@@ -1,0 +1,31 @@
+{
+  "name": "way-india-backend-main",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prisma": "6"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.940.0",
+    "@aws-sdk/lib-storage": "^3.940.0",
+    "@aws-sdk/s3-request-presigner": "^3.940.0",
+    "@prisma/client": "6",
+    "@types/mime-types": "^3.0.1",
+    "@types/multer": "^2.0.0",
+    "@types/papaparse": "^5.5.0",
+    "express": "^5.1.0",
+    "ioredis": "^5.8.2",
+    "mime-types": "^3.0.2",
+    "multer": "^2.0.2",
+    "papaparse": "^5.5.3",
+    "prettier": "^3.7.2",
+    "puppeteer": "^24.31.0",
+    "redis": "^5.10.0",
+    "sharp": "^0.34.5",
+    "zod": "^4.1.13"
+  }
+}

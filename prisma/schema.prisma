@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String       @id @default(uuid())
+  name              String       @db.VarChar(255)
+  phone             String?      @unique @db.VarChar(20)
+  isPhoneVerified   Boolean      @default(false)
+  email             String       @unique @db.VarChar(255)
+  profileImage      String?      @db.VarChar(500)
+  profileCoverImage String?      @db.VarChar(500)
+  address           String?      @db.VarChar(500)
+  pinCode           String?      @db.VarChar(10)
+  bio               String?      @db.Text
+  isActive          Boolean      @default(true)
+  password          String       @db.VarChar(255)
+  createdAt         DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime     @updatedAt @db.Timestamptz(3)
+  reviews           TourReview[]
+
+  @@index([isActive, createdAt(sort: Desc)])
+  @@index([email])
+  @@index([phone])
+  @@map("users")
+}
+
+model Tour {
+  id                 String   @id @default(cuid())
+  title              String   @db.VarChar(255)
+  slug               String   @unique @db.VarChar(300)
+  metatitle          String?  @db.VarChar(255)
+  metadesc           String?  @db.VarChar(500)
+  overview           String?  @db.Text
+  description        String?  @db.Text
+  durationDays       Int      @default(0) @db.SmallInt
+  durationNights     Int      @default(0) @db.SmallInt
+  price              Int      @default(0)
+  discountPrice      Int?
+  currency           String   @default("INR") @db.VarChar(3)
+  minGroupSize       Int      @default(1) @db.SmallInt
+  maxGroupSize       Int      @default(50) @db.SmallInt
+  bestTime           String?  @db.VarChar(255)
+  idealFor           String?  @db.VarChar(255)
+  difficulty         String?  @db.VarChar(50)
+  rating             Decimal  @default(0) @db.Decimal(3, 2)
+  reviewCount        Int      @default(0)
+  viewCount          Int      @default(0)
+  bookingCount       Int      @default(0)
+  isActive           Boolean  @default(true)
+  isFeatured         Boolean  @default(false)
+  cancellationPolicy String?  @db.Text
+  travelTips         String?  @db.Text
+  startCityId        String?
+  createdAt          DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime @updatedAt @db.Timestamptz(3)
+
+  startCity  City?            @relation("TourStartCity", fields: [startCityId], references: [id], onDelete: SetNull)
+  itinerary  TourItinerary[]
+  themes     TourTheme[]
+  cities     TourCity[]
+  faqs       Faq[]
+  reviews    TourReview[]
+  priceGuide TourPriceGuide[]
+
+  images     String[]
+  highlights String[]
+  inclusions String[]
+  exclusions String[]
+
+  @@index([isActive, isFeatured, rating(sort: Desc)])
+  @@index([isActive, price, rating(sort: Desc)])
+  @@index([isActive, createdAt(sort: Desc)])
+  @@index([isActive, bookingCount(sort: Desc)])
+  @@index([isActive, viewCount(sort: Desc)])
+  @@index([startCityId, isActive, rating(sort: Desc)])
+  @@index([durationDays, isActive, rating(sort: Desc)])
+  @@index([slug])
+  @@map("tours")
+}
+
+model TourPriceGuide {
+  id     String @id @default(cuid())
+  tourId String
+  title  String @db.VarChar(255)
+  value  Int    @default(0)
+  order  Int    @default(0) @db.SmallInt
+  tour   Tour   @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([tourId, order])
+  @@index([tourId])
+  @@map("tour_price_guide")
+}
+
+model Theme {
+  id          String      @id @default(cuid())
+  name        String      @db.VarChar(100)
+  label       String      @db.VarChar(150)
+  slug        String      @unique @db.VarChar(150)
+  icon        String?     @db.VarChar(100)
+  description String?     @db.Text
+  imageUrl    String?     @db.VarChar(500)
+  isActive    Boolean     @default(true)
+  order       Int         @default(0) @db.SmallInt
+  tourCount   Int         @default(0)
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  tours       TourTheme[]
+
+  @@index([slug])
+  @@index([isActive, order])
+  @@index([isActive, tourCount(sort: Desc)])
+  @@map("themes")
+}
+
+model TourTheme {
+  tourId    String
+  themeId   String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  theme     Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tour      Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([tourId, themeId])
+  @@index([themeId])
+  @@index([tourId])
+  @@map("tour_themes")
+}
+
+model TourReview {
+  id           String        @id @default(cuid())
+  userId       String
+  tourId       String
+  rating       Int           @db.SmallInt
+  title        String        @db.VarChar(255)
+  comment      String        @db.Text
+  isActive     Boolean       @default(true)
+  isVerified   Boolean       @default(false)
+  helpfulCount Int           @default(0)
+  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @db.Timestamptz(3)
+  images       ReviewImage[]
+  tour         Tour          @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, tourId])
+  @@index([tourId, isActive, rating(sort: Desc)])
+  @@index([tourId, isActive, createdAt(sort: Desc)])
+  @@index([tourId, isActive, helpfulCount(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([isActive, isVerified])
+  @@map("reviews")
+}
+
+model ReviewImage {
+  id         String     @id @default(cuid())
+  reviewId   String
+  key        String     @db.VarChar(500)
+  url        String     @db.VarChar(1000)
+  thumbnail  String?    @db.VarChar(1000)
+  uploadedAt DateTime   @default(now()) @db.Timestamptz(3)
+  review     TourReview @relation(fields: [reviewId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([reviewId])
+  @@map("review_images")
+}
+
+model TourItinerary {
+  id          String  @id @default(cuid())
+  tourId      String
+  day         Int     @db.SmallInt
+  title       String  @db.VarChar(255)
+  description String  @db.Text
+  imageUrl    String? @db.VarChar(1000)
+  tour        Tour    @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([tourId, day])
+  @@index([tourId, day])
+  @@map("tour_itinerary")
+}
+
+model TourCity {
+  tourId    String
+  cityId    String
+  order     Int      @default(0) @db.SmallInt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tour      Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([tourId, cityId])
+  @@index([cityId])
+  @@index([tourId])
+  @@map("tour_cities")
+}
+
+model City {
+  id            String     @id @default(cuid())
+  name          String     @db.VarChar(150)
+  label         String     @db.VarChar(150)
+  slug          String     @unique @db.VarChar(200)
+  stateId       String?    @db.VarChar(100)
+  stateName     String?    @db.VarChar(150)
+  countryId     String?    @db.VarChar(100)
+  countryName   String?    @db.VarChar(150)
+  latitude      Decimal?   @db.Decimal(10, 8)
+  longitude     Decimal?   @db.Decimal(11, 8)
+  imageUrl      String?    @db.VarChar(500)
+  description   String?    @db.Text
+  isActive      Boolean    @default(true)
+  tourCount     Int        @default(0)
+  createdAt     DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime   @updatedAt @db.Timestamptz(3)
+  tours         TourCity[]
+  startingTours Tour[]     @relation("TourStartCity")
+
+  @@index([slug])
+  @@index([isActive, tourCount(sort: Desc)])
+  @@index([isActive, name])
+  @@index([stateId, isActive])
+  @@index([countryId, isActive])
+  @@map("cities")
+}
+
+model Faq {
+  id        String        @id @default(cuid())
+  tourId    String
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime      @updatedAt @db.Timestamptz(3)
+  questions FaqQuestion[]
+  tour      Tour          @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([tourId, isActive])
+  @@map("faqs")
+}
+
+model FaqQuestion {
+  id       String @id @default(cuid())
+  faqId    String
+  question String @db.Text
+  answer   String @db.Text
+  order    Int    @db.SmallInt
+  faq      Faq    @relation(fields: [faqId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([faqId, order])
+  @@index([faqId])
+  @@map("faq_questions")
+}
