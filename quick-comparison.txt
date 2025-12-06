@@ -1,0 +1,378 @@
+
+QUICK COMPARISON REPORT
+Generated: 12/6/2025, 1:39:10 PM
+================================================================================
+
+SUMMARY:
+- Tours in CSV: 393
+- Tours in DB: 317
+- In BOTH: 310
+- In CSV but NOT in DB: 83
+- In DB but NOT in CSV: 7
+
+================================================================================
+TOURS IN CSV BUT NOT IN DATABASE (83):
+================================================================================
+1. golden-triangle-with-ranthambore
+   Golden Triangle with Ranthambore Tour
+
+2. kashmir-holiday-package
+   The Best Of Kashmir Holiday Package
+
+3. beach-honeymoon-tour-@-resort
+   Beach Honeymoon Tour @ Resort
+
+4. vaishno-devi-yatra-with-helicopter
+   Vaishno Devi Yatra
+
+5. trip-to-golden-temple
+   Trip To Golden Temple
+
+6. jaipur-package
+   4 night 5 days
+
+7. this-is-name-of-package
+   this is package title
+
+8. ranthambore-from-delhi
+   Ranthambore From Delhi
+
+9. wildlife-safari-near-delhi
+   Wildlife Safari Near Delhi
+
+10. best-of-leh-ladakh
+   Best of Leh Ladakh
+
+11. trip-to-dehradun
+   Trip to Dehradun
+
+12. trip-to-shimla
+   Trip to Shimla
+
+13. udaipur-and-mount-abu-tour-package
+   Udaipur And Mount Abu Tour Package
+
+14. jim-corbett-park-weekend-tour-package-[by-rail]
+   Jim Corbett Park Weekend Tour Package
+
+15. bird-watching-in-jim-corbett-park
+   Bird Watching in Jim Corbett Park
+
+16. uttarakhand-tour-package
+   Uttarakhand Tour Package
+
+17. best-of-kashmir
+   Kashmir Tour Package
+
+18. ladakh-with-pangong-lake
+   Ladakh Pangong Lake Tour
+
+19. udaipur-mount-abu-tour
+   03 Nights / 04 Days
+
+20. trip-to-dalhousie-from-delhi
+   Trip To Dalhousie From Delhi
+
+21. north-east-vacation
+   North East Vacation
+
+22. best-of-kerala
+   Best of Kerala
+
+23. kerala-nature-trails
+   Kerala Nature Trails
+
+24. beaches-of-kerala
+   Beaches Of Kerala
+
+25. mumbai---goa-tour
+   Mumbai - Goa Tour
+
+26. mumbai---goa-beach-tour
+   Mumbai - Goa Beach Tour
+
+27. kumbh-mela-–-haridwar
+   03 Nights / 04 Days
+
+28. pushkar-camel-fair
+   Pushkar Camel Fair
+
+29. konark-dance-festival
+   Konark Dance Festival
+
+30. golden-triangle--khajuraho-dance-festival-tour
+   Golden Triangle and Khajuraho Dance Festival Tour
+
+31. thrissur-elephant-festival-kerala
+   Thrissur Elephant Festival Kerala
+
+32. dussehra-festival-kullu
+   Dussehra Festival Kullu
+
+33. varanasi-tour-by-air
+   Varanasi Tour By Air
+
+34. udaipur-tour-package
+   Udaipur Tour Package
+
+35. delhi--neemrana-tour
+   Delhi Neemrana Tour Package
+
+36. delhi---sultanpur-tour
+   Delhi - Sultanpur Tour
+
+37. yogita
+   yogita
+
+38. uttranchal-5-days-tours
+   uttranchal 5 days tours
+
+39. latest-wildlife-tour
+   latest wildlife tour
+
+40. honey-moon-in-kerala
+   Honey Moon In Kerala
+
+41. desert-festival-jaisalmer
+   Jaisalmer Desert Festival Tour
+
+42. golden-triangle-with-ranthambore--bharatpur-luxury-group-tour
+   Golden Triangle with Ranthambore & Bharatpur Luxury Group Tour
+
+43. jaisalmer-desert-festival
+   Jaisalmer Desert Festival
+
+44. kashmir-ltc-tour
+   Kashmir LTC Tour
+
+45. uttarakhand-holidays
+   Uttarakhand Holidays
+
+46. glimpse-of-nepal
+   03 Nights / 04 Days 
+
+47. leh-ladakh-by-air
+   Leh Ladakh By Air
+
+48. treasures-of-south-india
+   Treasures of South India
+
+49. bandhavgarh-national-park
+   Bandhavgarh National Park Tour Packages
+
+50. kajiranga-national-park
+   Kajiranga National Park
+
+51. manas-national-park
+   Manas National Park Tour
+
+52. kaziranga-national-park-tour
+   Kaziranga National Park Tour
+
+53. nameri-national-park-tour
+   Nameri National Park Tour
+
+54. bandipur-national-park-tour
+   Bandipur National Park Tour
+
+55. eravikulam-national-park
+   Eravikulam National Park Tour
+
+56. periyar-national-park-tour
+   Periyar National Park Tour
+
+57. pench-national-park-tour
+   Pench National Park Tour
+
+58. panna-national-park-tour
+   Panna National Park Tour
+
+59. nagarhole-national-park-tour
+   Nagarhole National Park Tour
+
+60. ranthambore-wildlife-safari-tour
+   Ranthambore Wildlife Safari Tour
+
+61. jim-corbett-national-park
+   Jim Corbett National Park Tour
+
+62. bharatpur-tour
+   Keoladeo National Park Tour
+
+63. mudumalai-national-park-tour
+   Mudumalai National Park Tour
+
+64. rajaji-national-park-safari
+   Rajaji National Park Tour
+
+65. sariska-national-park-tour
+   Sariska National Park Tour
+
+66. gir-national-park-tour
+   Gir National Park Tour
+
+67. kanha-national-park-tour
+   Kanha National Park Tour
+
+68. tadoba-national-park-tour-package
+   Tadoba National Park Tour
+
+69. sundarbans-tour
+   Sundarbans National Park Tour
+
+70. testing-national-park
+   Testing National Park
+
+71. silent-valley-national-park
+   Silent Valley National Park
+
+72. a-visit-to-karnataka
+   A Visit To Karnataka
+
+73. pancha-bootha-sthalam-tour
+   Pancha Bootha Sthalam Tour
+
+74. srinagar-to-amarnath-helicopter
+   Srinagar To Amarnath Helicopter
+
+75. shimla-test-trip
+   shimla test trip
+
+76. 3days-kashmir-tours-for-indian
+   3days Kashmir Tours for Indian
+
+77. ranthambore-tour-package1
+   Ranthambore Tour Package
+
+78. gangaur-festival-jaipur
+   Gangaur Festival Jaipur
+
+79. kagbhushudi-lake-trek
+   Kagbhushudi Lake Trek
+
+80. valley-of-flowers-trekking-tour
+   Valley of Flowers Trekking Tour
+
+81. udaipur-city-tour-package
+   Udaipur City Tour Package
+
+82. udaipur-tour-package-for-couples
+   Udaipur Tour Package for Couples
+
+83. valley-of-flowers-uttarakhand-package
+   Valley of Flowers Uttarakhand Package 
+
+================================================================================
+TOURS IN DB BUT NOT IN CSV (7):
+================================================================================
+1. mumbai-goa-beach-tour
+   Mumbai - Goa Beach Tour
+
+2. mumbai-goa-tour
+   Mumbai - Goa Tour
+
+3. delhi-sultanpur-tour
+   Delhi - Sultanpur Tour
+
+4. delhi-neemrana-tour
+   Delhi Neemrana Tour
+
+5. golden-triangle-with-ranthambore-bharatpur-luxury-group-tour
+   Golden Triangle with Ranthambore & Bharatpur Luxury Group Tour
+
+6. jim-corbett-park-weekend-tour-package-by-rail
+   Jim Corbett Park Weekend Tour Package
+
+7. golden-triangle-khajuraho-dance-festival-tour
+   Golden Triangle & Khajuraho Dance Festival Tour
+
+================================================================================
+ARRAYS FOR PROCESSING:
+================================================================================
+
+// Tours to add to DB from CSV:
+const toursToAdd = [
+  'golden-triangle-with-ranthambore',
+  'kashmir-holiday-package',
+  'beach-honeymoon-tour-@-resort',
+  'vaishno-devi-yatra-with-helicopter',
+  'trip-to-golden-temple',
+  'jaipur-package',
+  'this-is-name-of-package',
+  'ranthambore-from-delhi',
+  'wildlife-safari-near-delhi',
+  'best-of-leh-ladakh',
+  'trip-to-dehradun',
+  'trip-to-shimla',
+  'udaipur-and-mount-abu-tour-package',
+  'jim-corbett-park-weekend-tour-package-[by-rail]',
+  'bird-watching-in-jim-corbett-park',
+  'uttarakhand-tour-package',
+  'best-of-kashmir',
+  'ladakh-with-pangong-lake',
+  'udaipur-mount-abu-tour',
+  'trip-to-dalhousie-from-delhi',
+  'north-east-vacation',
+  'best-of-kerala',
+  'kerala-nature-trails',
+  'beaches-of-kerala',
+  'mumbai---goa-tour',
+  'mumbai---goa-beach-tour',
+  'kumbh-mela-–-haridwar',
+  'pushkar-camel-fair',
+  'konark-dance-festival',
+  'golden-triangle--khajuraho-dance-festival-tour',
+  'thrissur-elephant-festival-kerala',
+  'dussehra-festival-kullu',
+  'varanasi-tour-by-air',
+  'udaipur-tour-package',
+  'delhi--neemrana-tour',
+  'delhi---sultanpur-tour',
+  'yogita',
+  'uttranchal-5-days-tours',
+  'latest-wildlife-tour',
+  'honey-moon-in-kerala',
+  'desert-festival-jaisalmer',
+  'golden-triangle-with-ranthambore--bharatpur-luxury-group-tour',
+  'jaisalmer-desert-festival',
+  'kashmir-ltc-tour',
+  'uttarakhand-holidays',
+  'glimpse-of-nepal',
+  'leh-ladakh-by-air',
+  'treasures-of-south-india',
+  'bandhavgarh-national-park',
+  'kajiranga-national-park',
+  'manas-national-park',
+  'kaziranga-national-park-tour',
+  'nameri-national-park-tour',
+  'bandipur-national-park-tour',
+  'eravikulam-national-park',
+  'periyar-national-park-tour',
+  'pench-national-park-tour',
+  'panna-national-park-tour',
+  'nagarhole-national-park-tour',
+  'ranthambore-wildlife-safari-tour',
+  'jim-corbett-national-park',
+  'bharatpur-tour',
+  'mudumalai-national-park-tour',
+  'rajaji-national-park-safari',
+  'sariska-national-park-tour',
+  'gir-national-park-tour',
+  'kanha-national-park-tour',
+  'tadoba-national-park-tour-package',
+  'sundarbans-tour',
+  'testing-national-park',
+  'silent-valley-national-park',
+  'a-visit-to-karnataka',
+  'pancha-bootha-sthalam-tour',
+  'srinagar-to-amarnath-helicopter',
+  'shimla-test-trip',
+  '3days-kashmir-tours-for-indian',
+  'ranthambore-tour-package1',
+  'gangaur-festival-jaipur',
+  'kagbhushudi-lake-trek',
+  'valley-of-flowers-trekking-tour',
+  'udaipur-city-tour-package',
+  'udaipur-tour-package-for-couples',
+  'valley-of-flowers-uttarakhand-package',
+];
