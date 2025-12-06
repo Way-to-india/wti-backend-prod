@@ -2,7 +2,7 @@ import express from 'express';
 import type { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import routerSetup from '@/routes';
-
+import rateLimit from 'express-rate-limit';
 import ResponseHandler from '@/middlewares/handlers/responseHandler';
 import { InternalServerError } from '@/middlewares/handlers/errorHandler';
 
@@ -21,6 +21,18 @@ class Server {
   }
 
   private configureMiddleware(app: Application): void {
+    console.log('Configuring Rate Limiting...');
+    const globalLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 300,
+      standardHeaders: true,
+      legacyHeaders: false,
+      // skip: (req: Request) => {
+      //   console.log(req.path);
+      //   return req.path === '/api/user/auth/login'
+      // }
+    });
+    app.use(globalLimiter);
     console.log('Configuring CORS middleware...');
     app.use(
       cors({
