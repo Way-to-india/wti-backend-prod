@@ -3,7 +3,6 @@ import prisma from '@/config/db';
 import type { Prisma } from 'prisma/generated/prisma/client';
 
 export class TourController {
-
   static async getAllTours(req: Request, res: Response) {
     try {
       const {
@@ -207,9 +206,14 @@ export class TourController {
 
       if ((where.AND as Prisma.TourWhereInput[]).length === 0) delete where.AND;
 
-      const orderBy: Prisma.TourOrderByWithRelationInput = {};
-      orderBy[sortBy as keyof Prisma.TourOrderByWithRelationInput] =
-        sortOrder === 'asc' ? 'asc' : 'desc';
+      const orderBy: Prisma.TourOrderByWithRelationInput[] = [
+        { isFeatured: 'desc' }, 
+        {
+          [sortBy as keyof Prisma.TourOrderByWithRelationInput]:
+            sortOrder === 'asc' ? 'asc' : 'desc',
+        },
+        { id: 'asc' },
+      ];
 
       const include: Prisma.TourInclude = {};
       if (includeStartCity === 'true') include.startCity = true;
@@ -490,5 +494,4 @@ export class TourController {
       );
     }
   }
-  
 }
