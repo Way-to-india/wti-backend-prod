@@ -15,16 +15,13 @@ interface CacheOptions {
 function generateCacheKey(req: Request, options: CacheOptions = {}): string {
   const { keyPrefix = 'route', excludeQuery = [], includeHeaders = [] } = options;
 
-  // Base components
   const method = req.method;
   const path = req.path;
 
-  // Query parameters (excluding specified ones)
   const queryParams = { ...req.query };
   excludeQuery.forEach((key) => delete queryParams[key]);
   const queryString = JSON.stringify(queryParams);
 
-  // Optional headers
   const headers: Record<string, any> = {};
   includeHeaders.forEach((header) => {
     if (req.headers[header]) {
@@ -33,7 +30,6 @@ function generateCacheKey(req: Request, options: CacheOptions = {}): string {
   });
   const headerString = JSON.stringify(headers);
 
-  // Create hash for uniqueness
   const keyString = `${method}:${path}:${queryString}:${headerString}`;
   const hash = crypto.createHash('md5').update(keyString).digest('hex');
 
@@ -47,16 +43,15 @@ export function cache(options: CacheOptions = {}) {
   const { ttl } = options;
 
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Only cache GET requests
-        
     if (req.method !== 'GET') {
       return next();
     }
 
+    console.log("req",req.params);
+
     const cacheKey = generateCacheKey(req, options);
 
     try {
-      // Check if cached data exists
       const cachedData = await cacheService.get(cacheKey);
 
       if (cachedData) {
@@ -66,19 +61,15 @@ export function cache(options: CacheOptions = {}) {
 
       console.log(`❌ Cache MISS: ${cacheKey}`);
 
-      // Store original res.deliver
       const originalDeliver = res.deliver;
 
-      // Override res.deliver to cache the response
       res.deliver = function (statusCode: number, success: boolean, data?: any, message?: string) {
-        // Only cache successful responses
         if (success && statusCode === 200 && data) {
           cacheService.set(cacheKey, data, ttl).catch((err) => {
             console.error('Failed to cache response:', err);
           });
         }
 
-        // Call original deliver
         return originalDeliver.call(this, statusCode, success, data, message);
       };
 
