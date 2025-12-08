@@ -42,7 +42,6 @@ class Server {
         allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
       })
     );
-
     app.use(express.json({ limit: '50mb' }));
     app.use(
       express.urlencoded({
@@ -51,7 +50,6 @@ class Server {
         parameterLimit: 50000,
       })
     );
-
     app.set('trust proxy', 1);
   }
 

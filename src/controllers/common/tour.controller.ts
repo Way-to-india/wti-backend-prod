@@ -1,6 +1,8 @@
+// src/controllers/common/tour.controller.ts
 import type { Request, Response } from 'express';
 import prisma from '@/config/db';
 import type { Prisma } from 'prisma/generated/prisma/client';
+import cacheService from '@/services/cache.service';
 
 export class TourController {
   static async getAllTours(req: Request, res: Response) {
@@ -207,7 +209,7 @@ export class TourController {
       if ((where.AND as Prisma.TourWhereInput[]).length === 0) delete where.AND;
 
       const orderBy: Prisma.TourOrderByWithRelationInput[] = [
-        { isFeatured: 'desc' }, 
+        { isFeatured: 'desc' },
         {
           [sortBy as keyof Prisma.TourOrderByWithRelationInput]:
             sortOrder === 'asc' ? 'asc' : 'desc',
@@ -389,10 +391,16 @@ export class TourController {
         return res.deliver(404, false, undefined, 'Tour not found');
       }
 
+      // Async view count increment (non-blocking)
       prisma.tour
         .update({
           where: { id: tour.id },
           data: { viewCount: { increment: 1 } },
+        })
+        .then(() => {
+          // Invalidate cache for this tour after view count update
+          cacheService.delete(`tour:${id}`).catch(console.error);
+          cacheService.deletePattern('tour:list:*').catch(console.error);
         })
         .catch((error) => {
           console.error('Failed to increment view count:', error);
@@ -412,25 +420,20 @@ export class TourController {
             {
               OR: [
                 themeIds.length > 0 ? { themes: { some: { themeId: { in: themeIds } } } } : {},
-
                 cityIds.length > 0 ? { cities: { some: { cityId: { in: cityIds } } } } : {},
-
                 tour.startCityId ? { startCityId: tour.startCityId } : {},
-
                 {
                   price: {
                     gte: Math.max(0, tour.price - priceRange),
                     lte: tour.price + priceRange,
                   },
                 },
-
                 {
                   durationDays: {
                     gte: Math.max(0, tour.durationDays - 2),
                     lte: tour.durationDays + 2,
                   },
                 },
-
                 tour.difficulty ? { difficulty: tour.difficulty } : {},
               ].filter((condition) => Object.keys(condition).length > 0),
             },
@@ -492,6 +495,22 @@ export class TourController {
         undefined,
         error instanceof Error ? error.message : 'Failed to fetch tour'
       );
+    }
+  }
+
+  /**
+   * Helper method to clear tour caches (use in admin controllers)
+   */
+  static async clearTourCache(tourId?: string) {
+    try {
+      if (tourId) {
+        await cacheService.delete(`tour:${tourId}`);
+      }
+      await cacheService.deletePattern('tour:list:*');
+      await cacheService.deletePattern('route:*');
+      console.log('✅ Tour cache cleared successfully');
+    } catch (error) {
+      console.error('Failed to clear tour cache:', error);
     }
   }
 }
