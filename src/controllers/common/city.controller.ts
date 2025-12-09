@@ -3,6 +3,7 @@ import prisma from '@/config/db';
 import type { Prisma } from 'prisma/generated/prisma/client';
 
 export class CityController {
+  
   static async getAllCities(req: Request, res: Response) {
     try {
       const {
