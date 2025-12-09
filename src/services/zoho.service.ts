@@ -17,6 +17,7 @@ interface ZohoLeadData {
   Phone?: string;
   Lead_Source: 'Tour Query' | 'Hotel Query' | 'Transport Query' | 'Contact Us';
   Description?: string;
+  Reference_Number?: string;
   [key: string]: any;
 }
 
@@ -98,7 +99,6 @@ class ZohoService {
       }
 
       this.accessToken = response.data.access_token;
-
       this.tokenExpiresAt = now + (response.data.expires_in - 300) * 1000;
 
       console.log('Successfully obtained Zoho access token');
@@ -155,6 +155,43 @@ class ZohoService {
   }
 
   /**
+   * Check if a reference number already exists in Zoho CRM
+   */
+  async checkReferenceNumberExists(referenceNumber: string): Promise<boolean> {
+    const token = await this.getAccessToken();
+
+    try {
+      console.log(`🔍 Checking if reference number exists: ${referenceNumber}`);
+
+      const response = await this.axiosInstance.get(`${this.ZOHO_API_URL}/Leads/search`, {
+        headers: {
+          Authorization: `Zoho-oauthtoken ${token}`,
+        },
+        params: {
+          criteria: `(Reference_Number:equals:${referenceNumber})`,
+        },
+      });
+
+      const exists = response.data.data && response.data.data.length > 0;
+      console.log(
+        `${exists ? '❌' : '✅'} Reference number ${referenceNumber} ${exists ? 'exists' : 'is unique'}`
+      );
+
+      return exists;
+    } catch (error: any) {
+      // 204 means no records found, which means the reference number is unique
+      if (error.response?.status === 204) {
+        console.log(`✅ Reference number ${referenceNumber} is unique (204 No Content)`);
+        return false;
+      }
+
+      console.error('Error checking reference number:', error.response?.data || error.message);
+      // If there's an error checking, assume it doesn't exist to avoid blocking lead creation
+      return false;
+    }
+  }
+
+  /**
    * Create a lead in Zoho CRM
    */
   async createLead(leadData: ZohoLeadData): Promise<any> {
@@ -170,7 +207,8 @@ class ZohoService {
         trigger: ['approval', 'workflow', 'blueprint'],
       };
 
-      console.log('Creating lead in Zoho CRM...');
+      console.log('📤 Creating lead in Zoho CRM...');
+      console.log('📋 Lead Payload:', JSON.stringify(payload, null, 2));
 
       const response = await this.axiosInstance.post(`${this.ZOHO_API_URL}/Leads`, payload, {
         headers: {
@@ -178,18 +216,21 @@ class ZohoService {
         },
       });
 
+      console.log('📥 Zoho API Response:', JSON.stringify(response.data, null, 2));
+
       if (response.data.data && response.data.data[0].code === 'SUCCESS') {
-        console.log('Lead created successfully:', response.data.data[0].details.id);
+        console.log('✅ Lead created successfully with ID:', response.data.data[0].details.id);
         return {
           success: true,
           leadId: response.data.data[0].details.id,
           message: 'Lead created successfully',
         };
       } else {
+        console.error('❌ Zoho API returned non-success code:', response.data.data[0]);
         throw new Error(response.data.data[0].message || 'Failed to create lead');
       }
     } catch (error: any) {
-      console.error('Zoho lead creation failed:', {
+      console.error('❌ Zoho lead creation failed:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,

@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import queryService from '@/services/query.service';
+import { verifyRecaptcha } from '@/utils/captcha';
 
 export class QueryController {
   /**
@@ -8,7 +9,27 @@ export class QueryController {
    */
   static async submitTourQuery(req: Request, res: Response) {
     try {
-      const result = await queryService.handleTourQuery(req.body);
+      const { recaptchaToken, ...queryData } = req.body;
+
+      if (!recaptchaToken) {
+        return res.deliver(400, false, undefined, 'reCAPTCHA token is required');
+      }
+
+      const isValidRecaptcha = await verifyRecaptcha(
+        recaptchaToken,
+        req.ip || req.socket.remoteAddress
+      );
+
+      if (!isValidRecaptcha) {
+        return res.deliver(
+          400,
+          false,
+          undefined,
+          'reCAPTCHA verification failed. Please try again.'
+        );
+      }
+
+      const result = await queryService.handleTourQuery(queryData);
 
       return res.deliver(200, true, result, 'Tour query submitted successfully');
     } catch (error) {
@@ -28,7 +49,27 @@ export class QueryController {
    */
   static async submitHotelQuery(req: Request, res: Response) {
     try {
-      const result = await queryService.handleHotelQuery(req.body);
+      const { recaptchaToken, ...queryData } = req.body;
+
+      if (!recaptchaToken) {
+        return res.deliver(400, false, undefined, 'reCAPTCHA token is required');
+      }
+
+      const isValidRecaptcha = await verifyRecaptcha(
+        recaptchaToken,
+        req.ip || req.socket.remoteAddress
+      );
+
+      if (!isValidRecaptcha) {
+        return res.deliver(
+          400,
+          false,
+          undefined,
+          'reCAPTCHA verification failed. Please try again.'
+        );
+      }
+
+      const result = await queryService.handleHotelQuery(queryData);
 
       return res.deliver(200, true, result, 'Hotel query submitted successfully');
     } catch (error) {
@@ -48,7 +89,27 @@ export class QueryController {
    */
   static async submitTransportQuery(req: Request, res: Response) {
     try {
-      const result = await queryService.handleTransportQuery(req.body);
+      const { recaptchaToken, ...queryData } = req.body;
+
+      if (!recaptchaToken) {
+        return res.deliver(400, false, undefined, 'reCAPTCHA token is required');
+      }
+
+      const isValidRecaptcha = await verifyRecaptcha(
+        recaptchaToken,
+        req.ip || req.socket.remoteAddress
+      );
+
+      if (!isValidRecaptcha) {
+        return res.deliver(
+          400,
+          false,
+          undefined,
+          'reCAPTCHA verification failed. Please try again.'
+        );
+      }
+
+      const result = await queryService.handleTransportQuery(queryData);
 
       return res.deliver(200, true, result, 'Transport query submitted successfully');
     } catch (error) {
@@ -68,7 +129,27 @@ export class QueryController {
    */
   static async submitContactUsQuery(req: Request, res: Response) {
     try {
-      const result = await queryService.handleContactUsQuery(req.body);
+      const { recaptchaToken, ...queryData } = req.body;
+
+      if (!recaptchaToken) {
+        return res.deliver(400, false, undefined, 'reCAPTCHA token is required');
+      }
+
+      const isValidRecaptcha = await verifyRecaptcha(
+        recaptchaToken,
+        req.ip || req.socket.remoteAddress
+      );
+
+      if (!isValidRecaptcha) {
+        return res.deliver(
+          400,
+          false,
+          undefined,
+          'reCAPTCHA verification failed. Please try again.'
+        );
+      }
+
+      const result = await queryService.handleContactUsQuery(queryData);
 
       return res.deliver(200, true, result, 'Contact query submitted successfully');
     } catch (error) {
