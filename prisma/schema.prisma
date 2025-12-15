@@ -18,7 +18,7 @@ model User {
   profileCoverImage String?      @db.VarChar(500)
   address           String?      @db.VarChar(500)
   pinCode           String?      @db.VarChar(10)
-  bio               String?      @db.Text
+  bio               String?
   isActive          Boolean      @default(true)
   password          String       @db.VarChar(255)
   createdAt         DateTime     @default(now()) @db.Timestamptz(3)
@@ -32,47 +32,45 @@ model User {
 }
 
 model Tour {
-  id                 String   @id @default(cuid())
-  title              String   @db.VarChar(255)
-  slug               String   @unique @db.VarChar(300)
-  metatitle          String?  @db.VarChar(255)
-  metadesc           String?  @db.VarChar(500)
-  overview           String?  @db.Text
-  description        String?  @db.Text
-  durationDays       Int      @default(0) @db.SmallInt
-  durationNights     Int      @default(0) @db.SmallInt
-  price              Int      @default(0)
+  id                 String           @id @default(cuid())
+  title              String           @db.VarChar(255)
+  slug               String           @unique @db.VarChar(300)
+  metatitle          String?          @db.VarChar(255)
+  metadesc           String?          @db.VarChar(500)
+  overview           String?
+  description        String?
+  durationDays       Int              @default(0) @db.SmallInt
+  durationNights     Int              @default(0) @db.SmallInt
+  price              Int              @default(0)
   discountPrice      Int?
-  currency           String   @default("INR") @db.VarChar(3)
-  minGroupSize       Int      @default(1) @db.SmallInt
-  maxGroupSize       Int      @default(50) @db.SmallInt
-  bestTime           String?  @db.VarChar(255)
-  idealFor           String?  @db.VarChar(255)
-  difficulty         String?  @db.VarChar(50)
-  rating             Decimal  @default(0) @db.Decimal(3, 2)
-  reviewCount        Int      @default(0)
-  viewCount          Int      @default(0)
-  bookingCount       Int      @default(0)
-  isActive           Boolean  @default(true)
-  isFeatured         Boolean  @default(false)
-  cancellationPolicy String?  @db.Text
-  travelTips         String?  @db.Text
+  currency           String           @default("INR") @db.VarChar(3)
+  minGroupSize       Int              @default(1) @db.SmallInt
+  maxGroupSize       Int              @default(50) @db.SmallInt
+  bestTime           String?          @db.VarChar(255)
+  idealFor           String?          @db.VarChar(255)
+  difficulty         String?          @db.VarChar(50)
+  rating             Decimal          @default(0) @db.Decimal(3, 2)
+  reviewCount        Int              @default(0)
+  viewCount          Int              @default(0)
+  bookingCount       Int              @default(0)
+  isActive           Boolean          @default(true)
+  isFeatured         Boolean          @default(false)
+  cancellationPolicy String?
+  travelTips         String?
   startCityId        String?
-  createdAt          DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt          DateTime @updatedAt @db.Timestamptz(3)
-
-  startCity  City?            @relation("TourStartCity", fields: [startCityId], references: [id], onDelete: SetNull)
-  itinerary  TourItinerary[]
-  themes     TourTheme[]
-  cities     TourCity[]
-  faqs       Faq[]
-  reviews    TourReview[]
-  priceGuide TourPriceGuide[]
-
-  images     String[]
-  highlights String[]
-  inclusions String[]
-  exclusions String[]
+  createdAt          DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime         @updatedAt @db.Timestamptz(3)
+  images             String[]
+  highlights         String[]
+  inclusions         String[]
+  exclusions         String[]
+  faqs               Faq[]
+  reviews            TourReview[]
+  cities             TourCity[]
+  itinerary          TourItinerary[]
+  priceGuide         TourPriceGuide[]
+  themes             TourTheme[]
+  startCity          City?            @relation("TourStartCity", fields: [startCityId], references: [id])
 
   @@index([isActive, isFeatured, rating(sort: Desc)])
   @@index([isActive, price, rating(sort: Desc)])
@@ -91,7 +89,7 @@ model TourPriceGuide {
   title  String @db.VarChar(255)
   value  Int    @default(0)
   order  Int    @default(0) @db.SmallInt
-  tour   Tour   @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tour   Tour   @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
   @@unique([tourId, order])
   @@index([tourId])
@@ -104,7 +102,7 @@ model Theme {
   label       String      @db.VarChar(150)
   slug        String      @unique @db.VarChar(150)
   icon        String?     @db.VarChar(100)
-  description String?     @db.Text
+  description String?
   imageUrl    String?     @db.VarChar(500)
   isActive    Boolean     @default(true)
   order       Int         @default(0) @db.SmallInt
@@ -123,8 +121,8 @@ model TourTheme {
   tourId    String
   themeId   String
   createdAt DateTime @default(now()) @db.Timestamptz(3)
-  theme     Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  tour      Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  theme     Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  tour      Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
   @@id([tourId, themeId])
   @@index([themeId])
@@ -138,15 +136,15 @@ model TourReview {
   tourId       String
   rating       Int           @db.SmallInt
   title        String        @db.VarChar(255)
-  comment      String        @db.Text
+  comment      String
   isActive     Boolean       @default(true)
   isVerified   Boolean       @default(false)
   helpfulCount Int           @default(0)
   createdAt    DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt    DateTime      @updatedAt @db.Timestamptz(3)
   images       ReviewImage[]
-  tour         Tour          @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tour         Tour          @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, tourId])
   @@index([tourId, isActive, rating(sort: Desc)])
@@ -164,7 +162,7 @@ model ReviewImage {
   url        String     @db.VarChar(1000)
   thumbnail  String?    @db.VarChar(1000)
   uploadedAt DateTime   @default(now()) @db.Timestamptz(3)
-  review     TourReview @relation(fields: [reviewId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  review     TourReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
   @@index([reviewId])
   @@map("review_images")
@@ -175,9 +173,9 @@ model TourItinerary {
   tourId      String
   day         Int     @db.SmallInt
   title       String  @db.VarChar(255)
-  description String  @db.Text
+  description String
   imageUrl    String? @db.VarChar(1000)
-  tour        Tour    @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tour        Tour    @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
   @@unique([tourId, day])
   @@index([tourId, day])
@@ -189,8 +187,8 @@ model TourCity {
   cityId    String
   order     Int      @default(0) @db.SmallInt
   createdAt DateTime @default(now()) @db.Timestamptz(3)
-  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  tour      Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  tour      Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
   @@id([tourId, cityId])
   @@index([cityId])
@@ -210,7 +208,7 @@ model City {
   latitude      Decimal?   @db.Decimal(10, 8)
   longitude     Decimal?   @db.Decimal(11, 8)
   imageUrl      String?    @db.VarChar(500)
-  description   String?    @db.Text
+  description   String?
   isActive      Boolean    @default(true)
   tourCount     Int        @default(0)
   createdAt     DateTime   @default(now()) @db.Timestamptz(3)
@@ -233,7 +231,7 @@ model Faq {
   createdAt DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt DateTime      @updatedAt @db.Timestamptz(3)
   questions FaqQuestion[]
-  tour      Tour          @relation(fields: [tourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tour      Tour          @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
   @@index([tourId, isActive])
   @@map("faqs")
@@ -242,12 +240,145 @@ model Faq {
 model FaqQuestion {
   id       String @id @default(cuid())
   faqId    String
-  question String @db.Text
-  answer   String @db.Text
+  question String
+  answer   String
   order    Int    @db.SmallInt
-  faq      Faq    @relation(fields: [faqId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  faq      Faq    @relation(fields: [faqId], references: [id], onDelete: Cascade)
 
   @@unique([faqId, order])
   @@index([faqId])
   @@map("faq_questions")
+}
+
+model Admin {
+  id                 String         @id @default(uuid())
+  name               String         @db.VarChar(255)
+  email              String         @unique @db.VarChar(255)
+  password           String         @db.VarChar(255)
+  roleId             String
+  isActive           Boolean        @default(true)
+  lastLoginAt        DateTime?      @db.Timestamptz(3)
+  refreshToken       String?        @db.VarChar(500)
+  refreshTokenExpiry DateTime?      @db.Timestamptz(3)
+  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime       @updatedAt @db.Timestamptz(3)
+  role               Role           @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  leads              Lead[]
+  leadActivities     LeadActivity[]
+
+  @@index([email])
+  @@index([isActive])
+  @@index([roleId])
+  @@map("admins")
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique @db.VarChar(100)
+  description String?      @db.Text
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
+  admins      Admin[]
+  permissions Permission[]
+
+  @@index([name])
+  @@index([isActive])
+  @@map("roles")
+}
+
+model Module {
+  id          String       @id @default(cuid())
+  name        String       @unique @db.VarChar(100)
+  label       String       @db.VarChar(150)
+  description String?      @db.Text
+  icon        String?      @db.VarChar(100)
+  order       Int          @default(0) @db.SmallInt
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
+  permissions Permission[]
+
+  @@index([name])
+  @@index([isActive, order])
+  @@map("modules")
+}
+
+model Permission {
+  id        String   @id @default(cuid())
+  roleId    String
+  moduleId  String
+  view      Boolean  @default(false)
+  create    Boolean  @default(false)
+  edit      Boolean  @default(false)
+  delete    Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, moduleId])
+  @@index([roleId])
+  @@index([moduleId])
+  @@map("permissions")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  REJECTED
+  FOLLOW_UP
+}
+
+enum LeadSource {
+  TOUR_QUERY
+  HOTEL_QUERY
+  TRANSPORT_QUERY
+  CONTACT_US
+}
+
+model Lead {
+  id              String     @id @default(cuid())
+  referenceNumber String     @unique @db.VarChar(20)
+  source          LeadSource
+  status          LeadStatus @default(NEW)
+  fullName    String  @db.VarChar(255)
+  email       String  @db.VarChar(255)
+  phoneNumber String? @db.VarChar(20)
+  details Json
+  assignedToId String?
+  assignedTo   Admin?  @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  priority Int     @default(0) @db.SmallInt
+  notes    String? @db.Text
+  zohoLeadId   String?   @db.VarChar(100)
+  syncedToZoho Boolean   @default(false)
+  lastSyncedAt DateTime? @db.Timestamptz(3)
+  ipAddress String? @db.VarChar(50)
+  userAgent String? @db.VarChar(500)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  contactedAt DateTime? @db.Timestamptz(3)
+  activities LeadActivity[]
+  @@index([source, status, createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([email])
+  @@index([referenceNumber])
+  @@index([assignedToId, status])
+  @@index([createdAt(sort: Desc)])
+  @@map("leads")
+}
+
+model LeadActivity {
+  id            String   @id @default(cuid())
+  leadId        String
+  activityType  String   @db.VarChar(50)
+  description   String   @db.Text
+  performedById String?
+  performedBy   Admin?   @relation(fields: [performedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  @@index([leadId, createdAt(sort: Desc)])
+  @@map("lead_activities")
 }

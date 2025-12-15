@@ -77,3 +77,33 @@ export type Faq = Prisma.FaqModel
  * 
  */
 export type FaqQuestion = Prisma.FaqQuestionModel
+/**
+ * Model Admin
+ * 
+ */
+export type Admin = Prisma.AdminModel
+/**
+ * Model Role
+ * 
+ */
+export type Role = Prisma.RoleModel
+/**
+ * Model Module
+ * 
+ */
+export type Module = Prisma.ModuleModel
+/**
+ * Model Permission
+ * 
+ */
+export type Permission = Prisma.PermissionModel
+/**
+ * Model Lead
+ * 
+ */
+export type Lead = Prisma.LeadModel
+/**
+ * Model LeadActivity
+ * 
+ */
+export type LeadActivity = Prisma.LeadActivityModel

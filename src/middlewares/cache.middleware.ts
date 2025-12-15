@@ -1,6 +1,6 @@
-import type { Request, Response, NextFunction } from 'express';
-import cacheService from '@/services/cache.service';
+import cacheService from '@/services/common/cache.service';
 import crypto from 'crypto';
+import type { NextFunction, Request, Response } from 'express';
 
 interface CacheOptions {
   ttl?: number;
@@ -47,7 +47,7 @@ export function cache(options: CacheOptions = {}) {
       return next();
     }
 
-    console.log("req",req.params);
+    console.log('req', req.params);
 
     const cacheKey = generateCacheKey(req, options);
 

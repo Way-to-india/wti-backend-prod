@@ -1,6 +1,6 @@
-import type { Request, Response } from 'express';
-import queryService from '@/services/query.service';
+import queryService from '@/services/user/query.service';
 import { verifyRecaptcha } from '@/utils/captcha';
+import type { Request, Response } from 'express';
 
 export class QueryController {
   /**
@@ -29,7 +29,7 @@ export class QueryController {
         );
       }
 
-      const result = await queryService.handleTourQuery(queryData);
+      const result = await queryService.handleTourQuery(queryData, req);
 
       return res.deliver(200, true, result, 'Tour query submitted successfully');
     } catch (error) {
@@ -69,7 +69,7 @@ export class QueryController {
         );
       }
 
-      const result = await queryService.handleHotelQuery(queryData);
+      const result = await queryService.handleHotelQuery(queryData, req);
 
       return res.deliver(200, true, result, 'Hotel query submitted successfully');
     } catch (error) {
@@ -109,7 +109,7 @@ export class QueryController {
         );
       }
 
-      const result = await queryService.handleTransportQuery(queryData);
+      const result = await queryService.handleTransportQuery(queryData, req);
 
       return res.deliver(200, true, result, 'Transport query submitted successfully');
     } catch (error) {
@@ -149,7 +149,7 @@ export class QueryController {
         );
       }
 
-      const result = await queryService.handleContactUsQuery(queryData);
+      const result = await queryService.handleContactUsQuery(queryData, req);
 
       return res.deliver(200, true, result, 'Contact query submitted successfully');
     } catch (error) {

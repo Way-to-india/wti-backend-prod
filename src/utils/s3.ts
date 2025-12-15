@@ -1,5 +1,5 @@
 import { S3Folder } from '@/common/constants';
-import S3Service from '@/services/s3.service';
+import S3Service from '@/services/common/s3.service';
 
 const s3Service = new S3Service();
 

@@ -9,7 +9,23 @@
 * 🟢 You can import this file directly.
 */
 
+export const LeadStatus = {
+  NEW: 'NEW',
+  CONTACTED: 'CONTACTED',
+  QUALIFIED: 'QUALIFIED',
+  CONVERTED: 'CONVERTED',
+  REJECTED: 'REJECTED',
+  FOLLOW_UP: 'FOLLOW_UP'
+} as const
+
+export type LeadStatus = (typeof LeadStatus)[keyof typeof LeadStatus]
 
 
-// This file is empty because there are no enums in the schema.
-export {}
+export const LeadSource = {
+  TOUR_QUERY: 'TOUR_QUERY',
+  HOTEL_QUERY: 'HOTEL_QUERY',
+  TRANSPORT_QUERY: 'TRANSPORT_QUERY',
+  CONTACT_US: 'CONTACT_US'
+} as const
+
+export type LeadSource = (typeof LeadSource)[keyof typeof LeadSource]

@@ -1,8 +1,8 @@
 // src/controllers/common/tour.controller.ts
-import type { Request, Response } from 'express';
 import prisma from '@/config/db';
+import cacheService from '@/services/common/cache.service';
+import type { Request, Response } from 'express';
 import type { Prisma } from 'prisma/generated/prisma/client';
-import cacheService from '@/services/cache.service';
 
 export class TourController {
   static async getAllTours(req: Request, res: Response) {

@@ -1,0 +1,22 @@
+[
+  {
+    "tourId": "udaipur-mount-abu-tour",
+    "startCity": "Udaipur",
+    "citiesCovered": ["Mount Abu", "Delhi"]
+  },
+  {
+    "tourId": "a-visit-to-karnataka",
+    "startCity": "Bangalore",
+    "citiesCovered": ["Shravanbelagola", "Hassan", "Mysore", "Srirangapatna"]
+  },
+  {
+    "tourId": "bandipur-national-park-tour",
+    "startCity": "Calicut",
+    "citiesCovered": ["Bandipur"]
+  },
+    {
+    "tourId": "udaipur-mount-abu-tour",
+    "startCity": "Udaipur",
+    "citiesCovered": ["Mount Abu", "Delhi"]
+  },            
+]
