@@ -15,6 +15,7 @@ class Server {
   constructor() {
     this.app = express();
     this.port = process.env.PORT || 5000;
+    console.log(this.port);
     this.configureMiddleware(this.app);
     this.configureRoutes(this.app);
     this.errorMiddleware(this.app);

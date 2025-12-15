@@ -16,7 +16,9 @@ class RedisClient {
         },
         maxRetriesPerRequest: 3,
         tls: redisUrl.startsWith('rediss://') ? {} : undefined,
-        family: 6,
+        family: 4, // Changed from 6 to 4 (IPv4)
+        enableOfflineQueue: false,
+        lazyConnect: false,
       });
     } else {
       this.client = new Redis({
@@ -29,6 +31,7 @@ class RedisClient {
           return delay;
         },
         maxRetriesPerRequest: 3,
+        family: 4, // Use IPv4
       });
     }
 
