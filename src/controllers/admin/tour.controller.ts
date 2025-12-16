@@ -127,17 +127,31 @@ export class TourController {
 
   static async createTour(req: Request, res: Response) {
     try {
+      console.log('📝 Creating tour - Request received');
+
       const bodyData = req.validated?.body || req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+      // 🔍 DEBUG: Log what we received
+      console.log('📦 Files received:', {
+        images: files?.images?.length || 0,
+        itineraryImages: files?.itineraryImages?.length || 0,
+        coverImage: files?.coverImage?.length || 0,
+      });
 
       let uploadedImages: string[] = [];
       let itineraryImagesMap: { [key: string]: string } = {};
 
+      // Upload regular images
       if (files?.images?.length > 0) {
+        console.log(`📤 Uploading ${files.images.length} regular images...`);
         uploadedImages = await uploadMultipleImagesToS3(files.images, S3Folder.TOUR_IMAGES);
+        console.log(`✅ Uploaded ${uploadedImages.length} regular images`);
       }
 
+      // Upload itinerary images (if any)
       if (files?.itineraryImages?.length > 0) {
+        console.log(`📤 Uploading ${files.itineraryImages.length} itinerary images...`);
         const itineraryImageKeys = await uploadMultipleImagesToS3(
           files.itineraryImages,
           S3Folder.TOUR_IMAGES
@@ -145,32 +159,116 @@ export class TourController {
         files.itineraryImages.forEach((file, index) => {
           itineraryImagesMap[index.toString()] = itineraryImageKeys[index];
         });
+        console.log(`✅ Uploaded ${itineraryImageKeys.length} itinerary images`);
       }
 
+      // Upload cover image
       if (files?.coverImage?.length > 0) {
+        console.log('📤 Uploading cover image...');
         const coverImageKey = await uploadImageToS3(files.coverImage[0], S3Folder.TOUR_IMAGES);
         uploadedImages.unshift(coverImageKey);
+        console.log('✅ Uploaded cover image');
+      }
+
+      // Parse itinerary if it's a string
+      let itineraryArray = bodyData.itinerary;
+      if (typeof itineraryArray === 'string') {
+        try {
+          itineraryArray = JSON.parse(itineraryArray);
+          console.log('📋 Parsed itinerary JSON');
+        } catch (e) {
+          console.error('❌ Failed to parse itinerary JSON:', e);
+          return res.deliver(400, false, undefined, 'Invalid itinerary format');
+        }
       }
 
       // Map itinerary with images
-      const itineraryData = bodyData.itinerary?.map((item: any, index: number) => ({
-        day: item.day || index + 1,
-        title: item.title,
-        description: item.description,
-        imageUrl: itineraryImagesMap[index.toString()] || item.imageUrl || null,
-      }));
+      const itineraryData = itineraryArray?.map((item: any, index: number) => {
+        const imageUrl = itineraryImagesMap[index.toString()] || item.imageUrl || null;
 
+        return {
+          day: parseInt(item.day) || index + 1,
+          title: item.title,
+          description: item.description,
+          imageUrl: imageUrl,
+        };
+      });
+
+      console.log(`📋 Processed ${itineraryData?.length || 0} itinerary items`);
+
+      // Helper function to parse JSON fields
+      const parseJsonField = (field: any) => {
+        if (typeof field === 'string') {
+          try {
+            return JSON.parse(field);
+          } catch (e) {
+            return field;
+          }
+        }
+        return field;
+      };
+
+      // Helper function to convert string to number
+      const toNumber = (value: any): number => {
+        const num = Number(value);
+        return isNaN(num) ? 0 : num;
+      };
+
+      // Helper function to convert string to boolean
+      const toBoolean = (value: any): boolean => {
+        if (typeof value === 'boolean') return value;
+        if (typeof value === 'string') {
+          return value.toLowerCase() === 'true';
+        }
+        return Boolean(value);
+      };
+
+      // ✅ Convert all numeric and boolean fields from strings to proper types
       const tourData = {
-        ...bodyData,
+        title: bodyData.title,
+        slug: bodyData.slug,
+        durationDays: toNumber(bodyData.durationDays),
+        durationNights: toNumber(bodyData.durationNights),
+        price: toNumber(bodyData.price),
+        currency: bodyData.currency,
+        minGroupSize: toNumber(bodyData.minGroupSize),
+        maxGroupSize: toNumber(bodyData.maxGroupSize),
+        isActive: toBoolean(bodyData.isActive),
+        isFeatured: toBoolean(bodyData.isFeatured),
+        metatitle: bodyData.metatitle,
+        metadesc: bodyData.metadesc,
+        overview: bodyData.overview,
+        description: bodyData.description,
+        discountPrice: bodyData.discountPrice ? toNumber(bodyData.discountPrice) : undefined,
+        bestTime: bodyData.bestTime,
+        idealFor: bodyData.idealFor,
+        difficulty: bodyData.difficulty,
+        cancellationPolicy: bodyData.cancellationPolicy,
+        travelTips: bodyData.travelTips,
+        startCityId: bodyData.startCityId,
+        highlights: parseJsonField(bodyData.highlights),
+        inclusions: parseJsonField(bodyData.inclusions),
+        exclusions: parseJsonField(bodyData.exclusions),
+        themes: parseJsonField(bodyData.themes),
+        cities: parseJsonField(bodyData.cities),
         images: uploadedImages,
         itinerary: itineraryData,
       };
 
+      console.log('💾 Creating tour in database...');
       const tour = await TourService.createTour(tourData);
+      console.log('✅ Tour created successfully:', tour.id);
 
       return res.deliver(201, true, tour, 'Tour created successfully');
     } catch (error) {
-      console.error('Error creating tour:', error);
+      console.error('❌ Error creating tour:', error);
+
+      // More detailed error logging
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+      }
+
       return res.deliver(
         500,
         false,
