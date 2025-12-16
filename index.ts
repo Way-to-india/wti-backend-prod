@@ -22,6 +22,8 @@ class Server {
   }
 
   private configureMiddleware(app: Application): void {
+    this.app.use(express.json({ limit: '50mb' }));
+    this.app.use(express.urlencoded({ limit: '50mb', extended: true }));
     console.log('Configuring Rate Limiting...');
     const globalLimiter = rateLimit({
       windowMs: 15 * 60 * 1000,
