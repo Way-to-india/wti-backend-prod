@@ -129,7 +129,7 @@ model TourTheme {
   @@index([tourId])
   @@map("tour_themes")
 }
-
+  
 model TourReview {
   id           String        @id @default(cuid())
   userId       String

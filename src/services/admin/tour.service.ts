@@ -6,52 +6,36 @@ import type { Prisma } from 'prisma/generated/prisma/client';
 export interface CreateTourData {
   title: string;
   slug: string;
+  durationDays: number;
+  durationNights: number;
+  price: number;
+  currency: string;
+  minGroupSize: number;
+  maxGroupSize: number;
+  isActive: boolean;
+  isFeatured: boolean;
   metatitle?: string;
   metadesc?: string;
   overview?: string;
   description?: string;
-  durationDays: number;
-  durationNights: number;
-  price: number;
   discountPrice?: number;
-  currency?: string;
-  minGroupSize?: number;
-  maxGroupSize?: number;
   bestTime?: string;
   idealFor?: string;
   difficulty?: string;
-  isActive?: boolean;
-  isFeatured?: boolean;
   cancellationPolicy?: string;
   travelTips?: string;
   startCityId?: string;
-  images?: string[];
   highlights?: string[];
   inclusions?: string[];
   exclusions?: string[];
+  themes?: string[];
+  cities?: string[];
+  images?: string[];
   itinerary?: Array<{
     day: number;
     title: string;
     description: string;
-    imageUrl?: string;
-  }>;
-  themes?: string[];
-  cities?: Array<{
-    cityId: string;
-    order: number;
-  }>;
-  faqs?: Array<{
-    isActive?: boolean;
-    questions: Array<{
-      question: string;
-      answer: string;
-      order: number;
-    }>;
-  }>;
-  priceGuide?: Array<{
-    title: string;
-    value: number;
-    order: number;
+    imageUrl?: string | null;
   }>;
 }
 
@@ -158,46 +142,88 @@ export class TourService {
   }
 
   static async createTour(data: CreateTourData) {
+    const themesData = data.themes?.map((themeId: string) => ({
+      themeId: themeId,
+    }));
+
+    // Transform cities array to proper format for Prisma relation
+    const citiesData = data.cities?.map((cityId: string) => ({
+      cityId: cityId,
+    }));
+
+    // Transform itinerary array to proper format
+    const itineraryData = data.itinerary?.map((item) => ({
+      day: item.day,
+      title: item.title,
+      description: item.description,
+      imageUrl: item.imageUrl || null,
+    }));
+
     const tour = await prisma.tour.create({
       data: {
-        ...data,
-        itinerary: data.itinerary
-          ? {
-              create: data.itinerary,
-            }
-          : undefined,
-        themes: data.themes
-          ? {
-              create: data.themes.map((themeId) => ({ themeId })),
-            }
-          : undefined,
-        cities: data.cities
-          ? {
-              create: data.cities,
-            }
-          : undefined,
-        faqs: data.faqs
-          ? {
-              create: data.faqs.map((faq) => ({
-                isActive: faq.isActive ?? true,
-                questions: {
-                  create: faq.questions,
-                },
-              })),
-            }
-          : undefined,
-        priceGuide: data.priceGuide
-          ? {
-              create: data.priceGuide,
-            }
-          : undefined,
+        title: data.title,
+        slug: data.slug,
+        durationDays: data.durationDays,
+        durationNights: data.durationNights,
+        price: data.price,
+        currency: data.currency,
+        minGroupSize: data.minGroupSize,
+        maxGroupSize: data.maxGroupSize,
+        isActive: data.isActive,
+        isFeatured: data.isFeatured,
+        metatitle: data.metatitle,
+        metadesc: data.metadesc,
+        overview: data.overview,
+        description: data.description,
+        discountPrice: data.discountPrice,
+        bestTime: data.bestTime,
+        idealFor: data.idealFor,
+        difficulty: data.difficulty,
+        cancellationPolicy: data.cancellationPolicy,
+        travelTips: data.travelTips,
+        startCityId: data.startCityId,
+        highlights: data.highlights,
+        inclusions: data.inclusions,
+        exclusions: data.exclusions,
+        images: data.images,
+        // ✅ Properly format the relations
+        themes:
+          themesData && themesData.length > 0
+            ? {
+                create: themesData,
+              }
+            : undefined,
+        cities:
+          citiesData && citiesData.length > 0
+            ? {
+                create: citiesData,
+              }
+            : undefined,
+        itinerary:
+          itineraryData && itineraryData.length > 0
+            ? {
+                create: itineraryData,
+              }
+            : undefined,
       },
       include: {
         startCity: true,
         itinerary: true,
-        themes: { include: { theme: true } },
-        cities: { include: { city: true } },
-        faqs: { include: { questions: true } },
+        themes: {
+          include: {
+            theme: true,
+          },
+        },
+        cities: {
+          include: {
+            city: true,
+          },
+        },
+        faqs: {
+          include: {
+            questions: true,
+          },
+        },
         priceGuide: true,
       },
     });
