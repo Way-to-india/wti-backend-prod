@@ -1,0 +1,512 @@
+-- SQL to update tours with start cities
+-- Review and verify before executing
+
+-- 03 Nights / 04 Days
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Udaipur' LIMIT 1) WHERE id = 'udaipur-mount-abu-tour';
+
+-- A Visit To Karnataka
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Bangalore' LIMIT 1) WHERE id = 'a-visit-to-karnataka';
+
+-- Bandipur National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Calicut' LIMIT 1) WHERE id = 'bandipur-national-park-tour';
+
+-- Beach Honeymoon Tour @ Resort
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Goa' LIMIT 1) WHERE id = 'beach-honeymoon-tour-@-resort';
+
+-- Beaches Of Kerala
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Thiruvananthapuram' LIMIT 1) WHERE id = 'beaches-of-kerala';
+
+-- Best of Kerala
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Munnar' LIMIT 1) WHERE id = 'best-of-kerala';
+
+-- Best of Leh Ladakh
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Leh' LIMIT 1) WHERE id = 'best-of-leh-ladakh';
+
+-- Bird Watching in Jim Corbett Park
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'bird-watching-in-jim-corbett-park';
+
+-- Delhi Neemrana Tour Package
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'delhi--neemrana-tour';
+
+-- Dussehra Festival Kullu
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'dussehra-festival-kullu';
+
+-- Gangaur Festival Jaipur
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'gangaur-festival-jaipur';
+
+-- Golden Triangle and Khajuraho Dance Festival Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'golden-triangle--khajuraho-dance-festival-tour';
+
+-- Golden Triangle with Ranthambore Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'golden-triangle-with-ranthambore';
+
+-- Honey Moon In Kerala
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Kochi' LIMIT 1) WHERE id = 'honey-moon-in-kerala';
+
+-- Jaisalmer Desert Festival
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Jaisalmer' LIMIT 1) WHERE id = 'jaisalmer-desert-festival';
+
+-- Jaisalmer Desert Festival Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'desert-festival-jaisalmer';
+
+-- Jim Corbett National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Ramnagar' LIMIT 1) WHERE id = 'jim-corbett-national-park';
+
+-- Jim Corbett Park Weekend Tour Package
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Ramnagar' LIMIT 1) WHERE id = 'jim-corbett-park-weekend-tour-package-[by-rail]';
+
+-- Kagbhushudi Lake Trek
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Rishikesh' LIMIT 1) WHERE id = 'kagbhushudi-lake-trek';
+
+-- Kashmir LTC Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Chennai' LIMIT 1) WHERE id = 'kashmir-ltc-tour';
+
+-- Kaziranga National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Kaziranga' LIMIT 1) WHERE id = 'kaziranga-national-park-tour';
+
+-- Keoladeo National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Bharatpur' LIMIT 1) WHERE id = 'bharatpur-tour';
+
+-- Kerala Nature Trails
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Kochi' LIMIT 1) WHERE id = 'kerala-nature-trails';
+
+-- Konark Dance Festival
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'konark-dance-festival';
+
+-- Ladakh Pangong Lake Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Leh' LIMIT 1) WHERE id = 'ladakh-with-pangong-lake';
+
+-- Leh Ladakh By Air
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Leh' LIMIT 1) WHERE id = 'leh-ladakh-by-air';
+
+-- Manas National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Guwahati' LIMIT 1) WHERE id = 'manas-national-park';
+
+-- Mudumalai National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Calicut' LIMIT 1) WHERE id = 'mudumalai-national-park-tour';
+
+-- Nagarhole National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Calicut' LIMIT 1) WHERE id = 'nagarhole-national-park-tour';
+
+-- Nameri National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Guwahati' LIMIT 1) WHERE id = 'nameri-national-park-tour';
+
+-- North East Vacation
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Guwahati' LIMIT 1) WHERE id = 'north-east-vacation';
+
+-- Pancha Bootha Sthalam Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Chennai' LIMIT 1) WHERE id = 'pancha-bootha-sthalam-tour';
+
+-- Panna National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Khajuraho' LIMIT 1) WHERE id = 'panna-national-park-tour';
+
+-- Periyar National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Kochi' LIMIT 1) WHERE id = 'periyar-national-park-tour';
+
+-- Pushkar Camel Fair
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'pushkar-camel-fair';
+
+-- Ranthambore From Delhi
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'ranthambore-from-delhi';
+
+-- Ranthambore Wildlife Safari Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Sawai Madhopur' LIMIT 1) WHERE id = 'ranthambore-wildlife-safari-tour';
+
+-- Sariska National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Jaipur' LIMIT 1) WHERE id = 'sariska-national-park-tour';
+
+-- Srinagar To Amarnath Helicopter
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Srinagar' LIMIT 1) WHERE id = 'srinagar-to-amarnath-helicopter';
+
+-- Sundarbans National Park Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Kolkata' LIMIT 1) WHERE id = 'sundarbans-tour';
+
+-- The Best Of Kashmir Holiday Package
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Srinagar' LIMIT 1) WHERE id = 'kashmir-holiday-package';
+
+-- Thrissur Elephant Festival Kerala
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Kochi' LIMIT 1) WHERE id = 'thrissur-elephant-festival-kerala';
+
+-- Treasures of South India
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Mumbai' LIMIT 1) WHERE id = 'treasures-of-south-india';
+
+-- Trimbakeshwar Grishneshwar Bhimashankar Jyotirlinga Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Mumbai' LIMIT 1) WHERE id = 'trimbakeshwar-grishneshwar-bhimashankar-jyotirlinga-tour';
+
+-- Trip To Dalhousie From Delhi
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'trip-to-dalhousie-from-delhi';
+
+-- Trip To Golden Temple
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Amritsar' LIMIT 1) WHERE id = 'trip-to-golden-temple';
+
+-- Trip to Dehradun
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Dehradun' LIMIT 1) WHERE id = 'trip-to-dehradun';
+
+-- Trip to Shimla
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Shimla' LIMIT 1) WHERE id = 'trip-to-shimla';
+
+-- Udaipur And Mount Abu Tour Package
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Udaipur' LIMIT 1) WHERE id = 'udaipur-and-mount-abu-tour-package';
+
+-- Udaipur City Tour Package
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Udaipur' LIMIT 1) WHERE id = 'udaipur-city-tour-package';
+
+-- Udaipur Tour Package
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Udaipur' LIMIT 1) WHERE id = 'udaipur-tour-package';
+
+-- Udaipur Tour Package for Couples
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Udaipur' LIMIT 1) WHERE id = 'udaipur-tour-package-for-couples';
+
+-- Uttarakhand Holidays
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'uttarakhand-holidays';
+
+-- Uttarakhand Tour Package
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'uttarakhand-tour-package';
+
+-- Vaishno Devi Yatra
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Katra' LIMIT 1) WHERE id = 'vaishno-devi-yatra-with-helicopter';
+
+-- Valley of Flowers Trekking Tour
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Govindghat' LIMIT 1) WHERE id = 'valley-of-flowers-trekking-tour';
+
+-- Valley of Flowers Uttarakhand Package
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'valley-of-flowers-uttarakhand-package';
+
+-- Varanasi Tour By Air
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'varanasi-tour-by-air';
+
+-- Wildlife Safari Near Delhi
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1) WHERE id = 'wildlife-safari-near-delhi';
+
+-- shimla test trip
+UPDATE tours SET "startCityId" = (SELECT id FROM cities WHERE name = 'Shimla' LIMIT 1) WHERE id = 'shimla-test-trip';
+
+
+-- Cities to add to tour_cities table
+-- Note: You need to determine the order for each city
+
+-- 03 Nights / 04 Days (udaipur-mount-abu-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-mount-abu-tour', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-mount-abu-tour', (SELECT id FROM cities WHERE name = 'Leh' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-mount-abu-tour', (SELECT id FROM cities WHERE name = 'Mount Abu' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-mount-abu-tour', (SELECT id FROM cities WHERE name = 'Udaipur' LIMIT 1), 4);
+
+-- 4 night 5 days (jaipur-package)
+
+-- A Visit To Karnataka (a-visit-to-karnataka)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('a-visit-to-karnataka', (SELECT id FROM cities WHERE name = 'Bangalore' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('a-visit-to-karnataka', (SELECT id FROM cities WHERE name = 'Mysore' LIMIT 1), 2);
+
+-- Bandhavgarh National Park Tour Packages (bandhavgarh-national-park)
+
+-- Bandipur National Park Tour (bandipur-national-park-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('bandipur-national-park-tour', (SELECT id FROM cities WHERE name = 'Calicut' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('bandipur-national-park-tour', (SELECT id FROM cities WHERE name = 'Mysore' LIMIT 1), 2);
+
+-- Beach Honeymoon Tour @ Resort (beach-honeymoon-tour-@-resort)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('beach-honeymoon-tour-@-resort', (SELECT id FROM cities WHERE name = 'Goa' LIMIT 1), 1);
+
+-- Beaches Of Kerala (beaches-of-kerala)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('beaches-of-kerala', (SELECT id FROM cities WHERE name = 'Kanyakumari' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('beaches-of-kerala', (SELECT id FROM cities WHERE name = 'Kovalam' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('beaches-of-kerala', (SELECT id FROM cities WHERE name = 'Thiruvananthapuram' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('beaches-of-kerala', (SELECT id FROM cities WHERE name = 'Varkala' LIMIT 1), 4);
+
+-- Best of Kerala (best-of-kerala)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('best-of-kerala', (SELECT id FROM cities WHERE name = 'Alleppey' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('best-of-kerala', (SELECT id FROM cities WHERE name = 'Kochi' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('best-of-kerala', (SELECT id FROM cities WHERE name = 'Munnar' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('best-of-kerala', (SELECT id FROM cities WHERE name = 'Thekkady' LIMIT 1), 4);
+
+-- Best of Leh Ladakh (best-of-leh-ladakh)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('best-of-leh-ladakh', (SELECT id FROM cities WHERE name = 'Khardung La' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('best-of-leh-ladakh', (SELECT id FROM cities WHERE name = 'Leh' LIMIT 1), 2);
+
+-- Bird Watching in Jim Corbett Park (bird-watching-in-jim-corbett-park)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('bird-watching-in-jim-corbett-park', (SELECT id FROM cities WHERE name = 'Binsar' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('bird-watching-in-jim-corbett-park', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('bird-watching-in-jim-corbett-park', (SELECT id FROM cities WHERE name = 'Mukteshwar' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('bird-watching-in-jim-corbett-park', (SELECT id FROM cities WHERE name = 'Nainital' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('bird-watching-in-jim-corbett-park', (SELECT id FROM cities WHERE name = 'Ramnagar' LIMIT 1), 5);
+
+-- Delhi Neemrana Tour Package (delhi--neemrana-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('delhi--neemrana-tour', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('delhi--neemrana-tour', (SELECT id FROM cities WHERE name = 'Neemrana' LIMIT 1), 2);
+
+-- Dussehra Festival Kullu (dussehra-festival-kullu)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('dussehra-festival-kullu', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('dussehra-festival-kullu', (SELECT id FROM cities WHERE name = 'Kullu' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('dussehra-festival-kullu', (SELECT id FROM cities WHERE name = 'Manali' LIMIT 1), 3);
+
+-- Gangaur Festival Jaipur (gangaur-festival-jaipur)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('gangaur-festival-jaipur', (SELECT id FROM cities WHERE name = 'Agra' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('gangaur-festival-jaipur', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('gangaur-festival-jaipur', (SELECT id FROM cities WHERE name = 'Jaipur' LIMIT 1), 3);
+
+-- Gir National Park Tour (gir-national-park-tour)
+
+-- Golden Triangle and Khajuraho Dance Festival Tour (golden-triangle--khajuraho-dance-festival-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('golden-triangle--khajuraho-dance-festival-tour', (SELECT id FROM cities WHERE name = 'Agra' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('golden-triangle--khajuraho-dance-festival-tour', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('golden-triangle--khajuraho-dance-festival-tour', (SELECT id FROM cities WHERE name = 'Jaipur' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('golden-triangle--khajuraho-dance-festival-tour', (SELECT id FROM cities WHERE name = 'Khajuraho' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('golden-triangle--khajuraho-dance-festival-tour', (SELECT id FROM cities WHERE name = 'Puri' LIMIT 1), 5);
+
+-- Golden Triangle with Ranthambore Tour (golden-triangle-with-ranthambore)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('golden-triangle-with-ranthambore', (SELECT id FROM cities WHERE name = 'Agra' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('golden-triangle-with-ranthambore', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('golden-triangle-with-ranthambore', (SELECT id FROM cities WHERE name = 'Jaipur' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('golden-triangle-with-ranthambore', (SELECT id FROM cities WHERE name = 'Sawai Madhopur' LIMIT 1), 4);
+
+-- Honey Moon In Kerala (honey-moon-in-kerala)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('honey-moon-in-kerala', (SELECT id FROM cities WHERE name = 'Alleppey' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('honey-moon-in-kerala', (SELECT id FROM cities WHERE name = 'Kanyakumari' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('honey-moon-in-kerala', (SELECT id FROM cities WHERE name = 'Kochi' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('honey-moon-in-kerala', (SELECT id FROM cities WHERE name = 'Kovalam' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('honey-moon-in-kerala', (SELECT id FROM cities WHERE name = 'Munnar' LIMIT 1), 5);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('honey-moon-in-kerala', (SELECT id FROM cities WHERE name = 'Thiruvananthapuram' LIMIT 1), 6);
+
+-- Jaisalmer Desert Festival (jaisalmer-desert-festival)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('jaisalmer-desert-festival', (SELECT id FROM cities WHERE name = 'Jaisalmer' LIMIT 1), 1);
+
+-- Jaisalmer Desert Festival Tour (desert-festival-jaisalmer)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('desert-festival-jaisalmer', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('desert-festival-jaisalmer', (SELECT id FROM cities WHERE name = 'Jaisalmer' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('desert-festival-jaisalmer', (SELECT id FROM cities WHERE name = 'Jodhpur' LIMIT 1), 3);
+
+-- Jim Corbett National Park Tour (jim-corbett-national-park)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('jim-corbett-national-park', (SELECT id FROM cities WHERE name = 'Calicut' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('jim-corbett-national-park', (SELECT id FROM cities WHERE name = 'Goa' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('jim-corbett-national-park', (SELECT id FROM cities WHERE name = 'Ramnagar' LIMIT 1), 3);
+
+-- Jim Corbett Park Weekend Tour Package (jim-corbett-park-weekend-tour-package-[by-rail])
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('jim-corbett-park-weekend-tour-package-[by-rail]', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('jim-corbett-park-weekend-tour-package-[by-rail]', (SELECT id FROM cities WHERE name = 'Ramnagar' LIMIT 1), 2);
+
+-- Kagbhushudi Lake Trek (kagbhushudi-lake-trek)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kagbhushudi-lake-trek', (SELECT id FROM cities WHERE name = 'Dehradun' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kagbhushudi-lake-trek', (SELECT id FROM cities WHERE name = 'Govindghat' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kagbhushudi-lake-trek', (SELECT id FROM cities WHERE name = 'Haridwar' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kagbhushudi-lake-trek', (SELECT id FROM cities WHERE name = 'Joshimath' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kagbhushudi-lake-trek', (SELECT id FROM cities WHERE name = 'Rishikesh' LIMIT 1), 5);
+
+-- Kajiranga National Park (kajiranga-national-park)
+
+-- Kanha National Park Tour (kanha-national-park-tour)
+
+-- Kashmir LTC Tour (kashmir-ltc-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kashmir-ltc-tour', (SELECT id FROM cities WHERE name = 'Chennai' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kashmir-ltc-tour', (SELECT id FROM cities WHERE name = 'Kanyakumari' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kashmir-ltc-tour', (SELECT id FROM cities WHERE name = 'Madurai' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kashmir-ltc-tour', (SELECT id FROM cities WHERE name = 'Rameswaram' LIMIT 1), 4);
+
+-- Kaziranga National Park Tour (kaziranga-national-park-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kaziranga-national-park-tour', (SELECT id FROM cities WHERE name = 'Guwahati' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kaziranga-national-park-tour', (SELECT id FROM cities WHERE name = 'Kaziranga' LIMIT 1), 2);
+
+-- Keoladeo National Park Tour (bharatpur-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('bharatpur-tour', (SELECT id FROM cities WHERE name = 'Bharatpur' LIMIT 1), 1);
+
+-- Kerala Nature Trails (kerala-nature-trails)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kerala-nature-trails', (SELECT id FROM cities WHERE name = 'Alleppey' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kerala-nature-trails', (SELECT id FROM cities WHERE name = 'Kanyakumari' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kerala-nature-trails', (SELECT id FROM cities WHERE name = 'Kochi' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kerala-nature-trails', (SELECT id FROM cities WHERE name = 'Kovalam' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kerala-nature-trails', (SELECT id FROM cities WHERE name = 'Munnar' LIMIT 1), 5);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kerala-nature-trails', (SELECT id FROM cities WHERE name = 'Thekkady' LIMIT 1), 6);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kerala-nature-trails', (SELECT id FROM cities WHERE name = 'Thiruvananthapuram' LIMIT 1), 7);
+
+-- Konark Dance Festival (konark-dance-festival)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('konark-dance-festival', (SELECT id FROM cities WHERE name = 'Bhubaneswar' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('konark-dance-festival', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('konark-dance-festival', (SELECT id FROM cities WHERE name = 'Konark' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('konark-dance-festival', (SELECT id FROM cities WHERE name = 'Puri' LIMIT 1), 4);
+
+-- Ladakh Pangong Lake Tour (ladakh-with-pangong-lake)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('ladakh-with-pangong-lake', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('ladakh-with-pangong-lake', (SELECT id FROM cities WHERE name = 'Leh' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('ladakh-with-pangong-lake', (SELECT id FROM cities WHERE name = 'Pangong' LIMIT 1), 3);
+
+-- Leh Ladakh By Air (leh-ladakh-by-air)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('leh-ladakh-by-air', (SELECT id FROM cities WHERE name = 'Leh' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('leh-ladakh-by-air', (SELECT id FROM cities WHERE name = 'Nubra Valley' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('leh-ladakh-by-air', (SELECT id FROM cities WHERE name = 'Pangong' LIMIT 1), 3);
+
+-- Manas National Park Tour (manas-national-park)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('manas-national-park', (SELECT id FROM cities WHERE name = 'Guwahati' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('manas-national-park', (SELECT id FROM cities WHERE name = 'Kaziranga' LIMIT 1), 2);
+
+-- Mudumalai National Park Tour (mudumalai-national-park-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('mudumalai-national-park-tour', (SELECT id FROM cities WHERE name = 'Calicut' LIMIT 1), 1);
+
+-- Nagarhole National Park Tour (nagarhole-national-park-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('nagarhole-national-park-tour', (SELECT id FROM cities WHERE name = 'Calicut' LIMIT 1), 1);
+
+-- Nameri National Park Tour (nameri-national-park-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('nameri-national-park-tour', (SELECT id FROM cities WHERE name = 'Guwahati' LIMIT 1), 1);
+
+-- North East Vacation (north-east-vacation)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('north-east-vacation', (SELECT id FROM cities WHERE name = 'Guwahati' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('north-east-vacation', (SELECT id FROM cities WHERE name = 'Kaziranga' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('north-east-vacation', (SELECT id FROM cities WHERE name = 'Shillong' LIMIT 1), 3);
+
+-- Pancha Bootha Sthalam Tour (pancha-bootha-sthalam-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('pancha-bootha-sthalam-tour', (SELECT id FROM cities WHERE name = 'Chennai' LIMIT 1), 1);
+
+-- Panna National Park Tour (panna-national-park-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('panna-national-park-tour', (SELECT id FROM cities WHERE name = 'Khajuraho' LIMIT 1), 1);
+
+-- Pench National Park Tour (pench-national-park-tour)
+
+-- Periyar National Park Tour (periyar-national-park-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('periyar-national-park-tour', (SELECT id FROM cities WHERE name = 'Kochi' LIMIT 1), 1);
+
+-- Pushkar Camel Fair (pushkar-camel-fair)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('pushkar-camel-fair', (SELECT id FROM cities WHERE name = 'Agra' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('pushkar-camel-fair', (SELECT id FROM cities WHERE name = 'Ajmer' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('pushkar-camel-fair', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('pushkar-camel-fair', (SELECT id FROM cities WHERE name = 'Jaipur' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('pushkar-camel-fair', (SELECT id FROM cities WHERE name = 'Pushkar' LIMIT 1), 5);
+
+-- Ranthambore From Delhi (ranthambore-from-delhi)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('ranthambore-from-delhi', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('ranthambore-from-delhi', (SELECT id FROM cities WHERE name = 'Sawai Madhopur' LIMIT 1), 2);
+
+-- Ranthambore Wildlife Safari Tour (ranthambore-wildlife-safari-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('ranthambore-wildlife-safari-tour', (SELECT id FROM cities WHERE name = 'Sawai Madhopur' LIMIT 1), 1);
+
+-- Sariska National Park Tour (sariska-national-park-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('sariska-national-park-tour', (SELECT id FROM cities WHERE name = 'Jaipur' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('sariska-national-park-tour', (SELECT id FROM cities WHERE name = 'Sariska' LIMIT 1), 2);
+
+-- Silent Valley National Park (silent-valley-national-park)
+
+-- Srinagar To Amarnath Helicopter (srinagar-to-amarnath-helicopter)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('srinagar-to-amarnath-helicopter', (SELECT id FROM cities WHERE name = 'Srinagar' LIMIT 1), 1);
+
+-- Sundarbans National Park Tour (sundarbans-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('sundarbans-tour', (SELECT id FROM cities WHERE name = 'Kolkata' LIMIT 1), 1);
+
+-- Tadoba National Park Tour (tadoba-national-park-tour-package)
+
+-- Testing National Park (testing-national-park)
+
+-- The Best Of Kashmir Holiday Package (kashmir-holiday-package)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kashmir-holiday-package', (SELECT id FROM cities WHERE name = 'Gulmarg' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kashmir-holiday-package', (SELECT id FROM cities WHERE name = 'Pahalgam' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kashmir-holiday-package', (SELECT id FROM cities WHERE name = 'Sonmarg' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('kashmir-holiday-package', (SELECT id FROM cities WHERE name = 'Srinagar' LIMIT 1), 4);
+
+-- Thrissur Elephant Festival Kerala (thrissur-elephant-festival-kerala)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('thrissur-elephant-festival-kerala', (SELECT id FROM cities WHERE name = 'Alleppey' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('thrissur-elephant-festival-kerala', (SELECT id FROM cities WHERE name = 'Kochi' LIMIT 1), 2);
+
+-- Treasures of South India (treasures-of-south-india)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('treasures-of-south-india', (SELECT id FROM cities WHERE name = 'Bangalore' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('treasures-of-south-india', (SELECT id FROM cities WHERE name = 'Chennai' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('treasures-of-south-india', (SELECT id FROM cities WHERE name = 'Mumbai' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('treasures-of-south-india', (SELECT id FROM cities WHERE name = 'Puttaparthi' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('treasures-of-south-india', (SELECT id FROM cities WHERE name = 'Tirupati' LIMIT 1), 5);
+
+-- Trimbakeshwar Grishneshwar Bhimashankar Jyotirlinga Tour (trimbakeshwar-grishneshwar-bhimashankar-jyotirlinga-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('trimbakeshwar-grishneshwar-bhimashankar-jyotirlinga-tour', (SELECT id FROM cities WHERE name = 'Mumbai' LIMIT 1), 1);
+
+-- Trip To Dalhousie From Delhi (trip-to-dalhousie-from-delhi)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('trip-to-dalhousie-from-delhi', (SELECT id FROM cities WHERE name = 'Dalhousie' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('trip-to-dalhousie-from-delhi', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('trip-to-dalhousie-from-delhi', (SELECT id FROM cities WHERE name = 'Dharamsala' LIMIT 1), 3);
+
+-- Trip To Golden Temple (trip-to-golden-temple)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('trip-to-golden-temple', (SELECT id FROM cities WHERE name = 'Amritsar' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('trip-to-golden-temple', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 2);
+
+-- Trip to Dehradun (trip-to-dehradun)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('trip-to-dehradun', (SELECT id FROM cities WHERE name = 'Dehradun' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('trip-to-dehradun', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 2);
+
+-- Trip to Shimla (trip-to-shimla)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('trip-to-shimla', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('trip-to-shimla', (SELECT id FROM cities WHERE name = 'Shimla' LIMIT 1), 2);
+
+-- Udaipur And Mount Abu Tour Package (udaipur-and-mount-abu-tour-package)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-and-mount-abu-tour-package', (SELECT id FROM cities WHERE name = 'Kumbhalgarh' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-and-mount-abu-tour-package', (SELECT id FROM cities WHERE name = 'Mount Abu' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-and-mount-abu-tour-package', (SELECT id FROM cities WHERE name = 'Ranakpur' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-and-mount-abu-tour-package', (SELECT id FROM cities WHERE name = 'Udaipur' LIMIT 1), 4);
+
+-- Udaipur City Tour Package (udaipur-city-tour-package)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-city-tour-package', (SELECT id FROM cities WHERE name = 'Chittorgarh' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-city-tour-package', (SELECT id FROM cities WHERE name = 'Kumbhalgarh' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-city-tour-package', (SELECT id FROM cities WHERE name = 'Ranakpur' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-city-tour-package', (SELECT id FROM cities WHERE name = 'Udaipur' LIMIT 1), 4);
+
+-- Udaipur Tour Package (udaipur-tour-package)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-tour-package', (SELECT id FROM cities WHERE name = 'Chittorgarh' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-tour-package', (SELECT id FROM cities WHERE name = 'Kumbhalgarh' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-tour-package', (SELECT id FROM cities WHERE name = 'Ranakpur' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-tour-package', (SELECT id FROM cities WHERE name = 'Udaipur' LIMIT 1), 4);
+
+-- Udaipur Tour Package for Couples (udaipur-tour-package-for-couples)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-tour-package-for-couples', (SELECT id FROM cities WHERE name = 'Agra' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-tour-package-for-couples', (SELECT id FROM cities WHERE name = 'Chittorgarh' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-tour-package-for-couples', (SELECT id FROM cities WHERE name = 'Kumbhalgarh' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-tour-package-for-couples', (SELECT id FROM cities WHERE name = 'Ranakpur' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('udaipur-tour-package-for-couples', (SELECT id FROM cities WHERE name = 'Udaipur' LIMIT 1), 5);
+
+-- Uttarakhand Holidays (uttarakhand-holidays)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-holidays', (SELECT id FROM cities WHERE name = 'Almora' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-holidays', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-holidays', (SELECT id FROM cities WHERE name = 'Lansdowne' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-holidays', (SELECT id FROM cities WHERE name = 'Nainital' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-holidays', (SELECT id FROM cities WHERE name = 'Ramnagar' LIMIT 1), 5);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-holidays', (SELECT id FROM cities WHERE name = 'Ranikhet' LIMIT 1), 6);
+
+-- Uttarakhand Tour Package (uttarakhand-tour-package)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-tour-package', (SELECT id FROM cities WHERE name = 'Almora' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-tour-package', (SELECT id FROM cities WHERE name = 'Binsar' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-tour-package', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-tour-package', (SELECT id FROM cities WHERE name = 'Haridwar' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-tour-package', (SELECT id FROM cities WHERE name = 'Mussoorie' LIMIT 1), 5);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-tour-package', (SELECT id FROM cities WHERE name = 'Nainital' LIMIT 1), 6);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('uttarakhand-tour-package', (SELECT id FROM cities WHERE name = 'Ranikhet' LIMIT 1), 7);
+
+-- Vaishno Devi Yatra (vaishno-devi-yatra-with-helicopter)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('vaishno-devi-yatra-with-helicopter', (SELECT id FROM cities WHERE name = 'Jammu' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('vaishno-devi-yatra-with-helicopter', (SELECT id FROM cities WHERE name = 'Katra' LIMIT 1), 2);
+
+-- Valley of Flowers Trekking Tour (valley-of-flowers-trekking-tour)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-trekking-tour', (SELECT id FROM cities WHERE name = 'Dehradun' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-trekking-tour', (SELECT id FROM cities WHERE name = 'Ghangaria' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-trekking-tour', (SELECT id FROM cities WHERE name = 'Govindghat' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-trekking-tour', (SELECT id FROM cities WHERE name = 'Joshimath' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-trekking-tour', (SELECT id FROM cities WHERE name = 'Rishikesh' LIMIT 1), 5);
+
+-- Valley of Flowers Uttarakhand Package (valley-of-flowers-uttarakhand-package)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-uttarakhand-package', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-uttarakhand-package', (SELECT id FROM cities WHERE name = 'Ghangaria' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-uttarakhand-package', (SELECT id FROM cities WHERE name = 'Govindghat' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-uttarakhand-package', (SELECT id FROM cities WHERE name = 'Haridwar' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-uttarakhand-package', (SELECT id FROM cities WHERE name = 'Joshimath' LIMIT 1), 5);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-uttarakhand-package', (SELECT id FROM cities WHERE name = 'Rishikesh' LIMIT 1), 6);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('valley-of-flowers-uttarakhand-package', (SELECT id FROM cities WHERE name = 'Rudraprayag' LIMIT 1), 7);
+
+-- Varanasi Tour By Air (varanasi-tour-by-air)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('varanasi-tour-by-air', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('varanasi-tour-by-air', (SELECT id FROM cities WHERE name = 'Varanasi' LIMIT 1), 2);
+
+-- Wildlife Safari Near Delhi (wildlife-safari-near-delhi)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('wildlife-safari-near-delhi', (SELECT id FROM cities WHERE name = 'Agra' LIMIT 1), 1);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('wildlife-safari-near-delhi', (SELECT id FROM cities WHERE name = 'Bharatpur' LIMIT 1), 2);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('wildlife-safari-near-delhi', (SELECT id FROM cities WHERE name = 'Delhi' LIMIT 1), 3);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('wildlife-safari-near-delhi', (SELECT id FROM cities WHERE name = 'Jaipur' LIMIT 1), 4);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('wildlife-safari-near-delhi', (SELECT id FROM cities WHERE name = 'Sariska' LIMIT 1), 5);
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('wildlife-safari-near-delhi', (SELECT id FROM cities WHERE name = 'Sawai Madhopur' LIMIT 1), 6);
+
+-- latest wildlife tour (latest-wildlife-tour)
+
+-- shimla test trip (shimla-test-trip)
+INSERT INTO tour_cities ("tourId", "cityId", "order") VALUES ('shimla-test-trip', (SELECT id FROM cities WHERE name = 'Shimla' LIMIT 1), 1);
+
+-- this is package title (this-is-name-of-package)
+
+-- uttranchal 5 days tours (uttranchal-5-days-tours)

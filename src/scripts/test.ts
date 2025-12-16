@@ -1,164 +1,193 @@
-import prisma from '@/config/db';
 import * as fs from 'fs';
-import * as Papa from 'papaparse';
 import * as path from 'path';
+import prisma from '@/config/db';
 
-interface CSVRow {
-  URL: string;
-  PackageTitle: string;
-  [key: string]: any;
-}
+async function findIncompleteTours() {
+  // Fetch all tours with related data
+  const tours = await prisma.tour.findMany({
+    include: {
+      startCity: true,
+      itinerary: true,
+      cities: true,
+      themes: true,
+      faqs: {
+        include: {
+          questions: true,
+        },
+      },
+    },
+  });
 
-function parseCSVFile(csvFilePath: string): Promise<CSVRow[]> {
-  return new Promise((resolve, reject) => {
-    const fileContent = fs.readFileSync(csvFilePath, 'utf-8');
-    Papa.parse<CSVRow>(fileContent, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => resolve(results.data),
-      error: (error: any) => reject(error),
+  const incompleteTours = tours.map((tour) => {
+    const missingFields: string[] = [];
+
+    // Check required metadata
+    if (!tour.metatitle) missingFields.push('metatitle');
+    if (!tour.metadesc) missingFields.push('metadesc');
+
+    // Check content fields
+    if (!tour.overview) missingFields.push('overview');
+    if (!tour.description) missingFields.push('description');
+
+    // Check duration
+    if (tour.durationDays === 0) missingFields.push('durationDays');
+    if (tour.durationNights === 0) missingFields.push('durationNights');
+
+    // Check arrays
+    if (!tour.images || tour.images.length === 0) missingFields.push('images');
+    if (!tour.highlights || tour.highlights.length === 0) missingFields.push('highlights');
+    if (!tour.inclusions || tour.inclusions.length === 0) missingFields.push('inclusions');
+    if (!tour.exclusions || tour.exclusions.length === 0) missingFields.push('exclusions');
+
+    // Check relations
+    if (!tour.startCityId) missingFields.push('startCity');
+    if (!tour.itinerary || tour.itinerary.length === 0) missingFields.push('itinerary');
+    if (!tour.cities || tour.cities.length === 0) missingFields.push('cities');
+    if (!tour.themes || tour.themes.length === 0) missingFields.push('themes');
+
+    // Check optional but important fields
+    if (!tour.bestTime) missingFields.push('bestTime');
+    if (!tour.idealFor) missingFields.push('idealFor');
+    if (!tour.difficulty) missingFields.push('difficulty');
+    if (!tour.cancellationPolicy) missingFields.push('cancellationPolicy');
+    if (!tour.travelTips) missingFields.push('travelTips');
+
+    // Check FAQs
+    const hasFaqs =
+      tour.faqs &&
+      tour.faqs.length > 0 &&
+      tour.faqs.some((faq) => faq.questions && faq.questions.length > 0);
+    if (!hasFaqs) missingFields.push('faqs');
+
+    return {
+      id: tour.id,
+      title: tour.title,
+      slug: tour.slug,
+      isActive: tour.isActive,
+      isFeatured: tour.isFeatured,
+      missingFields,
+      missingCount: missingFields.length,
+      completionPercentage: Math.round(((19 - missingFields.length) / 19) * 100),
+      // Include existing data for reference
+      existingData: {
+        metatitle: tour.metatitle,
+        metadesc: tour.metadesc,
+        overview: tour.overview ? 'EXISTS' : null,
+        description: tour.description ? 'EXISTS' : null,
+        durationDays: tour.durationDays,
+        durationNights: tour.durationNights,
+        imagesCount: tour.images?.length || 0,
+        highlightsCount: tour.highlights?.length || 0,
+        inclusionsCount: tour.inclusions?.length || 0,
+        exclusionsCount: tour.exclusions?.length || 0,
+        startCity: tour.startCity?.name || null,
+        itineraryCount: tour.itinerary?.length || 0,
+        citiesCount: tour.cities?.length || 0,
+        themesCount: tour.themes?.length || 0,
+        faqsCount: tour.faqs?.length || 0,
+      },
+    };
+  });
+
+  // Filter only incomplete tours
+  const incomplete = incompleteTours.filter((t) => t.missingCount > 0);
+
+  // Sort by missing count (most incomplete first)
+  incomplete.sort((a, b) => b.missingCount - a.missingCount);
+
+  console.log(`\n=== INCOMPLETE TOURS REPORT ===`);
+  console.log(`Total Tours: ${tours.length}`);
+  console.log(`Complete Tours: ${tours.length - incomplete.length}`);
+  console.log(`Incomplete Tours: ${incomplete.length}\n`);
+
+  incomplete.forEach((tour, index) => {
+    console.log(`${index + 1}. ${tour.title}`);
+    console.log(`   ID: ${tour.id}`);
+    console.log(`   Slug: ${tour.slug}`);
+    console.log(
+      `   Status: ${tour.isActive ? 'Active' : 'Inactive'} ${tour.isFeatured ? '(Featured)' : ''}`
+    );
+    console.log(`   Completion: ${tour.completionPercentage}%`);
+    console.log(`   Missing Fields (${tour.missingCount}):`);
+    tour.missingFields.forEach((field) => {
+      console.log(`     - ${field}`);
+    });
+    console.log('');
+  });
+
+  // Summary by missing field
+  const fieldStats: Record<string, number> = {};
+  incomplete.forEach((tour) => {
+    tour.missingFields.forEach((field) => {
+      fieldStats[field] = (fieldStats[field] || 0) + 1;
     });
   });
-}
 
-async function quickCompare() {
-  console.log('\n' + '='.repeat(100));
-  console.log('⚡ QUICK COMPARE: DATABASE vs CSV');
-  console.log('='.repeat(100));
+  console.log(`\n=== MISSING FIELDS SUMMARY ===`);
+  const sortedFields = Object.entries(fieldStats).sort((a, b) => b[1] - a[1]);
 
-  try {
-    // Load CSV
-    console.log('\n📂 Loading CSV...');
-    const csvFilePath = path.join(__dirname, 'tours.csv');
-    const csvData = await parseCSVFile(csvFilePath);
+  sortedFields.forEach(([field, count]) => {
+    console.log(`${field}: ${count} tours (${Math.round((count / incomplete.length) * 100)}%)`);
+  });
 
-    const csvTours = new Map<string, string>();
-    csvData.forEach((row) => {
-      if (row.URL && row.URL.trim()) {
-        const id = row.URL.trim();
-        if (!csvTours.has(id)) {
-          csvTours.set(id, row.PackageTitle || 'N/A');
-        }
-      }
-    });
-    console.log(`✅ CSV: ${csvTours.size} unique tours`);
-
-    // Load DB
-    console.log('\n🗄️  Loading Database...');
-    const dbTours = await prisma.tour.findMany({
-      select: { id: true, title: true },
-    });
-    const dbToursMap = new Map(dbTours.map((t) => [t.id, t.title]));
-    console.log(`✅ DB: ${dbTours.length} tours`);
-
-    // Compare
-    console.log('\n🔍 Comparing...\n');
-
-    const inCsvNotInDb: string[] = [];
-    const inDbNotInCsv: string[] = [];
-    const inBoth: string[] = [];
-
-    // Check CSV tours
-    csvTours.forEach((title, id) => {
-      if (dbToursMap.has(id)) {
-        inBoth.push(id);
-      } else {
-        inCsvNotInDb.push(id);
-      }
-    });
-
-    // Check DB tours
-    dbToursMap.forEach((title, id) => {
-      if (!csvTours.has(id)) {
-        inDbNotInCsv.push(id);
-      }
-    });
-
-    // Results
-    console.log('='.repeat(100));
-    console.log('📊 RESULTS');
-    console.log('='.repeat(100));
-    console.log(`✅ In BOTH: ${inBoth.length}`);
-    console.log(`❌ In CSV but NOT in DB: ${inCsvNotInDb.length}`);
-    console.log(`⚠️  In DB but NOT in CSV: ${inDbNotInCsv.length}`);
-    console.log('='.repeat(100));
-
-    // Show missing tours
-    if (inCsvNotInDb.length > 0) {
-      console.log(`\n❌ IN CSV BUT NOT IN DATABASE (${inCsvNotInDb.length}):`);
-      console.log('-'.repeat(100));
-      inCsvNotInDb.forEach((id, i) => {
-        console.log(`${i + 1}. ${id}`);
-        console.log(`   Title: ${csvTours.get(id)}`);
-      });
-
-      console.log('\n// Array for adding to DB:');
-      console.log('const toursToAdd = [');
-      inCsvNotInDb.forEach((id) => console.log(`  '${id}',`));
-      console.log('];\n');
-    }
-
-    if (inDbNotInCsv.length > 0) {
-      console.log(`\n⚠️  IN DB BUT NOT IN CSV (${inDbNotInCsv.length}):`);
-      console.log('-'.repeat(100));
-      inDbNotInCsv.forEach((id, i) => {
-        console.log(`${i + 1}. ${id}`);
-        console.log(`   Title: ${dbToursMap.get(id)}`);
-      });
-
-      console.log('\n// Array for reference:');
-      console.log('const toursOnlyInDb = [');
-      inDbNotInCsv.forEach((id) => console.log(`  '${id}',`));
-      console.log('];\n');
-    }
-
-    // Save report
-    const report = `
-QUICK COMPARISON REPORT
-Generated: ${new Date().toLocaleString()}
-================================================================================
-
-SUMMARY:
-- Tours in CSV: ${csvTours.size}
-- Tours in DB: ${dbTours.length}
-- In BOTH: ${inBoth.length}
-- In CSV but NOT in DB: ${inCsvNotInDb.length}
-- In DB but NOT in CSV: ${inDbNotInCsv.length}
-
-================================================================================
-TOURS IN CSV BUT NOT IN DATABASE (${inCsvNotInDb.length}):
-================================================================================
-${inCsvNotInDb.map((id, i) => `${i + 1}. ${id}\n   ${csvTours.get(id)}`).join('\n\n')}
-
-================================================================================
-TOURS IN DB BUT NOT IN CSV (${inDbNotInCsv.length}):
-================================================================================
-${inDbNotInCsv.map((id, i) => `${i + 1}. ${id}\n   ${dbToursMap.get(id)}`).join('\n\n')}
-
-================================================================================
-ARRAYS FOR PROCESSING:
-================================================================================
-
-// Tours to add to DB from CSV:
-const toursToAdd = [
-${inCsvNotInDb.map((id) => `  '${id}',`).join('\n')}
-];
-
-// Tours only in DB:
-const toursOnlyInDb = [
-${inDbNotInCsv.map((id) => `  '${id}',`).join('\n')}
-];
-`;
-
-    const reportPath = path.join(__dirname, 'quick-comparison.txt');
-    fs.writeFileSync(reportPath, report);
-    console.log(`\n📄 Report saved: ${reportPath}`);
-    console.log('\n✅ DONE!\n');
-  } catch (error: any) {
-    console.error('\n❌ ERROR:', error.message);
-  } finally {
-    await prisma.$disconnect();
+  // Save to JSON file
+  const outputDir = path.join(process.cwd(), 'output');
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
   }
+
+  const jsonOutput = {
+    generatedAt: new Date().toISOString(),
+    summary: {
+      totalTours: tours.length,
+      completeTours: tours.length - incomplete.length,
+      incompleteTours: incomplete.length,
+    },
+    fieldStatistics: Object.fromEntries(sortedFields),
+    incompleteTours: incomplete,
+  };
+
+  const outputPath = path.join(outputDir, 'incomplete-tours.json');
+  fs.writeFileSync(outputPath, JSON.stringify(jsonOutput, null, 2));
+  console.log(`\n✅ Data saved to: ${outputPath}`);
+
+  // Also save as CSV for easy viewing in Excel
+  const csvLines = ['ID,Title,Slug,Active,Featured,Completion %,Missing Count,Missing Fields'];
+
+  incomplete.forEach((tour) => {
+    csvLines.push(
+      [
+        tour.id,
+        `"${tour.title.replace(/"/g, '""')}"`,
+        tour.slug,
+        tour.isActive ? 'Yes' : 'No',
+        tour.isFeatured ? 'Yes' : 'No',
+        tour.completionPercentage,
+        tour.missingCount,
+        `"${tour.missingFields.join(', ')}"`,
+      ].join(',')
+    );
+  });
+
+  const csvPath = path.join(outputDir, 'incomplete-tours.csv');
+  fs.writeFileSync(csvPath, csvLines.join('\n'));
+  console.log(`✅ CSV saved to: ${csvPath}`);
+
+  return incomplete;
 }
 
-quickCompare();
+// Export for use in other files
+export async function getIncompleteToursList() {
+  return findIncompleteTours();
+}
+
+// Run if executed directly
+if (require.main === module) {
+  findIncompleteTours()
+    .then(() => prisma.$disconnect())
+    .catch((e) => {
+      console.error(e);
+      prisma.$disconnect();
+      process.exit(1);
+    });
+}

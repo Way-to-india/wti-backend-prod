@@ -60,7 +60,13 @@ export const ModelName = {
   TourCity: 'TourCity',
   City: 'City',
   Faq: 'Faq',
-  FaqQuestion: 'FaqQuestion'
+  FaqQuestion: 'FaqQuestion',
+  Admin: 'Admin',
+  Role: 'Role',
+  Module: 'Module',
+  Permission: 'Permission',
+  Lead: 'Lead',
+  LeadActivity: 'LeadActivity'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -270,12 +276,115 @@ export const FaqQuestionScalarFieldEnum = {
 export type FaqQuestionScalarFieldEnum = (typeof FaqQuestionScalarFieldEnum)[keyof typeof FaqQuestionScalarFieldEnum]
 
 
+export const AdminScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  password: 'password',
+  roleId: 'roleId',
+  isActive: 'isActive',
+  lastLoginAt: 'lastLoginAt',
+  refreshToken: 'refreshToken',
+  refreshTokenExpiry: 'refreshTokenExpiry',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AdminScalarFieldEnum = (typeof AdminScalarFieldEnum)[keyof typeof AdminScalarFieldEnum]
+
+
+export const RoleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RoleScalarFieldEnum = (typeof RoleScalarFieldEnum)[keyof typeof RoleScalarFieldEnum]
+
+
+export const ModuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  label: 'label',
+  description: 'description',
+  icon: 'icon',
+  order: 'order',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ModuleScalarFieldEnum = (typeof ModuleScalarFieldEnum)[keyof typeof ModuleScalarFieldEnum]
+
+
+export const PermissionScalarFieldEnum = {
+  id: 'id',
+  roleId: 'roleId',
+  moduleId: 'moduleId',
+  view: 'view',
+  create: 'create',
+  edit: 'edit',
+  delete: 'delete',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PermissionScalarFieldEnum = (typeof PermissionScalarFieldEnum)[keyof typeof PermissionScalarFieldEnum]
+
+
+export const LeadScalarFieldEnum = {
+  id: 'id',
+  referenceNumber: 'referenceNumber',
+  source: 'source',
+  status: 'status',
+  fullName: 'fullName',
+  email: 'email',
+  phoneNumber: 'phoneNumber',
+  details: 'details',
+  assignedToId: 'assignedToId',
+  priority: 'priority',
+  notes: 'notes',
+  zohoLeadId: 'zohoLeadId',
+  syncedToZoho: 'syncedToZoho',
+  lastSyncedAt: 'lastSyncedAt',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  contactedAt: 'contactedAt'
+} as const
+
+export type LeadScalarFieldEnum = (typeof LeadScalarFieldEnum)[keyof typeof LeadScalarFieldEnum]
+
+
+export const LeadActivityScalarFieldEnum = {
+  id: 'id',
+  leadId: 'leadId',
+  activityType: 'activityType',
+  description: 'description',
+  performedById: 'performedById',
+  createdAt: 'createdAt'
+} as const
+
+export type LeadActivityScalarFieldEnum = (typeof LeadActivityScalarFieldEnum)[keyof typeof LeadActivityScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -292,4 +401,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

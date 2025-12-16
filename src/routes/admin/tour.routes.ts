@@ -1,61 +1,46 @@
 import { Router } from 'express';
 import { TourController } from '@/controllers/admin/tour.controller';
-import { validate } from '@/middlewares/validation.middleware';
-import {
-  createTourSchema,
-  updateTourSchema,
-  getTourQuerySchema,
-  idParamSchema,
-} from '@/validators/tour.validator';
 import { uploadTourImages } from '@/middlewares/multer';
+import { checkPermission } from '@/middlewares/permission.middleware';
+import { authMiddleware } from '@/middlewares/admin/auth.middleware';
 
 const router = Router();
 
-router.get('/', validate(getTourQuerySchema, 'query'), TourController.getAllTours);
-
-router.get('/:id', validate(idParamSchema, 'params'), TourController.getTourById);
+router.use(authMiddleware);
 
 router.post(
-  '/',
+  '/create',
+  checkPermission('Tours', 'create'),
   uploadTourImages.fields,
-  validate(createTourSchema, 'body'),
   TourController.createTour
 );
+router.get('/', checkPermission('Tours', 'view'), TourController.getAllTours);
+router.get('/view/:id', checkPermission('Tours', 'view'), TourController.getTourById);
+router.put('/edit/:id', checkPermission('Tours', 'edit'), TourController.updateTour);
+router.delete('/delete/:id', checkPermission('Tours', 'delete'), TourController.deleteTour);
 
-router.patch(
-  '/:id',
-  validate(idParamSchema, 'params'),
-  uploadTourImages.fields,
-  validate(updateTourSchema, 'body'),
-  TourController.updateTour
-);
+// Nested updates
+// router.put('/:id/itinerary', checkPermission('Tours', 'edit'), TourController.updateTourItinerary);
+// router.put('/:id/themes', checkPermission('Tours', 'edit'), TourController.updateTourThemes);
+// router.put('/:id/cities', checkPermission('Tours', 'edit'), TourController.updateTourCities);
+// router.put('/:id/faqs', checkPermission('Tours', 'edit'), TourController.updateTourFaqs);
+// router.put(
+//   '/:id/price-guide',
+//   checkPermission('Tours', 'edit'),
+//   TourController.updateTourPriceGuide
+// );
 
-router.delete('/:id', validate(idParamSchema, 'params'), TourController.deleteTour);
-
-router.post(
-  '/:id/images',
-  validate(idParamSchema, 'params'),
-  uploadTourImages.multiple,
-  TourController.uploadGalleryImages
-);
-
+// Image management
+router.post('/:id/images', checkPermission('Tours', 'edit'), TourController.uploadGalleryImages);
 router.delete(
   '/:id/images/:imageKey',
-  validate(idParamSchema, 'params'),
+  checkPermission('Tours', 'edit'),
   TourController.deleteGalleryImage
 );
-
+router.post('/:id/cover-image', checkPermission('Tours', 'edit'), TourController.uploadCoverImage);
 router.post(
-  '/:id/cover',
-  validate(idParamSchema, 'params'),
-  uploadTourImages.single,
-  TourController.uploadCoverImage
-);
-
-router.post(
-  '/:id/itinerary/images',
-  validate(idParamSchema, 'params'),
-  uploadTourImages.multiple,
+  '/:id/itinerary-images',
+  checkPermission('Tours', 'edit'),
   TourController.uploadItineraryImages
 );
 

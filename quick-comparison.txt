@@ -1,6 +1,6 @@
 
 QUICK COMPARISON REPORT
-Generated: 12/6/2025, 1:39:10 PM
+Generated: 12/10/2025, 8:22:59 PM
 ================================================================================
 
 SUMMARY:
@@ -265,20 +265,20 @@ TOURS IN CSV BUT NOT IN DATABASE (83):
 ================================================================================
 TOURS IN DB BUT NOT IN CSV (7):
 ================================================================================
-1. mumbai-goa-beach-tour
+1. golden-triangle-with-ranthambore-bharatpur-luxury-group-tour
+   Golden Triangle with Ranthambore & Bharatpur Luxury Group Tour
+
+2. mumbai-goa-beach-tour
    Mumbai - Goa Beach Tour
 
-2. mumbai-goa-tour
+3. mumbai-goa-tour
    Mumbai - Goa Tour
 
-3. delhi-sultanpur-tour
+4. delhi-sultanpur-tour
    Delhi - Sultanpur Tour
 
-4. delhi-neemrana-tour
+5. delhi-neemrana-tour
    Delhi Neemrana Tour
-
-5. golden-triangle-with-ranthambore-bharatpur-luxury-group-tour
-   Golden Triangle with Ranthambore & Bharatpur Luxury Group Tour
 
 6. jim-corbett-park-weekend-tour-package-by-rail
    Jim Corbett Park Weekend Tour Package
@@ -375,4 +375,15 @@ const toursToAdd = [
   'udaipur-city-tour-package',
   'udaipur-tour-package-for-couples',
   'valley-of-flowers-uttarakhand-package',
+];
+
+// Tours only in DB:
+const toursOnlyInDb = [
+  'golden-triangle-with-ranthambore-bharatpur-luxury-group-tour',
+  'mumbai-goa-beach-tour',
+  'mumbai-goa-tour',
+  'delhi-sultanpur-tour',
+  'delhi-neemrana-tour',
+  'jim-corbett-park-weekend-tour-package-by-rail',
+  'golden-triangle-khajuraho-dance-festival-tour',
 ];

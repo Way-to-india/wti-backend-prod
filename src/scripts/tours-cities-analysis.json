@@ -1,0 +1,819 @@
+[
+  {
+    "tourId": "udaipur-mount-abu-tour",
+    "tourTitle": "03 Nights / 04 Days",
+    "startCity": "Udaipur",
+    "tourCities": [
+      "Delhi",
+      "Mount Abu",
+      "Udaipur"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "jaipur-package",
+    "tourTitle": "4 night 5 days",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  },
+  {
+    "tourId": "a-visit-to-karnataka",
+    "tourTitle": "A Visit To Karnataka",
+    "startCity": "Bangalore",
+    "tourCities": [
+      "Bangalore",
+      "Mysore"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "bandhavgarh-national-park",
+    "tourTitle": "Bandhavgarh National Park Tour Packages",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  },
+  {
+    "tourId": "bandipur-national-park-tour",
+    "tourTitle": "Bandipur National Park Tour",
+    "startCity": "Calicut",
+    "tourCities": [
+      "Calicut",
+      "Mysore"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "beach-honeymoon-tour-@-resort",
+    "tourTitle": "Beach Honeymoon Tour @ Resort",
+    "startCity": "Goa",
+    "tourCities": [
+      "Goa"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "beaches-of-kerala",
+    "tourTitle": "Beaches Of Kerala",
+    "startCity": "Thiruvananthapuram",
+    "tourCities": [
+      "Kanyakumari",
+      "Kovalam",
+      "Thiruvananthapuram",
+      "Varkala"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "best-of-kerala",
+    "tourTitle": "Best of Kerala",
+    "startCity": "Munnar",
+    "tourCities": [
+      "Alleppey",
+      "Kochi",
+      "Munnar",
+      "Thekkady"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "best-of-leh-ladakh",
+    "tourTitle": "Best of Leh Ladakh",
+    "startCity": "Leh",
+    "tourCities": [
+      "Khardung La",
+      "Leh"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "bird-watching-in-jim-corbett-park",
+    "tourTitle": "Bird Watching in Jim Corbett Park",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Binsar",
+      "Delhi",
+      "Mukteshwar",
+      "Nainital",
+      "Ramnagar"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "delhi--neemrana-tour",
+    "tourTitle": "Delhi Neemrana Tour Package",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Delhi",
+      "Neemrana"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "dussehra-festival-kullu",
+    "tourTitle": "Dussehra Festival Kullu",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Delhi",
+      "Kullu",
+      "Manali"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "gangaur-festival-jaipur",
+    "tourTitle": "Gangaur Festival Jaipur",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Agra",
+      "Delhi",
+      "Jaipur"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "gir-national-park-tour",
+    "tourTitle": "Gir National Park Tour",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  },
+  {
+    "tourId": "golden-triangle--khajuraho-dance-festival-tour",
+    "tourTitle": "Golden Triangle and Khajuraho Dance Festival Tour",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Agra",
+      "Delhi",
+      "Jaipur",
+      "Khajuraho",
+      "Puri"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "golden-triangle-with-ranthambore",
+    "tourTitle": "Golden Triangle with Ranthambore Tour",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Agra",
+      "Delhi",
+      "Jaipur",
+      "Sawai Madhopur"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "honey-moon-in-kerala",
+    "tourTitle": "Honey Moon In Kerala",
+    "startCity": "Kochi",
+    "tourCities": [
+      "Alleppey",
+      "Kanyakumari",
+      "Kochi",
+      "Kovalam",
+      "Munnar",
+      "Thiruvananthapuram"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "jaisalmer-desert-festival",
+    "tourTitle": "Jaisalmer Desert Festival",
+    "startCity": "Jaisalmer",
+    "tourCities": [
+      "Jaisalmer"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "desert-festival-jaisalmer",
+    "tourTitle": "Jaisalmer Desert Festival Tour",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Delhi",
+      "Jaisalmer",
+      "Jodhpur"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "jim-corbett-national-park",
+    "tourTitle": "Jim Corbett National Park Tour",
+    "startCity": "Ramnagar",
+    "tourCities": [
+      "Calicut",
+      "Goa",
+      "Ramnagar"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "jim-corbett-park-weekend-tour-package-[by-rail]",
+    "tourTitle": "Jim Corbett Park Weekend Tour Package",
+    "startCity": "Ramnagar",
+    "tourCities": [
+      "Delhi",
+      "Ramnagar"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "kagbhushudi-lake-trek",
+    "tourTitle": "Kagbhushudi Lake Trek",
+    "startCity": "Rishikesh",
+    "tourCities": [
+      "Dehradun",
+      "Govindghat",
+      "Haridwar",
+      "Joshimath",
+      "Rishikesh"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "kajiranga-national-park",
+    "tourTitle": "Kajiranga National Park",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  },
+  {
+    "tourId": "kanha-national-park-tour",
+    "tourTitle": "Kanha National Park Tour",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  },
+  {
+    "tourId": "kashmir-ltc-tour",
+    "tourTitle": "Kashmir LTC Tour",
+    "startCity": "Chennai",
+    "tourCities": [
+      "Chennai",
+      "Kanyakumari",
+      "Madurai",
+      "Rameswaram"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "kaziranga-national-park-tour",
+    "tourTitle": "Kaziranga National Park Tour",
+    "startCity": "Kaziranga",
+    "tourCities": [
+      "Guwahati",
+      "Kaziranga"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "bharatpur-tour",
+    "tourTitle": "Keoladeo National Park Tour",
+    "startCity": "Bharatpur",
+    "tourCities": [
+      "Bharatpur"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "kerala-nature-trails",
+    "tourTitle": "Kerala Nature Trails",
+    "startCity": "Kochi",
+    "tourCities": [
+      "Alleppey",
+      "Kanyakumari",
+      "Kochi",
+      "Kovalam",
+      "Munnar",
+      "Thekkady",
+      "Thiruvananthapuram"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "konark-dance-festival",
+    "tourTitle": "Konark Dance Festival",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Bhubaneswar",
+      "Delhi",
+      "Konark",
+      "Puri"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "ladakh-with-pangong-lake",
+    "tourTitle": "Ladakh Pangong Lake Tour",
+    "startCity": "Leh",
+    "tourCities": [
+      "Delhi",
+      "Leh",
+      "Pangong"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "leh-ladakh-by-air",
+    "tourTitle": "Leh Ladakh By Air",
+    "startCity": "Leh",
+    "tourCities": [
+      "Leh",
+      "Nubra Valley",
+      "Pangong"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "manas-national-park",
+    "tourTitle": "Manas National Park Tour",
+    "startCity": "Guwahati",
+    "tourCities": [
+      "Guwahati",
+      "Kaziranga"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "mudumalai-national-park-tour",
+    "tourTitle": "Mudumalai National Park Tour",
+    "startCity": "Calicut",
+    "tourCities": [
+      "Calicut"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "nagarhole-national-park-tour",
+    "tourTitle": "Nagarhole National Park Tour",
+    "startCity": "Calicut",
+    "tourCities": [
+      "Calicut"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "nameri-national-park-tour",
+    "tourTitle": "Nameri National Park Tour",
+    "startCity": "Guwahati",
+    "tourCities": [
+      "Guwahati"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "north-east-vacation",
+    "tourTitle": "North East Vacation",
+    "startCity": "Guwahati",
+    "tourCities": [
+      "Guwahati",
+      "Kaziranga",
+      "Shillong"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "pancha-bootha-sthalam-tour",
+    "tourTitle": "Pancha Bootha Sthalam Tour",
+    "startCity": "Chennai",
+    "tourCities": [
+      "Chennai"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "panna-national-park-tour",
+    "tourTitle": "Panna National Park Tour",
+    "startCity": "Khajuraho",
+    "tourCities": [
+      "Khajuraho"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "pench-national-park-tour",
+    "tourTitle": "Pench National Park Tour",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  },
+  {
+    "tourId": "periyar-national-park-tour",
+    "tourTitle": "Periyar National Park Tour",
+    "startCity": "Kochi",
+    "tourCities": [
+      "Kochi"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "pushkar-camel-fair",
+    "tourTitle": "Pushkar Camel Fair",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Agra",
+      "Ajmer",
+      "Delhi",
+      "Jaipur",
+      "Pushkar"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "ranthambore-from-delhi",
+    "tourTitle": "Ranthambore From Delhi",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Delhi",
+      "Sawai Madhopur"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "ranthambore-wildlife-safari-tour",
+    "tourTitle": "Ranthambore Wildlife Safari Tour",
+    "startCity": "Sawai Madhopur",
+    "tourCities": [
+      "Sawai Madhopur"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "sariska-national-park-tour",
+    "tourTitle": "Sariska National Park Tour",
+    "startCity": "Jaipur",
+    "tourCities": [
+      "Jaipur",
+      "Sariska"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "silent-valley-national-park",
+    "tourTitle": "Silent Valley National Park",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  },
+  {
+    "tourId": "srinagar-to-amarnath-helicopter",
+    "tourTitle": "Srinagar To Amarnath Helicopter",
+    "startCity": "Srinagar",
+    "tourCities": [
+      "Srinagar"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "sundarbans-tour",
+    "tourTitle": "Sundarbans National Park Tour",
+    "startCity": "Kolkata",
+    "tourCities": [
+      "Kolkata"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "tadoba-national-park-tour-package",
+    "tourTitle": "Tadoba National Park Tour",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  },
+  {
+    "tourId": "testing-national-park",
+    "tourTitle": "Testing National Park",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  },
+  {
+    "tourId": "kashmir-holiday-package",
+    "tourTitle": "The Best Of Kashmir Holiday Package",
+    "startCity": "Srinagar",
+    "tourCities": [
+      "Gulmarg",
+      "Pahalgam",
+      "Sonmarg",
+      "Srinagar"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "thrissur-elephant-festival-kerala",
+    "tourTitle": "Thrissur Elephant Festival Kerala",
+    "startCity": "Kochi",
+    "tourCities": [
+      "Alleppey",
+      "Kochi"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "treasures-of-south-india",
+    "tourTitle": "Treasures of South India",
+    "startCity": "Mumbai",
+    "tourCities": [
+      "Bangalore",
+      "Chennai",
+      "Mumbai",
+      "Puttaparthi",
+      "Tirupati"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "trimbakeshwar-grishneshwar-bhimashankar-jyotirlinga-tour",
+    "tourTitle": "Trimbakeshwar Grishneshwar Bhimashankar Jyotirlinga Tour",
+    "startCity": "Mumbai",
+    "tourCities": [
+      "Mumbai"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "trip-to-dalhousie-from-delhi",
+    "tourTitle": "Trip To Dalhousie From Delhi",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Dalhousie",
+      "Delhi",
+      "Dharamsala"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "trip-to-golden-temple",
+    "tourTitle": "Trip To Golden Temple",
+    "startCity": "Amritsar",
+    "tourCities": [
+      "Amritsar",
+      "Delhi"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "trip-to-dehradun",
+    "tourTitle": "Trip to Dehradun",
+    "startCity": "Dehradun",
+    "tourCities": [
+      "Dehradun",
+      "Delhi"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "trip-to-shimla",
+    "tourTitle": "Trip to Shimla",
+    "startCity": "Shimla",
+    "tourCities": [
+      "Delhi",
+      "Shimla"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "udaipur-and-mount-abu-tour-package",
+    "tourTitle": "Udaipur And Mount Abu Tour Package",
+    "startCity": "Udaipur",
+    "tourCities": [
+      "Kumbhalgarh",
+      "Mount Abu",
+      "Ranakpur",
+      "Udaipur"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "udaipur-city-tour-package",
+    "tourTitle": "Udaipur City Tour Package",
+    "startCity": "Udaipur",
+    "tourCities": [
+      "Chittorgarh",
+      "Kumbhalgarh",
+      "Ranakpur",
+      "Udaipur"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "udaipur-tour-package",
+    "tourTitle": "Udaipur Tour Package",
+    "startCity": "Udaipur",
+    "tourCities": [
+      "Chittorgarh",
+      "Kumbhalgarh",
+      "Ranakpur",
+      "Udaipur"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "udaipur-tour-package-for-couples",
+    "tourTitle": "Udaipur Tour Package for Couples",
+    "startCity": "Udaipur",
+    "tourCities": [
+      "Agra",
+      "Chittorgarh",
+      "Kumbhalgarh",
+      "Ranakpur",
+      "Udaipur"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "uttarakhand-holidays",
+    "tourTitle": "Uttarakhand Holidays",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Almora",
+      "Delhi",
+      "Lansdowne",
+      "Nainital",
+      "Ramnagar",
+      "Ranikhet"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "uttarakhand-tour-package",
+    "tourTitle": "Uttarakhand Tour Package",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Almora",
+      "Binsar",
+      "Delhi",
+      "Haridwar",
+      "Mussoorie",
+      "Nainital",
+      "Ranikhet"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "vaishno-devi-yatra-with-helicopter",
+    "tourTitle": "Vaishno Devi Yatra",
+    "startCity": "Katra",
+    "tourCities": [
+      "Jammu",
+      "Katra"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "valley-of-flowers-trekking-tour",
+    "tourTitle": "Valley of Flowers Trekking Tour",
+    "startCity": "Govindghat",
+    "tourCities": [
+      "Dehradun",
+      "Ghangaria",
+      "Govindghat",
+      "Joshimath",
+      "Rishikesh"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "valley-of-flowers-uttarakhand-package",
+    "tourTitle": "Valley of Flowers Uttarakhand Package",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Delhi",
+      "Ghangaria",
+      "Govindghat",
+      "Haridwar",
+      "Joshimath",
+      "Rishikesh",
+      "Rudraprayag"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "varanasi-tour-by-air",
+    "tourTitle": "Varanasi Tour By Air",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Delhi",
+      "Varanasi"
+    ],
+    "confidence": "medium",
+    "notes": ""
+  },
+  {
+    "tourId": "wildlife-safari-near-delhi",
+    "tourTitle": "Wildlife Safari Near Delhi",
+    "startCity": "Delhi",
+    "tourCities": [
+      "Agra",
+      "Bharatpur",
+      "Delhi",
+      "Jaipur",
+      "Sariska",
+      "Sawai Madhopur"
+    ],
+    "confidence": "high",
+    "notes": ""
+  },
+  {
+    "tourId": "latest-wildlife-tour",
+    "tourTitle": "latest wildlife tour",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  },
+  {
+    "tourId": "shimla-test-trip",
+    "tourTitle": "shimla test trip",
+    "startCity": "Shimla",
+    "tourCities": [
+      "Shimla"
+    ],
+    "confidence": "low",
+    "notes": "Start city inferred from tour title"
+  },
+  {
+    "tourId": "this-is-name-of-package",
+    "tourTitle": "this is package title",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  },
+  {
+    "tourId": "uttranchal-5-days-tours",
+    "tourTitle": "uttranchal 5 days tours",
+    "startCity": "Unknown",
+    "tourCities": [],
+    "confidence": "low",
+    "notes": "Unable to determine start city"
+  }
+]

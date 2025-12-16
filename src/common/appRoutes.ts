@@ -5,7 +5,9 @@ enum Routes {
     CITY = '/city',
     THEME = '/theme',
     QUERY = '/query',
-    ZOHO = '/zoho'
+    ZOHO = '/zoho',
+    ADMIN = '/admin',
+    DASHBOARD = '/dashboard'
 }
 
 const AppRoutes = { ...Routes } as const;
