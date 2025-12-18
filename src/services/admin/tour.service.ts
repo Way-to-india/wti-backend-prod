@@ -68,6 +68,7 @@ export interface UpdateTourData {
 }
 
 export class TourService {
+  
   static async getAllTours(
     page: number,
     limit: number,
@@ -232,6 +233,7 @@ export class TourService {
   }
 
   static async updateTour(id: string, data: UpdateTourData) {
+    
     const existingTour = await prisma.tour.findUnique({ where: { id } });
 
     if (!existingTour) {

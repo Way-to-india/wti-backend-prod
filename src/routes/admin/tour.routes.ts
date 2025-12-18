@@ -14,9 +14,18 @@ router.post(
   uploadTourImages.fields,
   TourController.createTour
 );
+
 router.get('/', checkPermission('Tours', 'view'), TourController.getAllTours);
+
 router.get('/view/:id', checkPermission('Tours', 'view'), TourController.getTourById);
-router.put('/edit/:id', checkPermission('Tours', 'edit'), TourController.updateTour);
+
+router.put(
+  '/edit/:id',
+  checkPermission('Tours', 'edit'),
+  uploadTourImages.fields,
+  TourController.updateTour
+);
+
 router.delete('/delete/:id', checkPermission('Tours', 'delete'), TourController.deleteTour);
 
 // Nested updates
@@ -32,12 +41,15 @@ router.delete('/delete/:id', checkPermission('Tours', 'delete'), TourController.
 
 // Image management
 router.post('/:id/images', checkPermission('Tours', 'edit'), TourController.uploadGalleryImages);
+
 router.delete(
   '/:id/images/:imageKey',
   checkPermission('Tours', 'edit'),
   TourController.deleteGalleryImage
 );
+
 router.post('/:id/cover-image', checkPermission('Tours', 'edit'), TourController.uploadCoverImage);
+
 router.post(
   '/:id/itinerary-images',
   checkPermission('Tours', 'edit'),

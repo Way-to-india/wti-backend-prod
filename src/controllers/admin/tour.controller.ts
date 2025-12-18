@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
 import { TourService } from '@/services/admin/tour.service';
-import type { TourFilters, TourIncludes } from '@/helpers/tour-query.helper';
 import { S3Folder } from '@/common/constants';
 import { deleteImagesFromS3, uploadImageToS3, uploadMultipleImagesToS3 } from '@/utils/s3';
+import { handleImageUploads, parseFilters, parseIncludes, prepareItineraryData, prepareTourData, prepareUpdateData } from '@/helpers/tour.helper';
 
 export class TourController {
   
@@ -16,74 +16,8 @@ export class TourController {
         ...queryFilters
       } = req.query;
 
-      const filters: TourFilters = {};
-      const includes: TourIncludes = {};
-
-      // Parse all filter parameters
-      if (queryFilters.search) filters.search = queryFilters.search as string;
-      if (queryFilters.id) filters.id = queryFilters.id as string;
-      if (queryFilters.slug) filters.slug = queryFilters.slug as string;
-      if (queryFilters.title) filters.title = queryFilters.title as string;
-      if (queryFilters.isActive !== undefined) filters.isActive = queryFilters.isActive === 'true';
-      if (queryFilters.isFeatured !== undefined)
-        filters.isFeatured = queryFilters.isFeatured === 'true';
-      if (queryFilters.minPrice) filters.minPrice = parseInt(queryFilters.minPrice as string);
-      if (queryFilters.maxPrice) filters.maxPrice = parseInt(queryFilters.maxPrice as string);
-      if (queryFilters.currency) filters.currency = queryFilters.currency as string;
-      if (queryFilters.hasDiscount) filters.hasDiscount = queryFilters.hasDiscount === 'true';
-      if (queryFilters.minDurationDays)
-        filters.minDurationDays = parseInt(queryFilters.minDurationDays as string);
-      if (queryFilters.maxDurationDays)
-        filters.maxDurationDays = parseInt(queryFilters.maxDurationDays as string);
-      if (queryFilters.minDurationNights)
-        filters.minDurationNights = parseInt(queryFilters.minDurationNights as string);
-      if (queryFilters.maxDurationNights)
-        filters.maxDurationNights = parseInt(queryFilters.maxDurationNights as string);
-      if (queryFilters.minGroupSize)
-        filters.minGroupSize = parseInt(queryFilters.minGroupSize as string);
-      if (queryFilters.maxGroupSize)
-        filters.maxGroupSize = parseInt(queryFilters.maxGroupSize as string);
-      if (queryFilters.minRating) filters.minRating = parseFloat(queryFilters.minRating as string);
-      if (queryFilters.maxRating) filters.maxRating = parseFloat(queryFilters.maxRating as string);
-      if (queryFilters.minReviewCount)
-        filters.minReviewCount = parseInt(queryFilters.minReviewCount as string);
-      if (queryFilters.minViewCount)
-        filters.minViewCount = parseInt(queryFilters.minViewCount as string);
-      if (queryFilters.minBookingCount)
-        filters.minBookingCount = parseInt(queryFilters.minBookingCount as string);
-      if (queryFilters.createdAfter)
-        filters.createdAfter = new Date(queryFilters.createdAfter as string);
-      if (queryFilters.createdBefore)
-        filters.createdBefore = new Date(queryFilters.createdBefore as string);
-      if (queryFilters.updatedAfter)
-        filters.updatedAfter = new Date(queryFilters.updatedAfter as string);
-      if (queryFilters.updatedBefore)
-        filters.updatedBefore = new Date(queryFilters.updatedBefore as string);
-      if (queryFilters.startCityId) filters.startCityId = queryFilters.startCityId as string;
-      if (queryFilters.startCitySlug) filters.startCitySlug = queryFilters.startCitySlug as string;
-      if (queryFilters.startCityName) filters.startCityName = queryFilters.startCityName as string;
-      if (queryFilters.cityId) filters.cityId = queryFilters.cityId as string;
-      if (queryFilters.citySlug) filters.citySlug = queryFilters.citySlug as string;
-      if (queryFilters.cityName) filters.cityName = queryFilters.cityName as string;
-      if (queryFilters.stateId) filters.stateId = queryFilters.stateId as string;
-      if (queryFilters.stateName) filters.stateName = queryFilters.stateName as string;
-      if (queryFilters.countryId) filters.countryId = queryFilters.countryId as string;
-      if (queryFilters.countryName) filters.countryName = queryFilters.countryName as string;
-      if (queryFilters.themeId) filters.themeId = queryFilters.themeId as string;
-      if (queryFilters.themeSlug) filters.themeSlug = queryFilters.themeSlug as string;
-      if (queryFilters.themeName) filters.themeName = queryFilters.themeName as string;
-      if (queryFilters.difficulty) filters.difficulty = queryFilters.difficulty as string;
-      if (queryFilters.bestTime) filters.bestTime = queryFilters.bestTime as string;
-      if (queryFilters.idealFor) filters.idealFor = queryFilters.idealFor as string;
-
-      // Parse include parameters
-      includes.includeStartCity = queryFilters.includeStartCity === 'true';
-      includes.includeItinerary = queryFilters.includeItinerary === 'true';
-      includes.includeThemes = queryFilters.includeThemes === 'true';
-      includes.includeCities = queryFilters.includeCities === 'true';
-      includes.includeFaqs = queryFilters.includeFaqs === 'true';
-      includes.includeReviews = queryFilters.includeReviews === 'true';
-      includes.includePriceGuide = queryFilters.includePriceGuide === 'true';
+      const filters = parseFilters(queryFilters);
+      const includes = parseIncludes(queryFilters);
 
       const result = await TourService.getAllTours(
         parseInt(page as string),
@@ -132,128 +66,10 @@ export class TourController {
       const bodyData = req.validated?.body || req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-      // 🔍 DEBUG: Log what we received
-      console.log('📦 Files received:', {
-        images: files?.images?.length || 0,
-        itineraryImages: files?.itineraryImages?.length || 0,
-        coverImage: files?.coverImage?.length || 0,
-      });
+      const { uploadedImages, itineraryImagesMap } = await handleImageUploads(files);
 
-      let uploadedImages: string[] = [];
-      let itineraryImagesMap: { [key: string]: string } = {};
-
-      // Upload regular images
-      if (files?.images?.length > 0) {
-        console.log(`📤 Uploading ${files.images.length} regular images...`);
-        uploadedImages = await uploadMultipleImagesToS3(files.images, S3Folder.TOUR_IMAGES);
-        console.log(`✅ Uploaded ${uploadedImages.length} regular images`);
-      }
-
-      // Upload itinerary images (if any)
-      if (files?.itineraryImages?.length > 0) {
-        console.log(`📤 Uploading ${files.itineraryImages.length} itinerary images...`);
-        const itineraryImageKeys = await uploadMultipleImagesToS3(
-          files.itineraryImages,
-          S3Folder.TOUR_IMAGES
-        );
-        files.itineraryImages.forEach((file, index) => {
-          itineraryImagesMap[index.toString()] = itineraryImageKeys[index];
-        });
-        console.log(`✅ Uploaded ${itineraryImageKeys.length} itinerary images`);
-      }
-
-      // Upload cover image
-      if (files?.coverImage?.length > 0) {
-        console.log('📤 Uploading cover image...');
-        const coverImageKey = await uploadImageToS3(files.coverImage[0], S3Folder.TOUR_IMAGES);
-        uploadedImages.unshift(coverImageKey);
-        console.log('✅ Uploaded cover image');
-      }
-
-      // Parse itinerary if it's a string
-      let itineraryArray = bodyData.itinerary;
-      if (typeof itineraryArray === 'string') {
-        try {
-          itineraryArray = JSON.parse(itineraryArray);
-          console.log('📋 Parsed itinerary JSON');
-        } catch (e) {
-          console.error('❌ Failed to parse itinerary JSON:', e);
-          return res.deliver(400, false, undefined, 'Invalid itinerary format');
-        }
-      }
-
-      // Map itinerary with images
-      const itineraryData = itineraryArray?.map((item: any, index: number) => {
-        const imageUrl = itineraryImagesMap[index.toString()] || item.imageUrl || null;
-
-        return {
-          day: parseInt(item.day) || index + 1,
-          title: item.title,
-          description: item.description,
-          imageUrl: imageUrl,
-        };
-      });
-
-      console.log(`📋 Processed ${itineraryData?.length || 0} itinerary items`);
-
-      // Helper function to parse JSON fields
-      const parseJsonField = (field: any) => {
-        if (typeof field === 'string') {
-          try {
-            return JSON.parse(field);
-          } catch (e) {
-            return field;
-          }
-        }
-        return field;
-      };
-
-      // Helper function to convert string to number
-      const toNumber = (value: any): number => {
-        const num = Number(value);
-        return isNaN(num) ? 0 : num;
-      };
-
-      // Helper function to convert string to boolean
-      const toBoolean = (value: any): boolean => {
-        if (typeof value === 'boolean') return value;
-        if (typeof value === 'string') {
-          return value.toLowerCase() === 'true';
-        }
-        return Boolean(value);
-      };
-
-      // ✅ Convert all numeric and boolean fields from strings to proper types
-      const tourData = {
-        title: bodyData.title,
-        slug: bodyData.slug,
-        durationDays: toNumber(bodyData.durationDays),
-        durationNights: toNumber(bodyData.durationNights),
-        price: toNumber(bodyData.price),
-        currency: bodyData.currency,
-        minGroupSize: toNumber(bodyData.minGroupSize),
-        maxGroupSize: toNumber(bodyData.maxGroupSize),
-        isActive: toBoolean(bodyData.isActive),
-        isFeatured: toBoolean(bodyData.isFeatured),
-        metatitle: bodyData.metatitle,
-        metadesc: bodyData.metadesc,
-        overview: bodyData.overview,
-        description: bodyData.description,
-        discountPrice: bodyData.discountPrice ? toNumber(bodyData.discountPrice) : undefined,
-        bestTime: bodyData.bestTime,
-        idealFor: bodyData.idealFor,
-        difficulty: bodyData.difficulty,
-        cancellationPolicy: bodyData.cancellationPolicy,
-        travelTips: bodyData.travelTips,
-        startCityId: bodyData.startCityId,
-        highlights: parseJsonField(bodyData.highlights),
-        inclusions: parseJsonField(bodyData.inclusions),
-        exclusions: parseJsonField(bodyData.exclusions),
-        themes: parseJsonField(bodyData.themes),
-        cities: parseJsonField(bodyData.cities),
-        images: uploadedImages,
-        itinerary: itineraryData,
-      };
+      const itineraryData = prepareItineraryData(bodyData.itinerary, itineraryImagesMap);
+      const tourData = prepareTourData(bodyData, uploadedImages, itineraryData);
 
       console.log('💾 Creating tour in database...');
       const tour = await TourService.createTour(tourData);
@@ -262,13 +78,6 @@ export class TourController {
       return res.deliver(201, true, tour, 'Tour created successfully');
     } catch (error) {
       console.error('❌ Error creating tour:', error);
-
-      // More detailed error logging
-      if (error instanceof Error) {
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-      }
-
       return res.deliver(
         500,
         false,
@@ -284,22 +93,31 @@ export class TourController {
       const bodyData = req.validated?.body || req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-      let newImages: string[] = [];
-
-      if (files?.images?.length > 0) {
-        newImages = await uploadMultipleImagesToS3(files.images, S3Folder.TOUR_IMAGES);
+      // Check if bodyData exists
+      if (!bodyData || Object.keys(bodyData).length === 0) {
+        console.log('⚠️ No body data received');
+        console.log('req.body:', req.body);
+        console.log('req.validated:', req.validated);
+        return res.deliver(400, false, undefined, 'No data provided for update');
       }
 
-      const updateData = {
-        ...bodyData,
-        images: bodyData.images ? [...bodyData.images, ...newImages] : undefined,
-      };
+      console.log('📦 Body data received:', Object.keys(bodyData));
 
-      const tour = await TourService.updateTour(id, updateData);
+      const updateData = await prepareUpdateData(bodyData, files);
 
-      return res.deliver(200, true, tour, 'Tour updated successfully');
+      // Only update if there's data to update
+      if (Object.keys(updateData).length > 0) {
+        await TourService.updateTour(id, updateData);
+      }
+
+      await TourController.handleRelatedDataUpdates(id, bodyData, files);
+
+      const updatedTour = await TourService.getTourById(id, true);
+
+      console.log('✅ Tour updated successfully');
+      return res.deliver(200, true, updatedTour, 'Tour updated successfully');
     } catch (error) {
-      console.error('Error updating tour:', error);
+      console.error('❌ Error updating tour:', error);
       return res.deliver(
         500,
         false,
@@ -361,6 +179,7 @@ export class TourController {
 
       const result = await TourService.deleteGalleryImage(id, imageKey);
       await deleteImagesFromS3([imageKey]);
+
       return res.deliver(200, true, result, 'Image deleted successfully');
     } catch (error) {
       console.error('Error deleting image:', error);
@@ -377,6 +196,7 @@ export class TourController {
     try {
       const { id } = req.params;
       const file = req.file;
+
       if (!file) {
         return res.deliver(400, false, undefined, 'No image provided');
       }
@@ -401,6 +221,7 @@ export class TourController {
       const { id } = req.params;
       const files = req.files as Express.Multer.File[];
       const { dayIndex } = req.body;
+
       if (!files || files.length === 0) {
         return res.deliver(400, false, undefined, 'No images provided');
       }
@@ -421,6 +242,97 @@ export class TourController {
         undefined,
         error instanceof Error ? error.message : 'Failed to upload itinerary images'
       );
+    }
+  }
+
+  static async handleRelatedDataUpdates(
+    tourId: string,
+    bodyData: any,
+    files: { [fieldname: string]: Express.Multer.File[] }
+  ) {
+    const parseJsonField = (field: any) => {
+      if (typeof field === 'string') {
+        try {
+          return JSON.parse(field);
+        } catch (e) {
+          return field;
+        }
+      }
+      return field;
+    };
+
+    if (bodyData.itinerary !== undefined) {
+      console.log('📋 Updating itinerary...');
+
+      let itineraryArray = parseJsonField(bodyData.itinerary);
+
+      let itineraryImagesMap: { [key: string]: string } = {};
+      if (files?.itineraryImages?.length > 0) {
+        console.log(`📤 Uploading ${files.itineraryImages.length} itinerary images...`);
+        const itineraryImageKeys = await uploadMultipleImagesToS3(
+          files.itineraryImages,
+          S3Folder.TOUR_IMAGES
+        );
+        files.itineraryImages.forEach((file, index) => {
+          itineraryImagesMap[index.toString()] = itineraryImageKeys[index];
+        });
+      }
+
+      const itineraryData = itineraryArray?.map((item: any, index: number) => ({
+        day: parseInt(item.day) || index + 1,
+        title: item.title,
+        description: item.description,
+        imageUrl: itineraryImagesMap[index.toString()] || item.imageUrl || null,
+      }));
+
+      if (itineraryData && itineraryData.length > 0) {
+        await TourService.updateTourItinerary(tourId, itineraryData);
+        console.log('✅ Itinerary updated');
+      }
+    }
+
+    // Update themes if provided
+    if (bodyData.themes !== undefined) {
+      console.log('🏷️ Updating themes...');
+      const themes = parseJsonField(bodyData.themes);
+      if (Array.isArray(themes) && themes.length > 0) {
+        await TourService.updateTourThemes(tourId, themes);
+        console.log('✅ Themes updated');
+      }
+    }
+
+    // Update cities if provided
+    if (bodyData.cities !== undefined) {
+      console.log('🏙️ Updating cities...');
+      const cities = parseJsonField(bodyData.cities);
+      if (Array.isArray(cities) && cities.length > 0) {
+        const citiesData = cities.map((cityId: string, index: number) => ({
+          cityId,
+          order: index,
+        }));
+        await TourService.updateTourCities(tourId, citiesData);
+        console.log('✅ Cities updated');
+      }
+    }
+
+    // Update FAQs if provided
+    if (bodyData.faqs !== undefined) {
+      console.log('❓ Updating FAQs...');
+      const faqs = parseJsonField(bodyData.faqs);
+      if (Array.isArray(faqs) && faqs.length > 0) {
+        await TourService.updateTourFaqs(tourId, faqs);
+        console.log('✅ FAQs updated');
+      }
+    }
+
+    // Update price guide if provided
+    if (bodyData.priceGuide !== undefined) {
+      console.log('💰 Updating price guide...');
+      const priceGuide = parseJsonField(bodyData.priceGuide);
+      if (Array.isArray(priceGuide) && priceGuide.length > 0) {
+        await TourService.updateTourPriceGuide(tourId, priceGuide);
+        console.log('✅ Price guide updated');
+      }
     }
   }
 }
