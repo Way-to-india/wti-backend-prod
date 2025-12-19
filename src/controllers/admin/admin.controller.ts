@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { AdminService } from '@/services/admin/admin.service';
 
 export class AdminController {
+  
   static async createAdmin(req: Request, res: Response) {
     try {
       console.log(req.body);

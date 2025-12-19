@@ -7,7 +7,10 @@ enum Routes {
     QUERY = '/query',
     ZOHO = '/zoho',
     ADMIN = '/admin',
-    DASHBOARD = '/dashboard'
+    DASHBOARD = '/dashboard',
+    ROLE = '/role',
+    PERMISSION = '/permission',
+    MODULE = '/module'
 }
 
 const AppRoutes = { ...Routes } as const;

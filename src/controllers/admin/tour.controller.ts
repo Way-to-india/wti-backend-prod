@@ -93,7 +93,6 @@ export class TourController {
       const bodyData = req.validated?.body || req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-      // Check if bodyData exists
       if (!bodyData || Object.keys(bodyData).length === 0) {
         console.log('⚠️ No body data received');
         console.log('req.body:', req.body);
@@ -105,7 +104,6 @@ export class TourController {
 
       const updateData = await prepareUpdateData(bodyData, files);
 
-      // Only update if there's data to update
       if (Object.keys(updateData).length > 0) {
         await TourService.updateTour(id, updateData);
       }
