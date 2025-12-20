@@ -2,20 +2,34 @@ import { uploadImageToS3, uploadMultipleImagesToS3 } from '@/utils/s3';
 import type { TourFilters, TourIncludes } from './tour-query.helper';
 import { S3Folder } from '@/common/constants';
 
+// ============================================================================
+// QUERY PARSING FUNCTIONS
+// ============================================================================
+
+/**
+ * Parse query filters from request query parameters
+ */
 export function parseFilters(queryFilters: any): TourFilters {
   const filters: TourFilters = {};
 
+  // Basic filters
   if (queryFilters.search) filters.search = queryFilters.search as string;
   if (queryFilters.id) filters.id = queryFilters.id as string;
   if (queryFilters.slug) filters.slug = queryFilters.slug as string;
   if (queryFilters.title) filters.title = queryFilters.title as string;
+
+  // Boolean filters
   if (queryFilters.isActive !== undefined) filters.isActive = queryFilters.isActive === 'true';
   if (queryFilters.isFeatured !== undefined)
     filters.isFeatured = queryFilters.isFeatured === 'true';
+  if (queryFilters.hasDiscount) filters.hasDiscount = queryFilters.hasDiscount === 'true';
+
+  // Price filters
   if (queryFilters.minPrice) filters.minPrice = parseInt(queryFilters.minPrice as string);
   if (queryFilters.maxPrice) filters.maxPrice = parseInt(queryFilters.maxPrice as string);
   if (queryFilters.currency) filters.currency = queryFilters.currency as string;
-  if (queryFilters.hasDiscount) filters.hasDiscount = queryFilters.hasDiscount === 'true';
+
+  // Duration filters
   if (queryFilters.minDurationDays)
     filters.minDurationDays = parseInt(queryFilters.minDurationDays as string);
   if (queryFilters.maxDurationDays)
@@ -24,10 +38,14 @@ export function parseFilters(queryFilters: any): TourFilters {
     filters.minDurationNights = parseInt(queryFilters.minDurationNights as string);
   if (queryFilters.maxDurationNights)
     filters.maxDurationNights = parseInt(queryFilters.maxDurationNights as string);
+
+  // Group size filters
   if (queryFilters.minGroupSize)
     filters.minGroupSize = parseInt(queryFilters.minGroupSize as string);
   if (queryFilters.maxGroupSize)
     filters.maxGroupSize = parseInt(queryFilters.maxGroupSize as string);
+
+  // Rating and engagement filters
   if (queryFilters.minRating) filters.minRating = parseFloat(queryFilters.minRating as string);
   if (queryFilters.maxRating) filters.maxRating = parseFloat(queryFilters.maxRating as string);
   if (queryFilters.minReviewCount)
@@ -36,6 +54,8 @@ export function parseFilters(queryFilters: any): TourFilters {
     filters.minViewCount = parseInt(queryFilters.minViewCount as string);
   if (queryFilters.minBookingCount)
     filters.minBookingCount = parseInt(queryFilters.minBookingCount as string);
+
+  // Date filters
   if (queryFilters.createdAfter)
     filters.createdAfter = new Date(queryFilters.createdAfter as string);
   if (queryFilters.createdBefore)
@@ -44,6 +64,8 @@ export function parseFilters(queryFilters: any): TourFilters {
     filters.updatedAfter = new Date(queryFilters.updatedAfter as string);
   if (queryFilters.updatedBefore)
     filters.updatedBefore = new Date(queryFilters.updatedBefore as string);
+
+  // Location filters
   if (queryFilters.startCityId) filters.startCityId = queryFilters.startCityId as string;
   if (queryFilters.startCitySlug) filters.startCitySlug = queryFilters.startCitySlug as string;
   if (queryFilters.startCityName) filters.startCityName = queryFilters.startCityName as string;
@@ -54,9 +76,13 @@ export function parseFilters(queryFilters: any): TourFilters {
   if (queryFilters.stateName) filters.stateName = queryFilters.stateName as string;
   if (queryFilters.countryId) filters.countryId = queryFilters.countryId as string;
   if (queryFilters.countryName) filters.countryName = queryFilters.countryName as string;
+
+  // Theme filters
   if (queryFilters.themeId) filters.themeId = queryFilters.themeId as string;
   if (queryFilters.themeSlug) filters.themeSlug = queryFilters.themeSlug as string;
   if (queryFilters.themeName) filters.themeName = queryFilters.themeName as string;
+
+  // Other filters
   if (queryFilters.difficulty) filters.difficulty = queryFilters.difficulty as string;
   if (queryFilters.bestTime) filters.bestTime = queryFilters.bestTime as string;
   if (queryFilters.idealFor) filters.idealFor = queryFilters.idealFor as string;
@@ -64,6 +90,9 @@ export function parseFilters(queryFilters: any): TourFilters {
   return filters;
 }
 
+/**
+ * Parse include options from query parameters
+ */
 export function parseIncludes(queryFilters: any): TourIncludes {
   return {
     includeStartCity: queryFilters.includeStartCity === 'true',
@@ -76,6 +105,51 @@ export function parseIncludes(queryFilters: any): TourIncludes {
   };
 }
 
+// ============================================================================
+// DATA TYPE CONVERSION UTILITIES
+// ============================================================================
+
+/**
+ * Parse JSON field safely - handles both string and object inputs
+ */
+export function parseJsonField(field: any): any {
+  if (typeof field === 'string') {
+    try {
+      return JSON.parse(field);
+    } catch (e) {
+      return field;
+    }
+  }
+  return field;
+}
+
+/**
+ * Convert value to number safely - returns undefined if invalid
+ */
+export function toNumber(value: any): number | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const num = Number(value);
+  return isNaN(num) ? undefined : num;
+}
+
+/**
+ * Convert value to boolean safely - handles string and boolean inputs
+ */
+export function toBoolean(value: any): boolean | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') return value.toLowerCase() === 'true';
+  return Boolean(value);
+}
+
+// ============================================================================
+// IMAGE UPLOAD FUNCTIONS
+// ============================================================================
+
+/**
+ * Handle all image uploads for tour creation
+ * Returns uploaded image URLs and itinerary image mappings
+ */
 export async function handleImageUploads(files: { [fieldname: string]: Express.Multer.File[] }) {
   let uploadedImages: string[] = [];
   let itineraryImagesMap: { [key: string]: string } = {};
@@ -86,11 +160,20 @@ export async function handleImageUploads(files: { [fieldname: string]: Express.M
     coverImage: files?.coverImage?.length || 0,
   });
 
-  // Upload regular images
+  // Upload cover image first (will be at index 0)
+  if (files?.coverImage?.length > 0) {
+    console.log('📤 Uploading cover image...');
+    const coverImageKey = await uploadImageToS3(files.coverImage[0], S3Folder.TOUR_IMAGES);
+    uploadedImages.push(coverImageKey);
+    console.log('✅ Uploaded cover image');
+  }
+
+  // Upload regular gallery images
   if (files?.images?.length > 0) {
-    console.log(`📤 Uploading ${files.images.length} regular images...`);
-    uploadedImages = await uploadMultipleImagesToS3(files.images, S3Folder.TOUR_IMAGES);
-    console.log(`✅ Uploaded ${uploadedImages.length} regular images`);
+    console.log(`📤 Uploading ${files.images.length} gallery images...`);
+    const galleryImages = await uploadMultipleImagesToS3(files.images, S3Folder.TOUR_IMAGES);
+    uploadedImages.push(...galleryImages);
+    console.log(`✅ Uploaded ${galleryImages.length} gallery images`);
   }
 
   // Upload itinerary images
@@ -106,23 +189,24 @@ export async function handleImageUploads(files: { [fieldname: string]: Express.M
     console.log(`✅ Uploaded ${itineraryImageKeys.length} itinerary images`);
   }
 
-  // Upload cover image
-  if (files?.coverImage?.length > 0) {
-    console.log('📤 Uploading cover image...');
-    const coverImageKey = await uploadImageToS3(files.coverImage[0], S3Folder.TOUR_IMAGES);
-    uploadedImages.unshift(coverImageKey);
-    console.log('✅ Uploaded cover image');
-  }
-
   return { uploadedImages, itineraryImagesMap };
 }
 
+// ============================================================================
+// ITINERARY DATA PREPARATION
+// ============================================================================
+
+/**
+ * Prepare itinerary data for database insertion
+ * Handles JSON parsing and image URL mapping
+ */
 export function prepareItineraryData(
   itinerary: any,
-  itineraryImagesMap: { [key: string]: string }
+  itineraryImagesMap: { [key: string]: string } = {}
 ) {
   let itineraryArray = itinerary;
 
+  // Parse JSON if needed
   if (typeof itineraryArray === 'string') {
     try {
       itineraryArray = JSON.parse(itineraryArray);
@@ -133,6 +217,7 @@ export function prepareItineraryData(
     }
   }
 
+  // Map and format itinerary data
   const itineraryData = itineraryArray?.map((item: any, index: number) => {
     const imageUrl = itineraryImagesMap[index.toString()] || item.imageUrl || null;
 
@@ -148,61 +233,71 @@ export function prepareItineraryData(
   return itineraryData;
 }
 
+// ============================================================================
+// TOUR DATA PREPARATION FOR CREATION
+// ============================================================================
+
+/**
+ * Prepare complete tour data for creation
+ * Combines form data with uploaded images and itinerary
+ */
 export function prepareTourData(bodyData: any, uploadedImages: string[], itineraryData: any) {
-  const parseJsonField = (field: any) => {
-    if (typeof field === 'string') {
-      try {
-        return JSON.parse(field);
-      } catch (e) {
-        return field;
-      }
-    }
-    return field;
-  };
-
-  const toNumber = (value: any): number => {
-    const num = Number(value);
-    return isNaN(num) ? 0 : num;
-  };
-
-  const toBoolean = (value: any): boolean => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') return value.toLowerCase() === 'true';
-    return Boolean(value);
-  };
-
   return {
+    // Basic information
     title: bodyData.title,
     slug: bodyData.slug,
-    durationDays: toNumber(bodyData.durationDays),
-    durationNights: toNumber(bodyData.durationNights),
-    price: toNumber(bodyData.price),
-    currency: bodyData.currency,
-    minGroupSize: toNumber(bodyData.minGroupSize),
-    maxGroupSize: toNumber(bodyData.maxGroupSize),
-    isActive: toBoolean(bodyData.isActive),
-    isFeatured: toBoolean(bodyData.isFeatured),
-    metatitle: bodyData.metatitle,
-    metadesc: bodyData.metadesc,
-    overview: bodyData.overview,
-    description: bodyData.description,
+    metatitle: bodyData.metatitle || null,
+    metadesc: bodyData.metadesc || null,
+    overview: bodyData.overview || null,
+    description: bodyData.description || null,
+
+    // Duration
+    durationDays: toNumber(bodyData.durationDays) || 0,
+    durationNights: toNumber(bodyData.durationNights) || 0,
+
+    // Pricing
+    price: toNumber(bodyData.price) || 0,
     discountPrice: bodyData.discountPrice ? toNumber(bodyData.discountPrice) : undefined,
-    bestTime: bodyData.bestTime,
-    idealFor: bodyData.idealFor,
-    difficulty: bodyData.difficulty,
-    cancellationPolicy: bodyData.cancellationPolicy,
-    travelTips: bodyData.travelTips,
-    startCityId: bodyData.startCityId,
-    highlights: parseJsonField(bodyData.highlights),
-    inclusions: parseJsonField(bodyData.inclusions),
-    exclusions: parseJsonField(bodyData.exclusions),
-    themes: parseJsonField(bodyData.themes),
-    cities: parseJsonField(bodyData.cities),
+    currency: bodyData.currency || 'INR',
+
+    // Group size
+    minGroupSize: toNumber(bodyData.minGroupSize) || 1,
+    maxGroupSize: toNumber(bodyData.maxGroupSize) || 50,
+
+    // Status
+    isActive: toBoolean(bodyData.isActive) || false,
+    isFeatured: toBoolean(bodyData.isFeatured) || false,
+
+    // Additional details
+    bestTime: bodyData.bestTime || null,
+    idealFor: bodyData.idealFor || null,
+    difficulty: bodyData.difficulty || null,
+    cancellationPolicy: bodyData.cancellationPolicy || null,
+    travelTips: bodyData.travelTips || null,
+
+    // Relations
+    startCityId: bodyData.startCityId || null,
+
+    // Arrays
+    highlights: parseJsonField(bodyData.highlights) || [],
+    inclusions: parseJsonField(bodyData.inclusions) || [],
+    exclusions: parseJsonField(bodyData.exclusions) || [],
+    themes: parseJsonField(bodyData.themes) || [],
+    cities: parseJsonField(bodyData.cities) || [],
     images: uploadedImages,
     itinerary: itineraryData,
   };
 }
 
+// ============================================================================
+// TOUR DATA PREPARATION FOR UPDATE
+// ============================================================================
+
+/**
+ * Prepare tour data for update operation
+ * Only includes fields that are explicitly provided
+ * Handles image uploads and merging with existing images
+ */
 export async function prepareUpdateData(
   bodyData: any,
   files: { [fieldname: string]: Express.Multer.File[] }
@@ -213,31 +308,9 @@ export async function prepareUpdateData(
     return {};
   }
 
-  const parseJsonField = (field: any) => {
-    if (typeof field === 'string') {
-      try {
-        return JSON.parse(field);
-      } catch (e) {
-        return field;
-      }
-    }
-    return field;
-  };
+  const updateData: any = {};
 
-  const toNumber = (value: any): number | undefined => {
-    if (value === undefined || value === null || value === '') return undefined;
-    const num = Number(value);
-    return isNaN(num) ? undefined : num;
-  };
-
-  const toBoolean = (value: any): boolean | undefined => {
-    if (value === undefined || value === null) return undefined;
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') return value.toLowerCase() === 'true';
-    return Boolean(value);
-  };
-
-  // Handle new image uploads
+  // ========== Upload New Images ==========
   let newImages: string[] = [];
   if (files?.images?.length > 0) {
     console.log(`📤 Uploading ${files.images.length} new images...`);
@@ -245,94 +318,99 @@ export async function prepareUpdateData(
     console.log(`✅ Uploaded ${newImages.length} new images`);
   }
 
-  // Build update data object
-  const updateData: any = {};
+  // ========== Basic Text Fields ==========
+  if ('title' in bodyData && bodyData.title !== undefined) {
+    updateData.title = bodyData.title;
+  }
+  if ('slug' in bodyData && bodyData.slug !== undefined) {
+    updateData.slug = bodyData.slug;
+  }
+  if ('metatitle' in bodyData) {
+    updateData.metatitle = bodyData.metatitle || null;
+  }
+  if ('metadesc' in bodyData) {
+    updateData.metadesc = bodyData.metadesc || null;
+  }
+  if ('overview' in bodyData) {
+    updateData.overview = bodyData.overview || null;
+  }
+  if ('description' in bodyData) {
+    updateData.description = bodyData.description || null;
+  }
 
-  // Basic fields - check if property exists in bodyData
-  if ('title' in bodyData && bodyData.title !== undefined) updateData.title = bodyData.title;
-  if ('slug' in bodyData && bodyData.slug !== undefined) updateData.slug = bodyData.slug;
-  if ('metatitle' in bodyData && bodyData.metatitle !== undefined)
-    updateData.metatitle = bodyData.metatitle;
-  if ('metadesc' in bodyData && bodyData.metadesc !== undefined)
-    updateData.metadesc = bodyData.metadesc;
-  if ('overview' in bodyData && bodyData.overview !== undefined)
-    updateData.overview = bodyData.overview;
-  if ('description' in bodyData && bodyData.description !== undefined)
-    updateData.description = bodyData.description;
-
-  // Numeric fields
+  // ========== Numeric Fields ==========
   if ('durationDays' in bodyData) {
-    const durationDays = toNumber(bodyData.durationDays);
-    if (durationDays !== undefined) updateData.durationDays = durationDays;
+    const value = toNumber(bodyData.durationDays);
+    if (value !== undefined) updateData.durationDays = value;
   }
-
   if ('durationNights' in bodyData) {
-    const durationNights = toNumber(bodyData.durationNights);
-    if (durationNights !== undefined) updateData.durationNights = durationNights;
+    const value = toNumber(bodyData.durationNights);
+    if (value !== undefined) updateData.durationNights = value;
   }
-
   if ('price' in bodyData) {
-    const price = toNumber(bodyData.price);
-    if (price !== undefined) updateData.price = price;
+    const value = toNumber(bodyData.price);
+    if (value !== undefined) updateData.price = value;
   }
-
   if ('discountPrice' in bodyData) {
-    const discountPrice = toNumber(bodyData.discountPrice);
-    if (discountPrice !== undefined) updateData.discountPrice = discountPrice;
+    const value = toNumber(bodyData.discountPrice);
+    if (value !== undefined) updateData.discountPrice = value;
   }
-
   if ('minGroupSize' in bodyData) {
-    const minGroupSize = toNumber(bodyData.minGroupSize);
-    if (minGroupSize !== undefined) updateData.minGroupSize = minGroupSize;
+    const value = toNumber(bodyData.minGroupSize);
+    if (value !== undefined) updateData.minGroupSize = value;
   }
-
   if ('maxGroupSize' in bodyData) {
-    const maxGroupSize = toNumber(bodyData.maxGroupSize);
-    if (maxGroupSize !== undefined) updateData.maxGroupSize = maxGroupSize;
+    const value = toNumber(bodyData.maxGroupSize);
+    if (value !== undefined) updateData.maxGroupSize = value;
   }
 
-  // String fields
-  if ('currency' in bodyData && bodyData.currency !== undefined)
+  // ========== String Fields ==========
+  if ('currency' in bodyData) {
     updateData.currency = bodyData.currency;
-  if ('bestTime' in bodyData && bodyData.bestTime !== undefined)
-    updateData.bestTime = bodyData.bestTime;
-  if ('idealFor' in bodyData && bodyData.idealFor !== undefined)
-    updateData.idealFor = bodyData.idealFor;
-  if ('difficulty' in bodyData && bodyData.difficulty !== undefined)
-    updateData.difficulty = bodyData.difficulty;
-  if ('cancellationPolicy' in bodyData && bodyData.cancellationPolicy !== undefined)
-    updateData.cancellationPolicy = bodyData.cancellationPolicy;
-  if ('travelTips' in bodyData && bodyData.travelTips !== undefined)
-    updateData.travelTips = bodyData.travelTips;
+  }
+  if ('bestTime' in bodyData) {
+    updateData.bestTime = bodyData.bestTime || null;
+  }
+  if ('idealFor' in bodyData) {
+    updateData.idealFor = bodyData.idealFor || null;
+  }
+  if ('difficulty' in bodyData) {
+    updateData.difficulty = bodyData.difficulty || null;
+  }
+  if ('cancellationPolicy' in bodyData) {
+    updateData.cancellationPolicy = bodyData.cancellationPolicy || null;
+  }
+  if ('travelTips' in bodyData) {
+    updateData.travelTips = bodyData.travelTips || null;
+  }
 
-  // Boolean fields
+  // ========== Boolean Fields ==========
   if ('isActive' in bodyData) {
-    const isActive = toBoolean(bodyData.isActive);
-    if (isActive !== undefined) updateData.isActive = isActive;
+    const value = toBoolean(bodyData.isActive);
+    if (value !== undefined) updateData.isActive = value;
   }
-
   if ('isFeatured' in bodyData) {
-    const isFeatured = toBoolean(bodyData.isFeatured);
-    if (isFeatured !== undefined) updateData.isFeatured = isFeatured;
+    const value = toBoolean(bodyData.isFeatured);
+    if (value !== undefined) updateData.isFeatured = value;
   }
 
-  // Relation fields
+  // ========== Relation Fields ==========
   if ('startCityId' in bodyData) {
     updateData.startCityId = bodyData.startCityId || null;
   }
 
-  // Array fields
-  if ('highlights' in bodyData && bodyData.highlights !== undefined) {
-    updateData.highlights = parseJsonField(bodyData.highlights);
+  // ========== Array Fields ==========
+  if ('highlights' in bodyData) {
+    updateData.highlights = parseJsonField(bodyData.highlights) || [];
   }
-  if ('inclusions' in bodyData && bodyData.inclusions !== undefined) {
-    updateData.inclusions = parseJsonField(bodyData.inclusions);
+  if ('inclusions' in bodyData) {
+    updateData.inclusions = parseJsonField(bodyData.inclusions) || [];
   }
-  if ('exclusions' in bodyData && bodyData.exclusions !== undefined) {
-    updateData.exclusions = parseJsonField(bodyData.exclusions);
+  if ('exclusions' in bodyData) {
+    updateData.exclusions = parseJsonField(bodyData.exclusions) || [];
   }
 
-  // Handle images - merge existing with new
+  // ========== Images (Merge Existing + New) ==========
   if ('images' in bodyData || newImages.length > 0) {
     const existingImages = bodyData.images ? parseJsonField(bodyData.images) : [];
     updateData.images = [...existingImages, ...newImages];
