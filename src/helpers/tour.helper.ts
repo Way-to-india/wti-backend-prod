@@ -2,23 +2,14 @@ import { uploadImageToS3, uploadMultipleImagesToS3 } from '@/utils/s3';
 import type { TourFilters, TourIncludes } from './tour-query.helper';
 import { S3Folder } from '@/common/constants';
 
-// ============================================================================
-// QUERY PARSING FUNCTIONS
-// ============================================================================
-
-/**
- * Parse query filters from request query parameters
- */
 export function parseFilters(queryFilters: any): TourFilters {
   const filters: TourFilters = {};
 
-  // Basic filters
   if (queryFilters.search) filters.search = queryFilters.search as string;
   if (queryFilters.id) filters.id = queryFilters.id as string;
   if (queryFilters.slug) filters.slug = queryFilters.slug as string;
   if (queryFilters.title) filters.title = queryFilters.title as string;
 
-  // Boolean filters
   if (queryFilters.isActive !== undefined) filters.isActive = queryFilters.isActive === 'true';
   if (queryFilters.isFeatured !== undefined)
     filters.isFeatured = queryFilters.isFeatured === 'true';
@@ -90,9 +81,6 @@ export function parseFilters(queryFilters: any): TourFilters {
   return filters;
 }
 
-/**
- * Parse include options from query parameters
- */
 export function parseIncludes(queryFilters: any): TourIncludes {
   return {
     includeStartCity: queryFilters.includeStartCity === 'true',
@@ -104,10 +92,6 @@ export function parseIncludes(queryFilters: any): TourIncludes {
     includePriceGuide: queryFilters.includePriceGuide === 'true',
   };
 }
-
-// ============================================================================
-// DATA TYPE CONVERSION UTILITIES
-// ============================================================================
 
 /**
  * Parse JSON field safely - handles both string and object inputs
