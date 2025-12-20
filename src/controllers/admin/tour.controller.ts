@@ -2,10 +2,9 @@ import type { Request, Response } from 'express';
 import { TourService } from '@/services/admin/tour.service';
 import { S3Folder } from '@/common/constants';
 import { deleteImagesFromS3, uploadImageToS3, uploadMultipleImagesToS3 } from '@/utils/s3';
-import { handleImageUploads, parseFilters, parseIncludes, prepareItineraryData, prepareTourData, prepareUpdateData } from '@/helpers/tour.helper';
+import { parseJsonField, toNumber, toBoolean, prepareItineraryData, parseFilters, parseIncludes, handleImageUploads, prepareTourData } from '@/helpers/tour.helper';
 
 export class TourController {
-  
   static async getAllTours(req: Request, res: Response) {
     try {
       const {
@@ -93,23 +92,189 @@ export class TourController {
       const bodyData = req.validated?.body || req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
+      console.log('🔄 Starting tour update for ID:', id);
+      console.log('📦 Body fields received:', Object.keys(bodyData));
+      console.log('🖼️ Files received:', files ? Object.keys(files) : 'none');
+
       if (!bodyData || Object.keys(bodyData).length === 0) {
-        console.log('⚠️ No body data received');
-        console.log('req.body:', req.body);
-        console.log('req.validated:', req.validated);
         return res.deliver(400, false, undefined, 'No data provided for update');
       }
 
-      console.log('📦 Body data received:', Object.keys(bodyData));
+      // ==================== STEP 1: Handle Image Updates ====================
+      let updatedImageUrls: string[] = [];
 
-      const updateData = await prepareUpdateData(bodyData, files);
+      // Parse existing images from body
+      const existingImages = bodyData.images ? parseJsonField(bodyData.images) : [];
 
-      if (Object.keys(updateData).length > 0) {
-        await TourService.updateTour(id, updateData);
+      console.log('📸 Existing images count:', existingImages.length);
+
+      // Upload new images if provided
+      if (files?.images && files.images.length > 0) {
+        console.log('⬆️ Uploading', files.images.length, 'new images...');
+        const newImageKeys = await uploadMultipleImagesToS3(files.images, S3Folder.TOUR_IMAGES);
+        console.log('✅ New images uploaded:', newImageKeys.length);
+
+        // Combine existing + new images
+        updatedImageUrls = [...existingImages, ...newImageKeys];
+      } else {
+        // No new images, just use existing ones
+        updatedImageUrls = existingImages;
       }
 
-      await TourController.handleRelatedDataUpdates(id, bodyData, files);
+      console.log('📊 Total images after update:', updatedImageUrls.length);
 
+      // ==================== STEP 2: Prepare Basic Update Data ====================
+      const updateData: any = {};
+
+      // Basic text fields
+      if ('title' in bodyData) updateData.title = bodyData.title;
+      if ('slug' in bodyData) updateData.slug = bodyData.slug;
+      if ('metatitle' in bodyData) updateData.metatitle = bodyData.metatitle || null;
+      if ('metadesc' in bodyData) updateData.metadesc = bodyData.metadesc || null;
+      if ('overview' in bodyData) updateData.overview = bodyData.overview || null;
+      if ('description' in bodyData) updateData.description = bodyData.description || null;
+
+      // Numeric fields
+      if ('durationDays' in bodyData) {
+        const value = toNumber(bodyData.durationDays);
+        if (value !== undefined) updateData.durationDays = value;
+      }
+      if ('durationNights' in bodyData) {
+        const value = toNumber(bodyData.durationNights);
+        if (value !== undefined) updateData.durationNights = value;
+      }
+      if ('price' in bodyData) {
+        const value = toNumber(bodyData.price);
+        if (value !== undefined) updateData.price = value;
+      }
+      if ('discountPrice' in bodyData) {
+        const value = toNumber(bodyData.discountPrice);
+        if (value !== undefined) updateData.discountPrice = value;
+      }
+      if ('minGroupSize' in bodyData) {
+        const value = toNumber(bodyData.minGroupSize);
+        if (value !== undefined) updateData.minGroupSize = value;
+      }
+      if ('maxGroupSize' in bodyData) {
+        const value = toNumber(bodyData.maxGroupSize);
+        if (value !== undefined) updateData.maxGroupSize = value;
+      }
+
+      // String fields
+      if ('currency' in bodyData) updateData.currency = bodyData.currency;
+      if ('bestTime' in bodyData) updateData.bestTime = bodyData.bestTime || null;
+      if ('idealFor' in bodyData) updateData.idealFor = bodyData.idealFor || null;
+      if ('difficulty' in bodyData) updateData.difficulty = bodyData.difficulty || null;
+      if ('cancellationPolicy' in bodyData) {
+        updateData.cancellationPolicy = bodyData.cancellationPolicy || null;
+      }
+      if ('travelTips' in bodyData) updateData.travelTips = bodyData.travelTips || null;
+
+      // Boolean fields
+      if ('isActive' in bodyData) {
+        const value = toBoolean(bodyData.isActive);
+        if (value !== undefined) updateData.isActive = value;
+      }
+      if ('isFeatured' in bodyData) {
+        const value = toBoolean(bodyData.isFeatured);
+        if (value !== undefined) updateData.isFeatured = value;
+      }
+
+      // Relation fields
+      if ('startCityId' in bodyData) {
+        updateData.startCityId = bodyData.startCityId || null;
+      }
+
+      // Array fields
+      if ('highlights' in bodyData) {
+        updateData.highlights = parseJsonField(bodyData.highlights) || [];
+      }
+      if ('inclusions' in bodyData) {
+        updateData.inclusions = parseJsonField(bodyData.inclusions) || [];
+      }
+      if ('exclusions' in bodyData) {
+        updateData.exclusions = parseJsonField(bodyData.exclusions) || [];
+      }
+
+      // Add images to update data
+      updateData.images = updatedImageUrls;
+
+      // ==================== STEP 3: Update Basic Tour Data ====================
+      console.log('💾 Updating basic tour data...');
+      await TourService.updateTour(id, updateData);
+
+      // ==================== STEP 4: Handle Related Data Updates ====================
+
+      // Update Itinerary
+      if ('itinerary' in bodyData) {
+        console.log('📋 Updating itinerary...');
+        const itineraryArray = parseJsonField(bodyData.itinerary);
+
+        if (Array.isArray(itineraryArray) && itineraryArray.length > 0) {
+          // Handle itinerary images if provided
+          let itineraryImagesMap: { [key: string]: string } = {};
+          if (files?.itineraryImages && files.itineraryImages.length > 0) {
+            console.log('⬆️ Uploading itinerary images...');
+            const itineraryImageKeys = await uploadMultipleImagesToS3(
+              files.itineraryImages,
+              S3Folder.TOUR_IMAGES
+            );
+            files.itineraryImages.forEach((file, index) => {
+              itineraryImagesMap[index.toString()] = itineraryImageKeys[index];
+            });
+          }
+
+          const itineraryData = prepareItineraryData(itineraryArray, itineraryImagesMap);
+          await TourService.updateTourItinerary(id, itineraryData);
+          console.log('✅ Itinerary updated');
+        }
+      }
+
+      // Update Themes
+      if ('themes' in bodyData) {
+        console.log('🏷️ Updating themes...');
+        const themes = parseJsonField(bodyData.themes);
+        if (Array.isArray(themes) && themes.length > 0) {
+          await TourService.updateTourThemes(id, themes);
+          console.log('✅ Themes updated');
+        }
+      }
+
+      // Update Cities
+      if ('cities' in bodyData) {
+        console.log('🏙️ Updating cities...');
+        const cities = parseJsonField(bodyData.cities);
+        if (Array.isArray(cities) && cities.length > 0) {
+          const citiesData = cities.map((cityId: string, index: number) => ({
+            cityId,
+            order: index,
+          }));
+          await TourService.updateTourCities(id, citiesData);
+          console.log('✅ Cities updated');
+        }
+      }
+
+      // Update FAQs
+      if ('faqs' in bodyData) {
+        console.log('❓ Updating FAQs...');
+        const faqs = parseJsonField(bodyData.faqs);
+        if (Array.isArray(faqs) && faqs.length > 0) {
+          await TourService.updateTourFaqs(id, faqs);
+          console.log('✅ FAQs updated');
+        }
+      }
+
+      // Update Price Guide
+      if ('priceGuide' in bodyData) {
+        console.log('💰 Updating price guide...');
+        const priceGuide = parseJsonField(bodyData.priceGuide);
+        if (Array.isArray(priceGuide) && priceGuide.length > 0) {
+          await TourService.updateTourPriceGuide(id, priceGuide);
+          console.log('✅ Price guide updated');
+        }
+      }
+
+      // ==================== STEP 5: Fetch and Return Updated Tour ====================
       const updatedTour = await TourService.getTourById(id, true);
 
       console.log('✅ Tour updated successfully');

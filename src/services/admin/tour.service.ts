@@ -68,7 +68,6 @@ export interface UpdateTourData {
 }
 
 export class TourService {
-  
   static async getAllTours(
     page: number,
     limit: number,
@@ -133,7 +132,6 @@ export class TourService {
       throw new Error('Tour not found');
     }
 
-    // Increment view count
     await prisma.tour.update({
       where: { id: tour.id },
       data: { viewCount: { increment: 1 } },
@@ -147,12 +145,10 @@ export class TourService {
       themeId: themeId,
     }));
 
-    // Transform cities array to proper format for Prisma relation
     const citiesData = data.cities?.map((cityId: string) => ({
       cityId: cityId,
     }));
 
-    // Transform itinerary array to proper format
     const itineraryData = data.itinerary?.map((item) => ({
       day: item.day,
       title: item.title,
@@ -187,7 +183,7 @@ export class TourService {
         inclusions: data.inclusions,
         exclusions: data.exclusions,
         images: data.images,
-        // ✅ Properly format the relations
+
         themes:
           themesData && themesData.length > 0
             ? {
@@ -233,58 +229,92 @@ export class TourService {
   }
 
   static async updateTour(id: string, data: UpdateTourData) {
-    
     const existingTour = await prisma.tour.findUnique({ where: { id } });
 
     if (!existingTour) {
       throw new Error('Tour not found');
     }
 
-    const updateData = Object.keys(data).reduce((acc, key) => {
-      const value = data[key as keyof UpdateTourData];
-      if (value !== undefined) {
-        (acc as any)[key] = value;
-      }
-      return acc;
-    }, {} as Prisma.TourUncheckedUpdateInput);
+    const updateData: Prisma.TourUpdateInput = {};
+
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.slug !== undefined) updateData.slug = data.slug;
+    if (data.metatitle !== undefined) updateData.metatitle = data.metatitle;
+    if (data.metadesc !== undefined) updateData.metadesc = data.metadesc;
+    if (data.overview !== undefined) updateData.overview = data.overview;
+    if (data.description !== undefined) updateData.description = data.description;
+
+    if (data.durationDays !== undefined) updateData.durationDays = data.durationDays;
+    if (data.durationNights !== undefined) updateData.durationNights = data.durationNights;
+    if (data.price !== undefined) updateData.price = data.price;
+    if (data.discountPrice !== undefined) updateData.discountPrice = data.discountPrice;
+    if (data.minGroupSize !== undefined) updateData.minGroupSize = data.minGroupSize;
+    if (data.maxGroupSize !== undefined) updateData.maxGroupSize = data.maxGroupSize;
+
+    if (data.currency !== undefined) updateData.currency = data.currency;
+    if (data.bestTime !== undefined) updateData.bestTime = data.bestTime;
+    if (data.idealFor !== undefined) updateData.idealFor = data.idealFor;
+    if (data.difficulty !== undefined) updateData.difficulty = data.difficulty;
+    if (data.cancellationPolicy !== undefined) {
+      updateData.cancellationPolicy = data.cancellationPolicy;
+    }
+    if (data.travelTips !== undefined) updateData.travelTips = data.travelTips;
+
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
+
+    if (data.startCityId !== undefined)
+      updateData.startCity =
+        data.startCityId as Prisma.CityUpdateOneWithoutStartingToursNestedInput;
+
+    if (data.images !== undefined) updateData.images = data.images;
+    if (data.highlights !== undefined) updateData.highlights = data.highlights;
+    if (data.inclusions !== undefined) updateData.inclusions = data.inclusions;
+    if (data.exclusions !== undefined) updateData.exclusions = data.exclusions;
 
     const tour = await prisma.tour.update({
       where: { id },
       data: updateData,
       include: {
         startCity: true,
-        itinerary: true,
+        itinerary: { orderBy: { day: 'asc' } },
         themes: { include: { theme: true } },
-        cities: { include: { city: true } },
-        faqs: { include: { questions: true } },
-        priceGuide: true,
+        cities: { include: { city: true }, orderBy: { order: 'asc' } },
+        faqs: { include: { questions: { orderBy: { order: 'asc' } } } },
+        priceGuide: { orderBy: { order: 'asc' } },
       },
     });
 
     return tour;
   }
 
+  /**
+   * Update tour itinerary (delete old and create new)
+   */
   static async updateTourItinerary(
     tourId: string,
     itinerary: Array<{
       day: number;
       title: string;
       description: string;
-      imageUrl?: string;
+      imageUrl?: string | null;
     }>
   ) {
-    // Delete existing itinerary
     await prisma.tourItinerary.deleteMany({
       where: { tourId },
     });
 
-    // Create new itinerary
-    await prisma.tourItinerary.createMany({
-      data: itinerary.map((item) => ({
-        tourId,
-        ...item,
-      })),
-    });
+    if (itinerary.length > 0) {
+      await prisma.tourItinerary.createMany({
+        data: itinerary.map((item) => ({
+          tourId,
+          day: item.day,
+          title: item.title,
+          description: item.description,
+          imageUrl: item.imageUrl || null,
+        })),
+      });
+    }
 
     return await prisma.tour.findUnique({
       where: { id: tourId },
@@ -292,19 +322,22 @@ export class TourService {
     });
   }
 
+  /**
+   * Update tour themes
+   */
   static async updateTourThemes(tourId: string, themeIds: string[]) {
-    // Delete existing themes
     await prisma.tourTheme.deleteMany({
       where: { tourId },
     });
 
-    // Create new themes
-    await prisma.tourTheme.createMany({
-      data: themeIds.map((themeId) => ({
-        tourId,
-        themeId,
-      })),
-    });
+    if (themeIds.length > 0) {
+      await prisma.tourTheme.createMany({
+        data: themeIds.map((themeId) => ({
+          tourId,
+          themeId,
+        })),
+      });
+    }
 
     return await prisma.tour.findUnique({
       where: { id: tourId },
@@ -312,25 +345,23 @@ export class TourService {
     });
   }
 
-  static async updateTourCities(
-    tourId: string,
-    cities: Array<{
-      cityId: string;
-      order: number;
-    }>
-  ) {
-    // Delete existing cities
+  /**
+   * Update tour cities
+   */
+  static async updateTourCities(tourId: string, cities: Array<{ cityId: string; order: number }>) {
     await prisma.tourCity.deleteMany({
       where: { tourId },
     });
 
-    // Create new cities
-    await prisma.tourCity.createMany({
-      data: cities.map((city) => ({
-        tourId,
-        ...city,
-      })),
-    });
+    if (cities.length > 0) {
+      await prisma.tourCity.createMany({
+        data: cities.map((city) => ({
+          tourId,
+          cityId: city.cityId,
+          order: city.order,
+        })),
+      });
+    }
 
     return await prisma.tour.findUnique({
       where: { id: tourId },
@@ -338,6 +369,9 @@ export class TourService {
     });
   }
 
+  /**
+   * Update tour FAQs
+   */
   static async updateTourFaqs(
     tourId: string,
     faqs: Array<{
@@ -349,12 +383,10 @@ export class TourService {
       }>;
     }>
   ) {
-    // Delete existing FAQs
     await prisma.faq.deleteMany({
       where: { tourId },
     });
 
-    // Create new FAQs
     for (const faq of faqs) {
       await prisma.faq.create({
         data: {
@@ -373,6 +405,9 @@ export class TourService {
     });
   }
 
+  /**
+   * Update tour price guide
+   */
   static async updateTourPriceGuide(
     tourId: string,
     priceGuide: Array<{
@@ -381,18 +416,20 @@ export class TourService {
       order: number;
     }>
   ) {
-    // Delete existing price guide
     await prisma.tourPriceGuide.deleteMany({
       where: { tourId },
     });
 
-    // Create new price guide
-    await prisma.tourPriceGuide.createMany({
-      data: priceGuide.map((item) => ({
-        tourId,
-        ...item,
-      })),
-    });
+    if (priceGuide.length > 0) {
+      await prisma.tourPriceGuide.createMany({
+        data: priceGuide.map((item) => ({
+          tourId,
+          title: item.title,
+          value: item.value,
+          order: item.order,
+        })),
+      });
+    }
 
     return await prisma.tour.findUnique({
       where: { id: tourId },
@@ -412,7 +449,6 @@ export class TourService {
 
     await prisma.tour.delete({ where: { id } });
 
-    // Return image keys for S3 deletion
     const imageKeys = [
       ...tour.images,
       ...tour.itinerary.map((item) => item.imageUrl).filter(Boolean),
