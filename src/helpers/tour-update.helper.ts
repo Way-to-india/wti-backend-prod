@@ -3,7 +3,6 @@ import { S3Folder } from '@/common/constants';
 import { TourService } from '@/services/admin/tour.service';
 import { parseJsonField, toNumber, toBoolean, prepareItineraryData } from './tour.helper';
 
-
 export async function prepareBasicUpdateData(
   bodyData: any,
   files: { [fieldname: string]: Express.Multer.File[] }
@@ -17,13 +16,20 @@ export async function prepareBasicUpdateData(
 
   const existingImages = bodyData.images ? parseJsonField(bodyData.images) : [];
 
-  if (files?.images?.length > 0) {
-    console.log(`⬆️ Uploading ${files.images.length} new images...`);
+  console.log(` Existing images from frontend: ${existingImages.length}`);
+  console.log(`New files being uploaded: ${files?.images?.length || 0}`);
+
+  if (files?.images && files.images.length > 0) {
+    console.log(`Uploading ${files.images.length} new images...`);
     const newImages = await uploadMultipleImagesToS3(files.images, S3Folder.TOUR_IMAGES);
+    console.log(`Uploaded ${newImages.length} new images`);
+
     updateData.images = [...existingImages, ...newImages];
-  } else if (existingImages.length > 0) {
+  } else {
     updateData.images = existingImages;
   }
+
+  console.log(`Final image count: ${updateData.images.length}`);
 
   const textFields = [
     'title',
@@ -86,7 +92,6 @@ export async function prepareBasicUpdateData(
   return updateData;
 }
 
-
 export async function handleRelatedDataUpdates(
   tourId: string,
   bodyData: any,
@@ -107,7 +112,6 @@ export async function handleRelatedDataUpdates(
   }
 }
 
-
 async function updateItinerary(
   tourId: string,
   itinerary: any,
@@ -118,7 +122,6 @@ async function updateItinerary(
   const itineraryArray = parseJsonField(itinerary);
   if (!Array.isArray(itineraryArray) || itineraryArray.length === 0) return;
 
-  // Handle itinerary images if provided
   let itineraryImagesMap: { [key: string]: string } = {};
 
   if (files?.itineraryImages && files.itineraryImages.length > 0) {
@@ -136,9 +139,6 @@ async function updateItinerary(
   console.log('✅ Itinerary updated');
 }
 
-/**
- * Update tour themes
- */
 async function updateThemes(tourId: string, themes: any) {
   console.log('🏷️ Updating themes...');
 
@@ -149,9 +149,6 @@ async function updateThemes(tourId: string, themes: any) {
   console.log('✅ Themes updated');
 }
 
-/**
- * Update tour cities
- */
 async function updateCities(tourId: string, cities: any) {
   console.log('🏙️ Updating cities...');
 
@@ -167,9 +164,6 @@ async function updateCities(tourId: string, cities: any) {
   console.log('✅ Cities updated');
 }
 
-/**
- * Update tour FAQs
- */
 async function updateFaqs(tourId: string, faqs: any) {
   console.log('❓ Updating FAQs...');
 
@@ -180,9 +174,6 @@ async function updateFaqs(tourId: string, faqs: any) {
   console.log('✅ FAQs updated');
 }
 
-/**
- * Update tour price guide
- */
 async function updatePriceGuide(tourId: string, priceGuide: any) {
   console.log('💰 Updating price guide...');
 
