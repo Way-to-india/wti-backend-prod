@@ -28,18 +28,7 @@ router.put(
 
 router.delete('/delete/:id', checkPermission('Tours', 'delete'), TourController.deleteTour);
 
-// Nested updates
-// router.put('/:id/itinerary', checkPermission('Tours', 'edit'), TourController.updateTourItinerary);
-// router.put('/:id/themes', checkPermission('Tours', 'edit'), TourController.updateTourThemes);
-// router.put('/:id/cities', checkPermission('Tours', 'edit'), TourController.updateTourCities);
-// router.put('/:id/faqs', checkPermission('Tours', 'edit'), TourController.updateTourFaqs);
-// router.put(
-//   '/:id/price-guide',
-//   checkPermission('Tours', 'edit'),
-//   TourController.updateTourPriceGuide
-// );
 
-// Image management
 router.post('/:id/images', checkPermission('Tours', 'edit'), TourController.uploadGalleryImages);
 
 router.delete(
