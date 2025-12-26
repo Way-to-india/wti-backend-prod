@@ -1,10 +1,10 @@
-// src/controllers/common/tour.controller.ts
 import prisma from '@/config/db';
 import cacheService from '@/services/common/cache.service';
 import type { Request, Response } from 'express';
 import type { Prisma } from 'prisma/generated/prisma/client';
 
 export class TourController {
+  
   static async getAllTours(req: Request, res: Response) {
     try {
       const {
@@ -498,9 +498,6 @@ export class TourController {
     }
   }
 
-  /**
-   * Helper method to clear tour caches (use in admin controllers)
-   */
   static async clearTourCache(tourId?: string) {
     try {
       if (tourId) {

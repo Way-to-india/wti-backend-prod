@@ -6,5 +6,4 @@ const router = Router();
 
 router.use(AppRoutes.AUTH, AuthRouter);
 
-
 export default router;

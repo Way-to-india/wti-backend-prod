@@ -105,6 +105,21 @@ export type Faq = Prisma.FaqModel
  */
 export type FaqQuestion = Prisma.FaqQuestionModel
 /**
+ * Model TravelGuideState
+ * 
+ */
+export type TravelGuideState = Prisma.TravelGuideStateModel
+/**
+ * Model TravelGuideCity
+ * 
+ */
+export type TravelGuideCity = Prisma.TravelGuideCityModel
+/**
+ * Model TravelGuideData
+ * 
+ */
+export type TravelGuideData = Prisma.TravelGuideDataModel
+/**
  * Model Admin
  * 
  */

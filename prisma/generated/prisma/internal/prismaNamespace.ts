@@ -402,6 +402,9 @@ export const ModelName = {
   City: 'City',
   Faq: 'Faq',
   FaqQuestion: 'FaqQuestion',
+  TravelGuideState: 'TravelGuideState',
+  TravelGuideCity: 'TravelGuideCity',
+  TravelGuideData: 'TravelGuideData',
   Admin: 'Admin',
   Role: 'Role',
   Module: 'Module',
@@ -423,7 +426,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "tour" | "tourPriceGuide" | "theme" | "tourTheme" | "tourReview" | "reviewImage" | "tourItinerary" | "tourCity" | "city" | "faq" | "faqQuestion" | "admin" | "role" | "module" | "permission" | "lead" | "leadActivity"
+    modelProps: "user" | "tour" | "tourPriceGuide" | "theme" | "tourTheme" | "tourReview" | "reviewImage" | "tourItinerary" | "tourCity" | "city" | "faq" | "faqQuestion" | "travelGuideState" | "travelGuideCity" | "travelGuideData" | "admin" | "role" | "module" | "permission" | "lead" | "leadActivity"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1315,6 +1318,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TravelGuideState: {
+      payload: Prisma.$TravelGuideStatePayload<ExtArgs>
+      fields: Prisma.TravelGuideStateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TravelGuideStateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideStatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TravelGuideStateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideStatePayload>
+        }
+        findFirst: {
+          args: Prisma.TravelGuideStateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideStatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TravelGuideStateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideStatePayload>
+        }
+        findMany: {
+          args: Prisma.TravelGuideStateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideStatePayload>[]
+        }
+        create: {
+          args: Prisma.TravelGuideStateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideStatePayload>
+        }
+        createMany: {
+          args: Prisma.TravelGuideStateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TravelGuideStateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideStatePayload>[]
+        }
+        delete: {
+          args: Prisma.TravelGuideStateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideStatePayload>
+        }
+        update: {
+          args: Prisma.TravelGuideStateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideStatePayload>
+        }
+        deleteMany: {
+          args: Prisma.TravelGuideStateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TravelGuideStateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TravelGuideStateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideStatePayload>[]
+        }
+        upsert: {
+          args: Prisma.TravelGuideStateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideStatePayload>
+        }
+        aggregate: {
+          args: Prisma.TravelGuideStateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTravelGuideState>
+        }
+        groupBy: {
+          args: Prisma.TravelGuideStateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TravelGuideStateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TravelGuideStateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TravelGuideStateCountAggregateOutputType> | number
+        }
+      }
+    }
+    TravelGuideCity: {
+      payload: Prisma.$TravelGuideCityPayload<ExtArgs>
+      fields: Prisma.TravelGuideCityFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TravelGuideCityFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideCityPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TravelGuideCityFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideCityPayload>
+        }
+        findFirst: {
+          args: Prisma.TravelGuideCityFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideCityPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TravelGuideCityFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideCityPayload>
+        }
+        findMany: {
+          args: Prisma.TravelGuideCityFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideCityPayload>[]
+        }
+        create: {
+          args: Prisma.TravelGuideCityCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideCityPayload>
+        }
+        createMany: {
+          args: Prisma.TravelGuideCityCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TravelGuideCityCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideCityPayload>[]
+        }
+        delete: {
+          args: Prisma.TravelGuideCityDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideCityPayload>
+        }
+        update: {
+          args: Prisma.TravelGuideCityUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideCityPayload>
+        }
+        deleteMany: {
+          args: Prisma.TravelGuideCityDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TravelGuideCityUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TravelGuideCityUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideCityPayload>[]
+        }
+        upsert: {
+          args: Prisma.TravelGuideCityUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideCityPayload>
+        }
+        aggregate: {
+          args: Prisma.TravelGuideCityAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTravelGuideCity>
+        }
+        groupBy: {
+          args: Prisma.TravelGuideCityGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TravelGuideCityGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TravelGuideCityCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TravelGuideCityCountAggregateOutputType> | number
+        }
+      }
+    }
+    TravelGuideData: {
+      payload: Prisma.$TravelGuideDataPayload<ExtArgs>
+      fields: Prisma.TravelGuideDataFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TravelGuideDataFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideDataPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TravelGuideDataFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideDataPayload>
+        }
+        findFirst: {
+          args: Prisma.TravelGuideDataFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideDataPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TravelGuideDataFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideDataPayload>
+        }
+        findMany: {
+          args: Prisma.TravelGuideDataFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideDataPayload>[]
+        }
+        create: {
+          args: Prisma.TravelGuideDataCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideDataPayload>
+        }
+        createMany: {
+          args: Prisma.TravelGuideDataCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TravelGuideDataCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideDataPayload>[]
+        }
+        delete: {
+          args: Prisma.TravelGuideDataDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideDataPayload>
+        }
+        update: {
+          args: Prisma.TravelGuideDataUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideDataPayload>
+        }
+        deleteMany: {
+          args: Prisma.TravelGuideDataDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TravelGuideDataUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TravelGuideDataUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideDataPayload>[]
+        }
+        upsert: {
+          args: Prisma.TravelGuideDataUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TravelGuideDataPayload>
+        }
+        aggregate: {
+          args: Prisma.TravelGuideDataAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTravelGuideData>
+        }
+        groupBy: {
+          args: Prisma.TravelGuideDataGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TravelGuideDataGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TravelGuideDataCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TravelGuideDataCountAggregateOutputType> | number
+        }
+      }
+    }
     Admin: {
       payload: Prisma.$AdminPayload<ExtArgs>
       fields: Prisma.AdminFieldRefs
@@ -1802,15 +2027,16 @@ export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
   phone: 'phone',
-  isPhoneVerified: 'isPhoneVerified',
   email: 'email',
   profileImage: 'profileImage',
   profileCoverImage: 'profileCoverImage',
   address: 'address',
   pinCode: 'pinCode',
   bio: 'bio',
-  isActive: 'isActive',
   password: 'password',
+  isActive: 'isActive',
+  isPhoneVerified: 'isPhoneVerified',
+  isEmailVerified: 'isEmailVerified',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1987,6 +2213,59 @@ export const FaqQuestionScalarFieldEnum = {
 } as const
 
 export type FaqQuestionScalarFieldEnum = (typeof FaqQuestionScalarFieldEnum)[keyof typeof FaqQuestionScalarFieldEnum]
+
+
+export const TravelGuideStateScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TravelGuideStateScalarFieldEnum = (typeof TravelGuideStateScalarFieldEnum)[keyof typeof TravelGuideStateScalarFieldEnum]
+
+
+export const TravelGuideCityScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  stateId: 'stateId',
+  stateName: 'stateName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TravelGuideCityScalarFieldEnum = (typeof TravelGuideCityScalarFieldEnum)[keyof typeof TravelGuideCityScalarFieldEnum]
+
+
+export const TravelGuideDataScalarFieldEnum = {
+  id: 'id',
+  cityId: 'cityId',
+  citySlug: 'citySlug',
+  stateId: 'stateId',
+  stateSlug: 'stateSlug',
+  originalCityId: 'originalCityId',
+  menuId: 'menuId',
+  isActive: 'isActive',
+  introduction: 'introduction',
+  facts: 'facts',
+  foodAndDining: 'foodAndDining',
+  shopping: 'shopping',
+  nearbyPlaces: 'nearbyPlaces',
+  gettingAround: 'gettingAround',
+  historyCulture: 'historyCulture',
+  otherDetails: 'otherDetails',
+  bestTimeToVisit: 'bestTimeToVisit',
+  placesToSeeTop: 'placesToSeeTop',
+  placesToSeeBottom: 'placesToSeeBottom',
+  hotelDetails: 'hotelDetails',
+  cityImage: 'cityImage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TravelGuideDataScalarFieldEnum = (typeof TravelGuideDataScalarFieldEnum)[keyof typeof TravelGuideDataScalarFieldEnum]
 
 
 export const AdminScalarFieldEnum = {
@@ -2348,6 +2627,9 @@ export type GlobalOmitConfig = {
   city?: Prisma.CityOmit
   faq?: Prisma.FaqOmit
   faqQuestion?: Prisma.FaqQuestionOmit
+  travelGuideState?: Prisma.TravelGuideStateOmit
+  travelGuideCity?: Prisma.TravelGuideCityOmit
+  travelGuideData?: Prisma.TravelGuideDataOmit
   admin?: Prisma.AdminOmit
   role?: Prisma.RoleOmit
   module?: Prisma.ModuleOmit

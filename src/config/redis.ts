@@ -6,6 +6,7 @@ class RedisClient {
   private client: Redis;
 
   private constructor() {
+    console.log(process.env.REDIS_URL);
     const redisUrl = process.env.REDIS_URL;
 
     if (redisUrl) {
