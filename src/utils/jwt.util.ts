@@ -41,7 +41,7 @@ export class JwtUtil {
   }
 
   static generateUserAccessToken(payload: UserTokenPayload): string {
-    return jwt.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
+    return jwt.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
   }
 
   static generateUserRefreshToken(payload: UserTokenPayload): string {
