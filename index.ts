@@ -78,7 +78,7 @@ class Server {
   public getApp(): Application {
     return this.app;
   }
-}
+} 
 
 const server = new Server();
 

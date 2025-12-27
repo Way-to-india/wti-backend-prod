@@ -40,9 +40,6 @@ export class JwtUtil {
     return jwt.verify(token, REFRESH_TOKEN_SECRET) as AdminTokenPayload;
   }
 
-  // ============================================
-  // USER METHODS (New)
-  // ============================================
   static generateUserAccessToken(payload: UserTokenPayload): string {
     return jwt.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
   }
