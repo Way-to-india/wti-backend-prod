@@ -25,6 +25,10 @@ interface BackupConfig {
  * Parse DATABASE_URL from .env file
  * Format: postgresql://username:password@host:port/database?params
  */
+/**
+ * Parse DATABASE_URL from .env file
+ * Format: postgresql://username:password@host:port/database?params
+ */
 function parseDatabaseUrl(): BackupConfig {
   const envPath = path.join(__dirname, '..', '.env');
 
@@ -50,10 +54,21 @@ function parseDatabaseUrl(): BackupConfig {
     }
 
     // Extract database name from pathname (remove leading slash)
-    const database = url.pathname.substring(1);
+    // Split by '?' to remove query parameters if they're in the pathname
+    let database = url.pathname.substring(1).split('?')[0];
+
+    // Debug logging
+    console.log('Parsed connection details:');
+    console.log('Host:', url.hostname);
+    console.log('Port:', url.port);
+    console.log('Username:', url.username);
+    console.log('Password:', url.password ? '***' : 'missing');
+    console.log('Database:', database);
 
     if (!url.hostname || !url.port || !url.username || !url.password || !database) {
-      throw new Error('Missing required connection parameters');
+      throw new Error(
+        `Missing required connection parameters - host: ${!!url.hostname}, port: ${!!url.port}, username: ${!!url.username}, password: ${!!url.password}, database: ${!!database}`
+      );
     }
 
     return {
