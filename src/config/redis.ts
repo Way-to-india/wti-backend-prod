@@ -6,6 +6,7 @@ class RedisClient {
   private client: Redis;
 
   private constructor() {
+    console.log(process.env.REDIS_URL);
     const redisUrl = process.env.REDIS_URL;
 
     if (redisUrl) {
@@ -16,9 +17,7 @@ class RedisClient {
         },
         maxRetriesPerRequest: 3,
         tls: redisUrl.startsWith('rediss://') ? {} : undefined,
-        family: 4, // Changed from 6 to 4 (IPv4)
-        enableOfflineQueue: false,
-        lazyConnect: false,
+        family: 6,
       });
     } else {
       this.client = new Redis({
@@ -31,7 +30,6 @@ class RedisClient {
           return delay;
         },
         maxRetriesPerRequest: 3,
-        family: 4, // Use IPv4
       });
     }
 

@@ -61,6 +61,9 @@ export const ModelName = {
   City: 'City',
   Faq: 'Faq',
   FaqQuestion: 'FaqQuestion',
+  TravelGuideState: 'TravelGuideState',
+  TravelGuideCity: 'TravelGuideCity',
+  TravelGuideData: 'TravelGuideData',
   Admin: 'Admin',
   Role: 'Role',
   Module: 'Module',
@@ -89,15 +92,16 @@ export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
   phone: 'phone',
-  isPhoneVerified: 'isPhoneVerified',
   email: 'email',
   profileImage: 'profileImage',
   profileCoverImage: 'profileCoverImage',
   address: 'address',
   pinCode: 'pinCode',
   bio: 'bio',
-  isActive: 'isActive',
   password: 'password',
+  isActive: 'isActive',
+  isPhoneVerified: 'isPhoneVerified',
+  isEmailVerified: 'isEmailVerified',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -274,6 +278,59 @@ export const FaqQuestionScalarFieldEnum = {
 } as const
 
 export type FaqQuestionScalarFieldEnum = (typeof FaqQuestionScalarFieldEnum)[keyof typeof FaqQuestionScalarFieldEnum]
+
+
+export const TravelGuideStateScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TravelGuideStateScalarFieldEnum = (typeof TravelGuideStateScalarFieldEnum)[keyof typeof TravelGuideStateScalarFieldEnum]
+
+
+export const TravelGuideCityScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  stateId: 'stateId',
+  stateName: 'stateName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TravelGuideCityScalarFieldEnum = (typeof TravelGuideCityScalarFieldEnum)[keyof typeof TravelGuideCityScalarFieldEnum]
+
+
+export const TravelGuideDataScalarFieldEnum = {
+  id: 'id',
+  cityId: 'cityId',
+  citySlug: 'citySlug',
+  stateId: 'stateId',
+  stateSlug: 'stateSlug',
+  originalCityId: 'originalCityId',
+  menuId: 'menuId',
+  isActive: 'isActive',
+  introduction: 'introduction',
+  facts: 'facts',
+  foodAndDining: 'foodAndDining',
+  shopping: 'shopping',
+  nearbyPlaces: 'nearbyPlaces',
+  gettingAround: 'gettingAround',
+  historyCulture: 'historyCulture',
+  otherDetails: 'otherDetails',
+  bestTimeToVisit: 'bestTimeToVisit',
+  placesToSeeTop: 'placesToSeeTop',
+  placesToSeeBottom: 'placesToSeeBottom',
+  hotelDetails: 'hotelDetails',
+  cityImage: 'cityImage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TravelGuideDataScalarFieldEnum = (typeof TravelGuideDataScalarFieldEnum)[keyof typeof TravelGuideDataScalarFieldEnum]
 
 
 export const AdminScalarFieldEnum = {

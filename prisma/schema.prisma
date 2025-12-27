@@ -13,15 +13,16 @@ model User {
   id                String       @id @default(uuid())
   name              String       @db.VarChar(255)
   phone             String?      @unique @db.VarChar(20)
-  isPhoneVerified   Boolean      @default(false)
   email             String       @unique @db.VarChar(255)
   profileImage      String?      @db.VarChar(500)
   profileCoverImage String?      @db.VarChar(500)
   address           String?      @db.VarChar(500)
   pinCode           String?      @db.VarChar(10)
   bio               String?
-  isActive          Boolean      @default(true)
   password          String       @db.VarChar(255)
+  isActive          Boolean      @default(true)
+  isPhoneVerified   Boolean      @default(false)
+  isEmailVerified   Boolean      @default(false)
   createdAt         DateTime     @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime     @updatedAt @db.Timestamptz(3)
   reviews           TourReview[]
@@ -130,7 +131,7 @@ model TourTheme {
   @@index([tourId])
   @@map("tour_themes")
 }
-  
+
 model TourReview {
   id           String        @id @default(cuid())
   userId       String
@@ -251,6 +252,81 @@ model FaqQuestion {
   @@map("faq_questions")
 }
 
+// ============================================
+// TRAVEL GUIDE MODELS (NEW)
+// ============================================
+
+model TravelGuideState {
+  id        String            @id @default(cuid())
+  name      String            @db.VarChar(150)
+  slug      String?           @unique @db.VarChar(200)
+  createdAt DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime          @updatedAt @db.Timestamptz(3)
+  cities    TravelGuideCity[]
+  data      TravelGuideData[]
+
+  @@index([slug])
+  @@index([name])
+  @@map("travel_guide_states")
+}
+
+model TravelGuideCity {
+  id        String            @id @default(cuid())
+  name      String            @db.VarChar(150)
+  slug      String?           @unique @db.VarChar(200)
+  stateId   String
+  stateName String            @db.VarChar(150)
+  createdAt DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime          @updatedAt @db.Timestamptz(3)
+  state     TravelGuideState  @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  data      TravelGuideData[]
+
+  @@index([stateId])
+  @@index([slug])
+  @@index([name])
+  @@map("travel_guide_cities")
+}
+
+model TravelGuideData {
+  id                String           @id @default(cuid())
+  cityId            String
+  citySlug          String?          @db.VarChar(200)
+  stateId           String
+  stateSlug         String?          @db.VarChar(200)
+  originalCityId    Int?
+  menuId            Int?
+  isActive          Boolean          @default(true)
+  introduction      String?          @db.Text
+  facts             String?          @db.Text
+  foodAndDining     String?          @db.Text
+  shopping          String?          @db.Text
+  nearbyPlaces      String?          @db.Text
+  gettingAround     String?          @db.Text
+  historyCulture    String?          @db.Text
+  otherDetails      String?          @db.Text
+  bestTimeToVisit   String?          @db.VarChar(255)
+  placesToSeeTop    String?          @db.Text
+  placesToSeeBottom String?          @db.Text
+  hotelDetails      String?          @db.Text
+  cityImage         String?          @db.VarChar(500)
+  createdAt         DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime         @updatedAt @db.Timestamptz(3)
+  city              TravelGuideCity  @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  state             TravelGuideState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+
+  @@unique([cityId, stateId])
+  @@index([cityId])
+  @@index([stateId])
+  @@index([citySlug])
+  @@index([stateSlug])
+  @@index([isActive])
+  @@map("travel_guide_data")
+}
+
+// ============================================
+// ADMIN & RBAC MODELS
+// ============================================
+
 model Admin {
   id                 String         @id @default(uuid())
   name               String         @db.VarChar(255)
@@ -324,6 +400,10 @@ model Permission {
   @@map("permissions")
 }
 
+// ============================================
+// LEAD MANAGEMENT MODELS
+// ============================================
+
 enum LeadStatus {
   NEW
   CONTACTED
@@ -341,27 +421,28 @@ enum LeadSource {
 }
 
 model Lead {
-  id              String     @id @default(cuid())
-  referenceNumber String     @unique @db.VarChar(20)
+  id              String         @id @default(cuid())
+  referenceNumber String         @unique @db.VarChar(20)
   source          LeadSource
-  status          LeadStatus @default(NEW)
-  fullName    String  @db.VarChar(255)
-  email       String  @db.VarChar(255)
-  phoneNumber String? @db.VarChar(20)
-  details Json
-  assignedToId String?
-  assignedTo   Admin?  @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
-  priority Int     @default(0) @db.SmallInt
-  notes    String? @db.Text
-  zohoLeadId   String?   @db.VarChar(100)
-  syncedToZoho Boolean   @default(false)
-  lastSyncedAt DateTime? @db.Timestamptz(3)
-  ipAddress String? @db.VarChar(50)
-  userAgent String? @db.VarChar(500)
-  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
-  contactedAt DateTime? @db.Timestamptz(3)
-  activities LeadActivity[]
+  status          LeadStatus     @default(NEW)
+  fullName        String         @db.VarChar(255)
+  email           String         @db.VarChar(255)
+  phoneNumber     String?        @db.VarChar(20)
+  details         Json
+  assignedToId    String?
+  assignedTo      Admin?         @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  priority        Int            @default(0) @db.SmallInt
+  notes           String?        @db.Text
+  zohoLeadId      String?        @db.VarChar(100)
+  syncedToZoho    Boolean        @default(false)
+  lastSyncedAt    DateTime?      @db.Timestamptz(3)
+  ipAddress       String?        @db.VarChar(50)
+  userAgent       String?        @db.VarChar(500)
+  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime       @updatedAt @db.Timestamptz(3)
+  contactedAt     DateTime?      @db.Timestamptz(3)
+  activities      LeadActivity[]
+
   @@index([source, status, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
   @@index([email])
@@ -379,7 +460,8 @@ model LeadActivity {
   performedById String?
   performedBy   Admin?   @relation(fields: [performedById], references: [id], onDelete: SetNull)
   createdAt     DateTime @default(now()) @db.Timestamptz(3)
-  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead          Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
   @@index([leadId, createdAt(sort: Desc)])
   @@map("lead_activities")
 }

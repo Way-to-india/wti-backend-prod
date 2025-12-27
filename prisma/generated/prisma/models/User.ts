@@ -28,15 +28,16 @@ export type UserMinAggregateOutputType = {
   id: string | null
   name: string | null
   phone: string | null
-  isPhoneVerified: boolean | null
   email: string | null
   profileImage: string | null
   profileCoverImage: string | null
   address: string | null
   pinCode: string | null
   bio: string | null
-  isActive: boolean | null
   password: string | null
+  isActive: boolean | null
+  isPhoneVerified: boolean | null
+  isEmailVerified: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -45,15 +46,16 @@ export type UserMaxAggregateOutputType = {
   id: string | null
   name: string | null
   phone: string | null
-  isPhoneVerified: boolean | null
   email: string | null
   profileImage: string | null
   profileCoverImage: string | null
   address: string | null
   pinCode: string | null
   bio: string | null
-  isActive: boolean | null
   password: string | null
+  isActive: boolean | null
+  isPhoneVerified: boolean | null
+  isEmailVerified: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,15 +64,16 @@ export type UserCountAggregateOutputType = {
   id: number
   name: number
   phone: number
-  isPhoneVerified: number
   email: number
   profileImage: number
   profileCoverImage: number
   address: number
   pinCode: number
   bio: number
-  isActive: number
   password: number
+  isActive: number
+  isPhoneVerified: number
+  isEmailVerified: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -81,15 +84,16 @@ export type UserMinAggregateInputType = {
   id?: true
   name?: true
   phone?: true
-  isPhoneVerified?: true
   email?: true
   profileImage?: true
   profileCoverImage?: true
   address?: true
   pinCode?: true
   bio?: true
-  isActive?: true
   password?: true
+  isActive?: true
+  isPhoneVerified?: true
+  isEmailVerified?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -98,15 +102,16 @@ export type UserMaxAggregateInputType = {
   id?: true
   name?: true
   phone?: true
-  isPhoneVerified?: true
   email?: true
   profileImage?: true
   profileCoverImage?: true
   address?: true
   pinCode?: true
   bio?: true
-  isActive?: true
   password?: true
+  isActive?: true
+  isPhoneVerified?: true
+  isEmailVerified?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -115,15 +120,16 @@ export type UserCountAggregateInputType = {
   id?: true
   name?: true
   phone?: true
-  isPhoneVerified?: true
   email?: true
   profileImage?: true
   profileCoverImage?: true
   address?: true
   pinCode?: true
   bio?: true
-  isActive?: true
   password?: true
+  isActive?: true
+  isPhoneVerified?: true
+  isEmailVerified?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -205,15 +211,16 @@ export type UserGroupByOutputType = {
   id: string
   name: string
   phone: string | null
-  isPhoneVerified: boolean
   email: string
   profileImage: string | null
   profileCoverImage: string | null
   address: string | null
   pinCode: string | null
   bio: string | null
-  isActive: boolean
   password: string
+  isActive: boolean
+  isPhoneVerified: boolean
+  isEmailVerified: boolean
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -243,15 +250,16 @@ export type UserWhereInput = {
   id?: Prisma.StringFilter<"User"> | string
   name?: Prisma.StringFilter<"User"> | string
   phone?: Prisma.StringNullableFilter<"User"> | string | null
-  isPhoneVerified?: Prisma.BoolFilter<"User"> | boolean
   email?: Prisma.StringFilter<"User"> | string
   profileImage?: Prisma.StringNullableFilter<"User"> | string | null
   profileCoverImage?: Prisma.StringNullableFilter<"User"> | string | null
   address?: Prisma.StringNullableFilter<"User"> | string | null
   pinCode?: Prisma.StringNullableFilter<"User"> | string | null
   bio?: Prisma.StringNullableFilter<"User"> | string | null
-  isActive?: Prisma.BoolFilter<"User"> | boolean
   password?: Prisma.StringFilter<"User"> | string
+  isActive?: Prisma.BoolFilter<"User"> | boolean
+  isPhoneVerified?: Prisma.BoolFilter<"User"> | boolean
+  isEmailVerified?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   reviews?: Prisma.TourReviewListRelationFilter
@@ -261,15 +269,16 @@ export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
-  isPhoneVerified?: Prisma.SortOrder
   email?: Prisma.SortOrder
   profileImage?: Prisma.SortOrderInput | Prisma.SortOrder
   profileCoverImage?: Prisma.SortOrderInput | Prisma.SortOrder
   address?: Prisma.SortOrderInput | Prisma.SortOrder
   pinCode?: Prisma.SortOrderInput | Prisma.SortOrder
   bio?: Prisma.SortOrderInput | Prisma.SortOrder
-  isActive?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  isActive?: Prisma.SortOrder
+  isPhoneVerified?: Prisma.SortOrder
+  isEmailVerified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   reviews?: Prisma.TourReviewOrderByRelationAggregateInput
@@ -283,14 +292,15 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   name?: Prisma.StringFilter<"User"> | string
-  isPhoneVerified?: Prisma.BoolFilter<"User"> | boolean
   profileImage?: Prisma.StringNullableFilter<"User"> | string | null
   profileCoverImage?: Prisma.StringNullableFilter<"User"> | string | null
   address?: Prisma.StringNullableFilter<"User"> | string | null
   pinCode?: Prisma.StringNullableFilter<"User"> | string | null
   bio?: Prisma.StringNullableFilter<"User"> | string | null
-  isActive?: Prisma.BoolFilter<"User"> | boolean
   password?: Prisma.StringFilter<"User"> | string
+  isActive?: Prisma.BoolFilter<"User"> | boolean
+  isPhoneVerified?: Prisma.BoolFilter<"User"> | boolean
+  isEmailVerified?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   reviews?: Prisma.TourReviewListRelationFilter
@@ -300,15 +310,16 @@ export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
-  isPhoneVerified?: Prisma.SortOrder
   email?: Prisma.SortOrder
   profileImage?: Prisma.SortOrderInput | Prisma.SortOrder
   profileCoverImage?: Prisma.SortOrderInput | Prisma.SortOrder
   address?: Prisma.SortOrderInput | Prisma.SortOrder
   pinCode?: Prisma.SortOrderInput | Prisma.SortOrder
   bio?: Prisma.SortOrderInput | Prisma.SortOrder
-  isActive?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  isActive?: Prisma.SortOrder
+  isPhoneVerified?: Prisma.SortOrder
+  isEmailVerified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -323,15 +334,16 @@ export type UserScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
   name?: Prisma.StringWithAggregatesFilter<"User"> | string
   phone?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  isPhoneVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   profileImage?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   profileCoverImage?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   address?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   pinCode?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   bio?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   password?: Prisma.StringWithAggregatesFilter<"User"> | string
+  isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  isPhoneVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  isEmailVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -340,15 +352,16 @@ export type UserCreateInput = {
   id?: string
   name: string
   phone?: string | null
-  isPhoneVerified?: boolean
   email: string
   profileImage?: string | null
   profileCoverImage?: string | null
   address?: string | null
   pinCode?: string | null
   bio?: string | null
-  isActive?: boolean
   password: string
+  isActive?: boolean
+  isPhoneVerified?: boolean
+  isEmailVerified?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   reviews?: Prisma.TourReviewCreateNestedManyWithoutUserInput
@@ -358,15 +371,16 @@ export type UserUncheckedCreateInput = {
   id?: string
   name: string
   phone?: string | null
-  isPhoneVerified?: boolean
   email: string
   profileImage?: string | null
   profileCoverImage?: string | null
   address?: string | null
   pinCode?: string | null
   bio?: string | null
-  isActive?: boolean
   password: string
+  isActive?: boolean
+  isPhoneVerified?: boolean
+  isEmailVerified?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   reviews?: Prisma.TourReviewUncheckedCreateNestedManyWithoutUserInput
@@ -376,15 +390,16 @@ export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileCoverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pinCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reviews?: Prisma.TourReviewUpdateManyWithoutUserNestedInput
@@ -394,15 +409,16 @@ export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileCoverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pinCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reviews?: Prisma.TourReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -412,15 +428,16 @@ export type UserCreateManyInput = {
   id?: string
   name: string
   phone?: string | null
-  isPhoneVerified?: boolean
   email: string
   profileImage?: string | null
   profileCoverImage?: string | null
   address?: string | null
   pinCode?: string | null
   bio?: string | null
-  isActive?: boolean
   password: string
+  isActive?: boolean
+  isPhoneVerified?: boolean
+  isEmailVerified?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -429,15 +446,16 @@ export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileCoverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pinCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -446,15 +464,16 @@ export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileCoverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pinCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -463,15 +482,16 @@ export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
-  isPhoneVerified?: Prisma.SortOrder
   email?: Prisma.SortOrder
   profileImage?: Prisma.SortOrder
   profileCoverImage?: Prisma.SortOrder
   address?: Prisma.SortOrder
   pinCode?: Prisma.SortOrder
   bio?: Prisma.SortOrder
-  isActive?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  isActive?: Prisma.SortOrder
+  isPhoneVerified?: Prisma.SortOrder
+  isEmailVerified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -480,15 +500,16 @@ export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
-  isPhoneVerified?: Prisma.SortOrder
   email?: Prisma.SortOrder
   profileImage?: Prisma.SortOrder
   profileCoverImage?: Prisma.SortOrder
   address?: Prisma.SortOrder
   pinCode?: Prisma.SortOrder
   bio?: Prisma.SortOrder
-  isActive?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  isActive?: Prisma.SortOrder
+  isPhoneVerified?: Prisma.SortOrder
+  isEmailVerified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -497,15 +518,16 @@ export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
-  isPhoneVerified?: Prisma.SortOrder
   email?: Prisma.SortOrder
   profileImage?: Prisma.SortOrder
   profileCoverImage?: Prisma.SortOrder
   address?: Prisma.SortOrder
   pinCode?: Prisma.SortOrder
   bio?: Prisma.SortOrder
-  isActive?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  isActive?: Prisma.SortOrder
+  isPhoneVerified?: Prisma.SortOrder
+  isEmailVerified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -549,15 +571,16 @@ export type UserCreateWithoutReviewsInput = {
   id?: string
   name: string
   phone?: string | null
-  isPhoneVerified?: boolean
   email: string
   profileImage?: string | null
   profileCoverImage?: string | null
   address?: string | null
   pinCode?: string | null
   bio?: string | null
-  isActive?: boolean
   password: string
+  isActive?: boolean
+  isPhoneVerified?: boolean
+  isEmailVerified?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -566,15 +589,16 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   id?: string
   name: string
   phone?: string | null
-  isPhoneVerified?: boolean
   email: string
   profileImage?: string | null
   profileCoverImage?: string | null
   address?: string | null
   pinCode?: string | null
   bio?: string | null
-  isActive?: boolean
   password: string
+  isActive?: boolean
+  isPhoneVerified?: boolean
+  isEmailVerified?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -599,15 +623,16 @@ export type UserUpdateWithoutReviewsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileCoverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pinCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -616,15 +641,16 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileCoverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pinCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isPhoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -664,15 +690,16 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   id?: boolean
   name?: boolean
   phone?: boolean
-  isPhoneVerified?: boolean
   email?: boolean
   profileImage?: boolean
   profileCoverImage?: boolean
   address?: boolean
   pinCode?: boolean
   bio?: boolean
-  isActive?: boolean
   password?: boolean
+  isActive?: boolean
+  isPhoneVerified?: boolean
+  isEmailVerified?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   reviews?: boolean | Prisma.User$reviewsArgs<ExtArgs>
@@ -683,15 +710,16 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   name?: boolean
   phone?: boolean
-  isPhoneVerified?: boolean
   email?: boolean
   profileImage?: boolean
   profileCoverImage?: boolean
   address?: boolean
   pinCode?: boolean
   bio?: boolean
-  isActive?: boolean
   password?: boolean
+  isActive?: boolean
+  isPhoneVerified?: boolean
+  isEmailVerified?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -700,15 +728,16 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   name?: boolean
   phone?: boolean
-  isPhoneVerified?: boolean
   email?: boolean
   profileImage?: boolean
   profileCoverImage?: boolean
   address?: boolean
   pinCode?: boolean
   bio?: boolean
-  isActive?: boolean
   password?: boolean
+  isActive?: boolean
+  isPhoneVerified?: boolean
+  isEmailVerified?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -717,20 +746,21 @@ export type UserSelectScalar = {
   id?: boolean
   name?: boolean
   phone?: boolean
-  isPhoneVerified?: boolean
   email?: boolean
   profileImage?: boolean
   profileCoverImage?: boolean
   address?: boolean
   pinCode?: boolean
   bio?: boolean
-  isActive?: boolean
   password?: boolean
+  isActive?: boolean
+  isPhoneVerified?: boolean
+  isEmailVerified?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "isPhoneVerified" | "email" | "profileImage" | "profileCoverImage" | "address" | "pinCode" | "bio" | "isActive" | "password" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "email" | "profileImage" | "profileCoverImage" | "address" | "pinCode" | "bio" | "password" | "isActive" | "isPhoneVerified" | "isEmailVerified" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   reviews?: boolean | Prisma.User$reviewsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -747,15 +777,16 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     id: string
     name: string
     phone: string | null
-    isPhoneVerified: boolean
     email: string
     profileImage: string | null
     profileCoverImage: string | null
     address: string | null
     pinCode: string | null
     bio: string | null
-    isActive: boolean
     password: string
+    isActive: boolean
+    isPhoneVerified: boolean
+    isEmailVerified: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1185,15 +1216,16 @@ export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
   readonly name: Prisma.FieldRef<"User", 'String'>
   readonly phone: Prisma.FieldRef<"User", 'String'>
-  readonly isPhoneVerified: Prisma.FieldRef<"User", 'Boolean'>
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly profileImage: Prisma.FieldRef<"User", 'String'>
   readonly profileCoverImage: Prisma.FieldRef<"User", 'String'>
   readonly address: Prisma.FieldRef<"User", 'String'>
   readonly pinCode: Prisma.FieldRef<"User", 'String'>
   readonly bio: Prisma.FieldRef<"User", 'String'>
-  readonly isActive: Prisma.FieldRef<"User", 'Boolean'>
   readonly password: Prisma.FieldRef<"User", 'String'>
+  readonly isActive: Prisma.FieldRef<"User", 'Boolean'>
+  readonly isPhoneVerified: Prisma.FieldRef<"User", 'Boolean'>
+  readonly isEmailVerified: Prisma.FieldRef<"User", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

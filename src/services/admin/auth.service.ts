@@ -28,8 +28,8 @@ export class AuthService {
       roleId: admin.roleId,
     };
 
-    const accessToken = JwtUtil.generateAccessToken(payload);
-    const refreshToken = JwtUtil.generateRefreshToken(payload);
+    const accessToken = JwtUtil.generateAdminAccessToken(payload);
+    const refreshToken = JwtUtil.generateAdminRefreshToken(payload);
 
     await prisma.admin.update({
       where: { id: admin.id },
@@ -50,7 +50,7 @@ export class AuthService {
   }
 
   static async refreshToken(token: string) {
-    const payload = JwtUtil.verifyRefreshToken(token);
+    const payload = JwtUtil.verifyAdminRefreshToken(token);
 
     const admin = await prisma.admin.findUnique({
       where: { id: payload.adminId },
@@ -70,7 +70,7 @@ export class AuthService {
       roleId: admin.roleId,
     };
 
-    const accessToken = JwtUtil.generateAccessToken(newPayload);
+    const accessToken = JwtUtil.generateAdminAccessToken(newPayload);
 
     return { accessToken };
   }
