@@ -1,5 +1,4 @@
 export const getVerificationEmailTemplate = (name: string, verificationUrl: string): string => {
-  console.log(process.env.FRONTEND_URL + '/logo-white.png');
   return `
     <!DOCTYPE html>
     <html>
@@ -254,7 +253,7 @@ export const getVerificationEmailTemplate = (name: string, verificationUrl: stri
           <!-- Header -->
           <div class="header">
             <div class="logo-container">
-              <img src="${process.env.FRONTEND_URL}/logo.png" alt="Way to India" class="logo">
+              <img src="https://www.waytoindia.com/logo.png" alt="Way to India" class="logo">
             </div>
             <h1 class="header-title">Welcome Aboard! 🎉</h1>
             <p class="header-subtitle">Let's verify your email and start exploring</p>
