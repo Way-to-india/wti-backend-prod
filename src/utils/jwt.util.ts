@@ -21,9 +21,7 @@ export interface EmailVerificationPayload {
 }
 
 export class JwtUtil {
-  // ============================================
-  // ADMIN METHODS (Keep your existing code)
-  // ============================================
+  
   static generateAdminAccessToken(payload: AdminTokenPayload): string {
     return jwt.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
   }
@@ -70,9 +68,6 @@ export class JwtUtil {
     return jwt.verify(token, ACCESS_TOKEN_SECRET) as EmailVerificationPayload;
   }
 
-  // ============================================
-  // SHARED UTILITY
-  // ============================================
   static getRefreshTokenExpiry(): Date {
     const date = new Date();
     date.setDate(date.getDate() + 7);
