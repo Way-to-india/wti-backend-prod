@@ -1,4 +1,3 @@
-// src/config/redis.ts
 import Redis from 'ioredis';
 
 class RedisClient {
@@ -6,8 +5,8 @@ class RedisClient {
   private client: Redis;
 
   private constructor() {
-    console.log(process.env.REDIS_URL);
     const redisUrl = process.env.REDIS_URL;
+    console.log('🔍 Redis URL:', redisUrl ? redisUrl.replace(/:[^:@]+@/, ':****@') : 'NOT SET');
 
     if (redisUrl) {
       this.client = new Redis(redisUrl, {
@@ -17,19 +16,32 @@ class RedisClient {
         },
         maxRetriesPerRequest: 3,
         tls: redisUrl.startsWith('rediss://') ? {} : undefined,
-        family: 6,
+        family: 4, // Changed from 6 to 4 (IPv4)
+        enableOfflineQueue: false,
+        lazyConnect: false,
       });
     } else {
+      const host = process.env.REDIS_HOST || 'localhost';
+      const port = parseInt(process.env.REDIS_PORT || '6379');
+      const password = process.env.REDIS_PASSWORD || undefined;
+
+      console.log('🔍 Redis Config:', { host, port, hasPassword: !!password });
+
       this.client = new Redis({
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        password: process.env.REDIS_PASSWORD || undefined,
+        host,
+        port,
+        password,
         db: parseInt(process.env.REDIS_DB || '0'),
         retryStrategy: (times: number) => {
           const delay = Math.min(times * 50, 2000);
           return delay;
         },
         maxRetriesPerRequest: 3,
+        family: 4, // Use IPv4
+        enableOfflineQueue: false,
+        lazyConnect: false,
+        // Add TLS for Upstash even when using individual params
+        tls: host.includes('upstash.io') ? {} : undefined,
       });
     }
 
