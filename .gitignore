@@ -186,3 +186,10 @@ server_ip
 tours.csv
 
 downloaded_images
+
+# Database backups
+backups/*.sql
+backups/*.gz
+backups/*.zip
+backups/*.log
+!backups/.gitkeep

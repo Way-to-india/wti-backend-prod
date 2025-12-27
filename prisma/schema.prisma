@@ -10,7 +10,7 @@ datasource db {
 }
 
 model User {
-  id                String       @id @default(uuid())
+  id                String        @id @default(uuid())
   name              String       @db.VarChar(255)
   phone             String?      @unique @db.VarChar(20)
   email             String       @unique @db.VarChar(255)
@@ -21,6 +21,7 @@ model User {
   bio               String?
   password          String       @db.VarChar(255)
   isActive          Boolean      @default(true)
+  countryCode       Int          @default(91)
   isPhoneVerified   Boolean      @default(false)
   isEmailVerified   Boolean      @default(false)
   createdAt         DateTime     @default(now()) @db.Timestamptz(3)
