@@ -22,6 +22,7 @@ interface BackupConfig {
 
 /**
  * Parse DATABASE_URL from .env file
+ * Format: postgresql://username:password@host:port/database?params
  */
 function parseDatabaseUrl(): BackupConfig {
   const envPath = path.join(__dirname, '..', '.env');
@@ -37,21 +38,35 @@ function parseDatabaseUrl(): BackupConfig {
     throw new Error('DATABASE_URL not found in .env file');
   }
 
-  const dbUrl = dbUrlMatch[1];
-  const urlPattern = /postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+?)(?:\?.*)?$/;
-  const match = dbUrl.match(urlPattern);
+  const dbUrl = dbUrlMatch[1].trim();
 
-  if (!match) {
-    throw new Error('Invalid DATABASE_URL format');
+  try {
+    // Use URL parser for better handling of special characters and query params
+    const url = new URL(dbUrl);
+
+    if (url.protocol !== 'postgresql:' && url.protocol !== 'postgres:') {
+      throw new Error('URL must use postgresql:// or postgres:// protocol');
+    }
+
+    // Extract database name from pathname (remove leading slash)
+    const database = url.pathname.substring(1);
+
+    if (!url.hostname || !url.port || !url.username || !url.password || !database) {
+      throw new Error('Missing required connection parameters');
+    }
+
+    return {
+      host: url.hostname,
+      port: url.port,
+      username: decodeURIComponent(url.username),
+      password: decodeURIComponent(url.password),
+      database: database,
+    };
+  } catch (error) {
+    throw new Error(
+      `Invalid DATABASE_URL format: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
-
-  return {
-    username: match[1],
-    password: match[2],
-    host: match[3],
-    port: match[4],
-    database: match[5],
-  };
 }
 
 /**
