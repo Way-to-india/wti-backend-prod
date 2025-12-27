@@ -129,6 +129,7 @@ export class AuthService {
   }
 
   static async verifyEmail(token: string) {
+    
     const decoded = JwtUtil.verifyEmailToken(token);
 
     if (decoded.type !== 'email-verification') {

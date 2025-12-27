@@ -54,12 +54,10 @@ export class AuthController {
     try {
       const { email, password } = req.body;
 
-      // Validation
       if (!email || !password) {
         return res.deliver(400, false, undefined, 'Email and password are required');
       }
 
-      // Login
       const result = await AuthService.login(email, password);
 
       return res.deliver(200, true, result, 'Login successful');
