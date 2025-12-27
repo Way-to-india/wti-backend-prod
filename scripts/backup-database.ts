@@ -6,11 +6,9 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-// Get the directory name in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configuration
 const BACKUP_DIR = path.join(__dirname, '..', 'backups');
 const BACKUP_RETENTION_DAYS = 30;
 const LOG_FILE = path.join(BACKUP_DIR, 'backup.log');
@@ -103,22 +101,21 @@ async function createBackup(config: BackupConfig): Promise<string> {
   log(`Starting backup for database: ${config.database}`);
 
   try {
-    // Set PGPASSWORD environment variable for authentication
     const env = {
       ...process.env,
       PGPASSWORD: config.password,
     };
 
-    // Run pg_dump command
+    console.log("env",env);
+
     const dumpCommand = `pg_dump -h ${config.host} -p ${config.port} -U ${config.username} -d ${config.database} -F p -f "${backupPath}"`;
 
     log(
       `Executing: pg_dump -h ${config.host} -p ${config.port} -U ${config.username} -d ${config.database}`
     );
 
-    await execAsync(dumpCommand, { env, maxBuffer: 1024 * 1024 * 100 }); // 100MB buffer
+    await execAsync(dumpCommand, { env, maxBuffer: 1024 * 1024 * 100 });
 
-    // Compress the backup file
     log('Compressing backup file...');
     const gzipCommand =
       process.platform === 'win32'
@@ -137,7 +134,6 @@ async function createBackup(config: BackupConfig): Promise<string> {
   } catch (error) {
     log(`Backup failed: ${error instanceof Error ? error.message : String(error)}`);
 
-    // Clean up partial backup file if it exists
     if (fs.existsSync(backupPath)) {
       fs.unlinkSync(backupPath);
     }
@@ -193,16 +189,12 @@ async function main(): Promise<void> {
   log('='.repeat(60));
 
   try {
-    // Ensure backup directory exists
     ensureBackupDir();
 
-    // Parse database configuration
     const config = parseDatabaseUrl();
 
-    // Create backup
     await createBackup(config);
 
-    // Clean old backups
     cleanOldBackups();
 
     log('='.repeat(60));
@@ -219,5 +211,4 @@ async function main(): Promise<void> {
   }
 }
 
-// Run the backup
 main();
