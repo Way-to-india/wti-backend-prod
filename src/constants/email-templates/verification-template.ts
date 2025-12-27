@@ -1,4 +1,5 @@
 export const getVerificationEmailTemplate = (name: string, verificationUrl: string): string => {
+  console.log(process.env.FRONTEND_URL + '/logo-white.png');
   return `
     <!DOCTYPE html>
     <html>
