@@ -13,7 +13,7 @@ export class EmailService {
       const htmlTemplate = getVerificationEmailTemplate(name, verificationUrl);
 
       await resend.emails.send({
-        from: 'Way to India <onboarding@resend.dev>',
+        from: 'Way to India <noreply@waytoindia.com>',
         to: [email],
         subject: '🎉 Welcome to Way to India - Verify Your Email',
         html: htmlTemplate,
