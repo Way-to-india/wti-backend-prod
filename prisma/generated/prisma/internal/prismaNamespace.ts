@@ -410,7 +410,12 @@ export const ModelName = {
   Module: 'Module',
   Permission: 'Permission',
   Lead: 'Lead',
-  LeadActivity: 'LeadActivity'
+  LeadActivity: 'LeadActivity',
+  PoiCategory: 'PoiCategory',
+  PoiMetadata: 'PoiMetadata',
+  PoiState: 'PoiState',
+  PoiCity: 'PoiCity',
+  PoiMonument: 'PoiMonument'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -426,7 +431,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "tour" | "tourPriceGuide" | "theme" | "tourTheme" | "tourReview" | "reviewImage" | "tourItinerary" | "tourCity" | "city" | "faq" | "faqQuestion" | "travelGuideState" | "travelGuideCity" | "travelGuideData" | "admin" | "role" | "module" | "permission" | "lead" | "leadActivity"
+    modelProps: "user" | "tour" | "tourPriceGuide" | "theme" | "tourTheme" | "tourReview" | "reviewImage" | "tourItinerary" | "tourCity" | "city" | "faq" | "faqQuestion" | "travelGuideState" | "travelGuideCity" | "travelGuideData" | "admin" | "role" | "module" | "permission" | "lead" | "leadActivity" | "poiCategory" | "poiMetadata" | "poiState" | "poiCity" | "poiMonument"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1984,6 +1989,376 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PoiCategory: {
+      payload: Prisma.$PoiCategoryPayload<ExtArgs>
+      fields: Prisma.PoiCategoryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PoiCategoryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCategoryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PoiCategoryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCategoryPayload>
+        }
+        findFirst: {
+          args: Prisma.PoiCategoryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCategoryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PoiCategoryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCategoryPayload>
+        }
+        findMany: {
+          args: Prisma.PoiCategoryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCategoryPayload>[]
+        }
+        create: {
+          args: Prisma.PoiCategoryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCategoryPayload>
+        }
+        createMany: {
+          args: Prisma.PoiCategoryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PoiCategoryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCategoryPayload>[]
+        }
+        delete: {
+          args: Prisma.PoiCategoryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCategoryPayload>
+        }
+        update: {
+          args: Prisma.PoiCategoryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCategoryPayload>
+        }
+        deleteMany: {
+          args: Prisma.PoiCategoryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PoiCategoryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PoiCategoryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCategoryPayload>[]
+        }
+        upsert: {
+          args: Prisma.PoiCategoryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCategoryPayload>
+        }
+        aggregate: {
+          args: Prisma.PoiCategoryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePoiCategory>
+        }
+        groupBy: {
+          args: Prisma.PoiCategoryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PoiCategoryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PoiCategoryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PoiCategoryCountAggregateOutputType> | number
+        }
+      }
+    }
+    PoiMetadata: {
+      payload: Prisma.$PoiMetadataPayload<ExtArgs>
+      fields: Prisma.PoiMetadataFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PoiMetadataFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMetadataPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PoiMetadataFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMetadataPayload>
+        }
+        findFirst: {
+          args: Prisma.PoiMetadataFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMetadataPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PoiMetadataFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMetadataPayload>
+        }
+        findMany: {
+          args: Prisma.PoiMetadataFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMetadataPayload>[]
+        }
+        create: {
+          args: Prisma.PoiMetadataCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMetadataPayload>
+        }
+        createMany: {
+          args: Prisma.PoiMetadataCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PoiMetadataCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMetadataPayload>[]
+        }
+        delete: {
+          args: Prisma.PoiMetadataDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMetadataPayload>
+        }
+        update: {
+          args: Prisma.PoiMetadataUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMetadataPayload>
+        }
+        deleteMany: {
+          args: Prisma.PoiMetadataDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PoiMetadataUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PoiMetadataUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMetadataPayload>[]
+        }
+        upsert: {
+          args: Prisma.PoiMetadataUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMetadataPayload>
+        }
+        aggregate: {
+          args: Prisma.PoiMetadataAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePoiMetadata>
+        }
+        groupBy: {
+          args: Prisma.PoiMetadataGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PoiMetadataGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PoiMetadataCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PoiMetadataCountAggregateOutputType> | number
+        }
+      }
+    }
+    PoiState: {
+      payload: Prisma.$PoiStatePayload<ExtArgs>
+      fields: Prisma.PoiStateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PoiStateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiStatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PoiStateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiStatePayload>
+        }
+        findFirst: {
+          args: Prisma.PoiStateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiStatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PoiStateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiStatePayload>
+        }
+        findMany: {
+          args: Prisma.PoiStateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiStatePayload>[]
+        }
+        create: {
+          args: Prisma.PoiStateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiStatePayload>
+        }
+        createMany: {
+          args: Prisma.PoiStateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PoiStateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiStatePayload>[]
+        }
+        delete: {
+          args: Prisma.PoiStateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiStatePayload>
+        }
+        update: {
+          args: Prisma.PoiStateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiStatePayload>
+        }
+        deleteMany: {
+          args: Prisma.PoiStateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PoiStateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PoiStateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiStatePayload>[]
+        }
+        upsert: {
+          args: Prisma.PoiStateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiStatePayload>
+        }
+        aggregate: {
+          args: Prisma.PoiStateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePoiState>
+        }
+        groupBy: {
+          args: Prisma.PoiStateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PoiStateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PoiStateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PoiStateCountAggregateOutputType> | number
+        }
+      }
+    }
+    PoiCity: {
+      payload: Prisma.$PoiCityPayload<ExtArgs>
+      fields: Prisma.PoiCityFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PoiCityFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCityPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PoiCityFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCityPayload>
+        }
+        findFirst: {
+          args: Prisma.PoiCityFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCityPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PoiCityFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCityPayload>
+        }
+        findMany: {
+          args: Prisma.PoiCityFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCityPayload>[]
+        }
+        create: {
+          args: Prisma.PoiCityCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCityPayload>
+        }
+        createMany: {
+          args: Prisma.PoiCityCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PoiCityCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCityPayload>[]
+        }
+        delete: {
+          args: Prisma.PoiCityDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCityPayload>
+        }
+        update: {
+          args: Prisma.PoiCityUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCityPayload>
+        }
+        deleteMany: {
+          args: Prisma.PoiCityDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PoiCityUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PoiCityUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCityPayload>[]
+        }
+        upsert: {
+          args: Prisma.PoiCityUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiCityPayload>
+        }
+        aggregate: {
+          args: Prisma.PoiCityAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePoiCity>
+        }
+        groupBy: {
+          args: Prisma.PoiCityGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PoiCityGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PoiCityCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PoiCityCountAggregateOutputType> | number
+        }
+      }
+    }
+    PoiMonument: {
+      payload: Prisma.$PoiMonumentPayload<ExtArgs>
+      fields: Prisma.PoiMonumentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PoiMonumentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMonumentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PoiMonumentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMonumentPayload>
+        }
+        findFirst: {
+          args: Prisma.PoiMonumentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMonumentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PoiMonumentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMonumentPayload>
+        }
+        findMany: {
+          args: Prisma.PoiMonumentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMonumentPayload>[]
+        }
+        create: {
+          args: Prisma.PoiMonumentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMonumentPayload>
+        }
+        createMany: {
+          args: Prisma.PoiMonumentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PoiMonumentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMonumentPayload>[]
+        }
+        delete: {
+          args: Prisma.PoiMonumentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMonumentPayload>
+        }
+        update: {
+          args: Prisma.PoiMonumentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMonumentPayload>
+        }
+        deleteMany: {
+          args: Prisma.PoiMonumentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PoiMonumentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PoiMonumentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMonumentPayload>[]
+        }
+        upsert: {
+          args: Prisma.PoiMonumentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PoiMonumentPayload>
+        }
+        aggregate: {
+          args: Prisma.PoiMonumentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePoiMonument>
+        }
+        groupBy: {
+          args: Prisma.PoiMonumentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PoiMonumentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PoiMonumentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PoiMonumentCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2365,6 +2740,81 @@ export const LeadActivityScalarFieldEnum = {
 export type LeadActivityScalarFieldEnum = (typeof LeadActivityScalarFieldEnum)[keyof typeof LeadActivityScalarFieldEnum]
 
 
+export const PoiCategoryScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  monumentCount: 'monumentCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PoiCategoryScalarFieldEnum = (typeof PoiCategoryScalarFieldEnum)[keyof typeof PoiCategoryScalarFieldEnum]
+
+
+export const PoiMetadataScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  data: 'data',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PoiMetadataScalarFieldEnum = (typeof PoiMetadataScalarFieldEnum)[keyof typeof PoiMetadataScalarFieldEnum]
+
+
+export const PoiStateScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  monumentCount: 'monumentCount',
+  cityCount: 'cityCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PoiStateScalarFieldEnum = (typeof PoiStateScalarFieldEnum)[keyof typeof PoiStateScalarFieldEnum]
+
+
+export const PoiCityScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  stateId: 'stateId',
+  monumentCount: 'monumentCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PoiCityScalarFieldEnum = (typeof PoiCityScalarFieldEnum)[keyof typeof PoiCityScalarFieldEnum]
+
+
+export const PoiMonumentScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  monumentName: 'monumentName',
+  cityId: 'cityId',
+  typeofPlace: 'typeofPlace',
+  description: 'description',
+  besttime: 'besttime',
+  openingtime: 'openingtime',
+  clossingtime: 'clossingtime',
+  weeklyoff: 'weeklyoff',
+  entryFees: 'entryFees',
+  weather: 'weather',
+  connectivity: 'connectivity',
+  location: 'location',
+  rating: 'rating',
+  totalRatings: 'totalRatings',
+  website: 'website',
+  phone: 'phone',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PoiMonumentScalarFieldEnum = (typeof PoiMonumentScalarFieldEnum)[keyof typeof PoiMonumentScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2378,6 +2828,14 @@ export const JsonNullValueInput = {
 } as const
 
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -2637,6 +3095,11 @@ export type GlobalOmitConfig = {
   permission?: Prisma.PermissionOmit
   lead?: Prisma.LeadOmit
   leadActivity?: Prisma.LeadActivityOmit
+  poiCategory?: Prisma.PoiCategoryOmit
+  poiMetadata?: Prisma.PoiMetadataOmit
+  poiState?: Prisma.PoiStateOmit
+  poiCity?: Prisma.PoiCityOmit
+  poiMonument?: Prisma.PoiMonumentOmit
 }
 
 /* Types for Logging */

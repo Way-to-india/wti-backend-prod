@@ -13,6 +13,7 @@ enum Routes {
   MODULE = '/module',
   REVIEW = '/reviews',
   TRAVEL_GUIDE = '/travel-guide',
+  POI = '/poi',
 }
 
 const AppRoutes = { ...Routes } as const;

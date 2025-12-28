@@ -122,3 +122,28 @@ export type Lead = Prisma.LeadModel
  * 
  */
 export type LeadActivity = Prisma.LeadActivityModel
+/**
+ * Model PoiCategory
+ * 
+ */
+export type PoiCategory = Prisma.PoiCategoryModel
+/**
+ * Model PoiMetadata
+ * 
+ */
+export type PoiMetadata = Prisma.PoiMetadataModel
+/**
+ * Model PoiState
+ * 
+ */
+export type PoiState = Prisma.PoiStateModel
+/**
+ * Model PoiCity
+ * 
+ */
+export type PoiCity = Prisma.PoiCityModel
+/**
+ * Model PoiMonument
+ * 
+ */
+export type PoiMonument = Prisma.PoiMonumentModel

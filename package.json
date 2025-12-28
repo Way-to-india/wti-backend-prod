@@ -5,7 +5,8 @@
   "scripts": {
     "backup:db": "bun run scripts/backup-database.ts",
     "backup:restore": "bun run scripts/restore-database.ts",
-    "backup:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-backup-schedule.ps1"
+    "backup:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-backup-schedule.ps1",
+    "import:poi": "bun run scripts/import-poi-data.ts"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",

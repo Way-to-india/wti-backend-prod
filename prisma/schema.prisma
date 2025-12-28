@@ -10,7 +10,7 @@ datasource db {
 }
 
 model User {
-  id                String        @id @default(uuid())
+  id                String       @id @default(uuid())
   name              String       @db.VarChar(255)
   phone             String?      @unique @db.VarChar(20)
   email             String       @unique @db.VarChar(255)
@@ -465,4 +465,94 @@ model LeadActivity {
 
   @@index([leadId, createdAt(sort: Desc)])
   @@map("lead_activities")
+}
+
+// ============================================
+// POI (PLACES OF INTEREST) MODELS
+// ============================================
+
+model PoiCategory {
+  id            String   @id @default(uuid())
+  slug          String   @unique
+  name          String
+  monumentCount Int      @default(0) @map("monument_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([slug])
+  @@index([monumentCount])
+  @@map("poi_categories")
+}
+
+model PoiMetadata {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([key])
+  @@map("poi_metadata")
+}
+
+model PoiState {
+  id            String    @id @default(uuid())
+  slug          String    @unique
+  name          String
+  monumentCount Int       @default(0) @map("monument_count")
+  cityCount     Int       @default(0) @map("city_count")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  cities        PoiCity[]
+
+  @@index([slug])
+  @@index([name])
+  @@map("poi_states")
+}
+
+model PoiCity {
+  id            String        @id @default(uuid())
+  slug          String
+  name          String
+  stateId       String        @map("state_id")
+  monumentCount Int           @default(0) @map("monument_count")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  state         PoiState      @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  monuments     PoiMonument[]
+
+  @@unique([stateId, slug])
+  @@index([slug])
+  @@index([stateId])
+  @@map("poi_cities")
+}
+
+model PoiMonument {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  monumentName String   @map("monument_name")
+  cityId       String   @map("city_id")
+  typeofPlace  String?  @map("type_of_place")
+  description  String?  @db.Text
+  besttime     String?  @map("best_time")
+  openingtime  String?  @map("opening_time")
+  clossingtime String?  @map("closing_time")
+  weeklyoff    String?  @map("weekly_off")
+  entryFees    Json?    @map("entry_fees")
+  weather      Json?
+  connectivity Json?
+  location     Json?
+  rating       Float?
+  totalRatings Int?     @default(0) @map("total_ratings")
+  website      String?
+  phone        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  city         PoiCity  @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+  @@index([cityId])
+  @@index([monumentName])
+  @@index([typeofPlace])
+  @@map("poi_monuments")
 }
