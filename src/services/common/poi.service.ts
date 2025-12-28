@@ -1,9 +1,7 @@
 import prisma from '@/config/db';
 
 export class PoiService {
-  /**
-   * Get all categories with monument counts
-   */
+  
   static async getAllCategories() {
     const categories = await prisma.poiCategory.findMany({
       orderBy: {
@@ -20,9 +18,6 @@ export class PoiService {
     return categories;
   }
 
-  /**
-   * Get category by slug with monuments
-   */
   static async getCategoryBySlug(slug: string, page: number = 1, limit: number = 20) {
     const category = await prisma.poiCategory.findUnique({
       where: { slug },
@@ -94,9 +89,6 @@ export class PoiService {
     };
   }
 
-  /**
-   * Get all states with counts
-   */
   static async getAllStates() {
     const states = await prisma.poiState.findMany({
       orderBy: {
@@ -114,9 +106,6 @@ export class PoiService {
     return states;
   }
 
-  /**
-   * Get state by slug with cities
-   */
   static async getStateBySlug(slug: string) {
     const state = await prisma.poiState.findUnique({
       where: { slug },
@@ -138,9 +127,6 @@ export class PoiService {
     return state;
   }
 
-  /**
-   * Get all cities in a state
-   */
   static async getCitiesByState(stateSlug: string) {
     const state = await prisma.poiState.findUnique({
       where: { slug: stateSlug },
@@ -175,9 +161,6 @@ export class PoiService {
     };
   }
 
-  /**
-   * Get all monuments in a state
-   */
   static async getMonumentsByState(stateSlug: string, page: number = 1, limit: number = 20) {
     const state = await prisma.poiState.findUnique({
       where: { slug: stateSlug },
@@ -241,9 +224,6 @@ export class PoiService {
     };
   }
 
-  /**
-   * Get all cities with pagination
-   */
   static async getAllCities(page: number = 1, limit: number = 50) {
     const skip = (page - 1) * limit;
 
@@ -392,9 +372,6 @@ export class PoiService {
     };
   }
 
-  /**
-   * Get all monuments with filters
-   */
   static async getAllMonuments(filters: {
     page?: number;
     limit?: number;
@@ -478,9 +455,6 @@ export class PoiService {
     };
   }
 
-  /**
-   * Get monument by slug
-   */
   static async getMonumentBySlug(slug: string) {
     const monument = await prisma.poiMonument.findUnique({
       where: { slug },
@@ -505,9 +479,6 @@ export class PoiService {
     return monument;
   }
 
-  /**
-   * Search monuments by name
-   */
   static async searchMonuments(query: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
