@@ -69,7 +69,12 @@ export const ModelName = {
   Module: 'Module',
   Permission: 'Permission',
   Lead: 'Lead',
-  LeadActivity: 'LeadActivity'
+  LeadActivity: 'LeadActivity',
+  PoiCategory: 'PoiCategory',
+  PoiMetadata: 'PoiMetadata',
+  PoiState: 'PoiState',
+  PoiCity: 'PoiCity',
+  PoiMonument: 'PoiMonument'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -430,6 +435,81 @@ export const LeadActivityScalarFieldEnum = {
 export type LeadActivityScalarFieldEnum = (typeof LeadActivityScalarFieldEnum)[keyof typeof LeadActivityScalarFieldEnum]
 
 
+export const PoiCategoryScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  monumentCount: 'monumentCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PoiCategoryScalarFieldEnum = (typeof PoiCategoryScalarFieldEnum)[keyof typeof PoiCategoryScalarFieldEnum]
+
+
+export const PoiMetadataScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  data: 'data',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PoiMetadataScalarFieldEnum = (typeof PoiMetadataScalarFieldEnum)[keyof typeof PoiMetadataScalarFieldEnum]
+
+
+export const PoiStateScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  monumentCount: 'monumentCount',
+  cityCount: 'cityCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PoiStateScalarFieldEnum = (typeof PoiStateScalarFieldEnum)[keyof typeof PoiStateScalarFieldEnum]
+
+
+export const PoiCityScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  stateId: 'stateId',
+  monumentCount: 'monumentCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PoiCityScalarFieldEnum = (typeof PoiCityScalarFieldEnum)[keyof typeof PoiCityScalarFieldEnum]
+
+
+export const PoiMonumentScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  monumentName: 'monumentName',
+  cityId: 'cityId',
+  typeofPlace: 'typeofPlace',
+  description: 'description',
+  besttime: 'besttime',
+  openingtime: 'openingtime',
+  clossingtime: 'clossingtime',
+  weeklyoff: 'weeklyoff',
+  entryFees: 'entryFees',
+  weather: 'weather',
+  connectivity: 'connectivity',
+  location: 'location',
+  rating: 'rating',
+  totalRatings: 'totalRatings',
+  website: 'website',
+  phone: 'phone',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PoiMonumentScalarFieldEnum = (typeof PoiMonumentScalarFieldEnum)[keyof typeof PoiMonumentScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -443,6 +523,14 @@ export const JsonNullValueInput = {
 } as const
 
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {

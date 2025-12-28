@@ -4,6 +4,7 @@ import CityRouter from './city.routes';
 import ThemeRouter from './theme.routes';
 import QueryRouter from './query.routes';
 import TravelGuideRouter from './travel-guide.routes';
+import PoiRouter from './poi.routes';
 import { Router } from 'express';
 
 const router = Router();
@@ -13,5 +14,6 @@ router.use(AppRoutes.CITY, CityRouter);
 router.use(AppRoutes.THEME, ThemeRouter);
 router.use(AppRoutes.QUERY, QueryRouter);
 router.use(AppRoutes.TRAVEL_GUIDE, TravelGuideRouter);
+router.use(AppRoutes.POI, PoiRouter);
 
 export default router;

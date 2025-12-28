@@ -1,0 +1,11 @@
+id,slug,name,monumentCount,createdAt,updatedAt
+52158348-3fb5-4ffe-93ce-7abfb1cda798,beach,Beach,36,""2025-11-01T19:59:28.398Z"",""2025-11-01T19:59:28.398Z""
+f5a8b15a-9a59-46ca-aae4-bd384bf206ac,heritage-site,Heritage Site,25,""2025-11-01T19:59:29.198Z"",""2025-11-01T19:59:29.198Z""
+f91f6d79-1fe1-4f2d-9b8c-508947ab24fc,hillmountain,Hill/Mountain,8,""2025-11-01T19:59:29.406Z"",""2025-11-01T19:59:29.406Z""
+5754f831-77b3-41d2-b280-1dd1fcc13172,historical-monument,Historical Monument,63,""2025-11-01T19:59:29.614Z"",""2025-11-01T19:59:29.614Z""
+383e3c82-f6d1-4ca0-93b2-176ee6efeb83,monumentsite,Monument/Site,156,""2025-11-01T19:59:29.919Z"",""2025-11-01T19:59:29.919Z""
+f269a18c-5e00-49e7-b263-4b5b5152de7e,museum,Museum,33,""2025-11-01T19:59:30.217Z"",""2025-11-01T19:59:30.217Z""
+2bc265c4-b2e1-4caf-8e79-7b269f7ddd34,parkgarden,Park/Garden,80,""2025-11-01T19:59:30.421Z"",""2025-11-01T19:59:30.421Z""
+e794338f-5444-449d-95de-e42ddd6713a6,religious-site,Religious Site,122,""2025-11-01T19:59:30.626Z"",""2025-11-01T19:59:30.626Z""
+249aa640-f004-488e-83da-08ff8bb5bf4b,water-body,Water Body,43,""2025-11-01T19:59:31.237Z"",""2025-11-01T19:59:31.237Z""
+e7c47508-c142-40e2-9d76-7000d1f4268a,wildlife,Wildlife,42,""2025-11-01T19:59:31.440Z"",""2025-11-01T19:59:31.440Z""
