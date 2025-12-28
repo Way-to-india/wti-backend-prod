@@ -30,20 +30,15 @@ interface BackupConfig {
  * Format: postgresql://username:password@host:port/database?params
  */
 function parseDatabaseUrl(): BackupConfig {
-  const envPath = path.join(__dirname, '..', '.env');
 
-  if (!fs.existsSync(envPath)) {
-    throw new Error('.env file not found');
-  }
 
-  const envContent = fs.readFileSync(envPath, 'utf-8');
-  const dbUrlMatch = envContent.match(/DATABASE_URL=["']?([^"'\n]+)["']?/);
+  const database_url = process.env.DATABASE_URL;
 
-  if (!dbUrlMatch) {
+  if (!database_url) {
     throw new Error('DATABASE_URL not found in .env file');
   }
 
-  const dbUrl = dbUrlMatch[1].trim();
+  const dbUrl = database_url.trim();
 
   try {
     // Use URL parser for better handling of special characters and query params
