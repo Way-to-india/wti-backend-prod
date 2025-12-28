@@ -57,23 +57,26 @@ function parseDatabaseUrl(): BackupConfig {
     // Split by '?' to remove query parameters if they're in the pathname
     let database = url.pathname.substring(1).split('?')[0];
 
+    // Use default PostgreSQL port if not specified
+    const port = url.port && url.port.trim() !== '' ? url.port : '5432';
+
     // Debug logging
     console.log('Parsed connection details:');
     console.log('Host:', url.hostname);
-    console.log('Port:', url.port);
+    console.log('Port:', port);
     console.log('Username:', url.username);
     console.log('Password:', url.password ? '***' : 'missing');
     console.log('Database:', database);
 
-    if (!url.hostname || !url.port || !url.username || !url.password || !database) {
+    if (!url.hostname || !url.username || !url.password || !database || !port) {
       throw new Error(
-        `Missing required connection parameters - host: ${!!url.hostname}, port: ${!!url.port}, username: ${!!url.username}, password: ${!!url.password}, database: ${!!database}`
+        `Missing required connection parameters - host: ${!!url.hostname}, port: ${!!port}, username: ${!!url.username}, password: ${!!url.password}, database: ${!!database}`
       );
     }
 
     return {
       host: url.hostname,
-      port: url.port,
+      port: port,
       username: decodeURIComponent(url.username),
       password: decodeURIComponent(url.password),
       database: database,
