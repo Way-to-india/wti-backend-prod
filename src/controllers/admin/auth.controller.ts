@@ -10,6 +10,8 @@ export class AuthController {
         return res.deliver(400, false, undefined, 'Email and password are required');
       }
 
+      console.log(email,password);
+
       const result = await AuthService.login(email, password);
 
       return res.deliver(200, true, result, 'Login successful');

@@ -1,11 +1,11 @@
 import type { Request, Response, NextFunction } from 'express';
 import { JwtUtil } from '@/utils/jwt.util';
-import type { TokenPayload } from '@/utils/jwt.util';
+import type { AdminTokenPayload } from '@/utils/jwt.util';
 
 declare global {
   namespace Express {
     interface Request {
-      admin?: TokenPayload;
+      admin?: AdminTokenPayload;
     }
   }
 }
@@ -19,7 +19,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     }
 
     const token = authHeader.substring(7);
-    const decoded = JwtUtil.verifyAccessToken(token);
+    const decoded = JwtUtil.verifyAdminAccessToken(token);
 
     req.admin = decoded;
     console.log("middleware");

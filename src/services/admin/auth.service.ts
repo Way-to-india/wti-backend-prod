@@ -4,10 +4,13 @@ import { JwtUtil } from '@/utils/jwt.util';
 
 export class AuthService {
   static async login(email: string, password: string) {
+
     const admin = await prisma.admin.findUnique({
       where: { email },
       include: { role: true },
     });
+
+    console.log(admin);
 
     if (!admin) {
       throw new Error('Invalid credentials');
