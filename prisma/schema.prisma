@@ -186,7 +186,7 @@ model TourItinerary {
 
 model TourCity {
   tourId    String
-  cityId    String
+  cityId    String   
   order     Int      @default(0) @db.SmallInt
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)

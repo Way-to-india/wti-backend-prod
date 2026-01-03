@@ -29,4 +29,10 @@ router.get(
   TourController.getTourById
 );
 
+router.get(
+  '/suggestions/:search',
+  validate(getTourQuerySchema, 'params'),
+  TourController.getSearchSuggestion
+);
+
 export default router;
