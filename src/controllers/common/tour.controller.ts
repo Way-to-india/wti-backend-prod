@@ -4,7 +4,6 @@ import type { Request, Response } from 'express';
 import type { Prisma } from 'prisma/generated/prisma/client';
 
 export class TourController {
-  
   static async getAllTours(req: Request, res: Response) {
     try {
       const {
@@ -494,6 +493,61 @@ export class TourController {
         false,
         undefined,
         error instanceof Error ? error.message : 'Failed to fetch tour'
+      );
+    }
+  } 
+
+  static async getSearchSuggestion(req: Request, res: Response) {
+    const { search } = req.params;
+
+    try {
+      
+      if (!search || search.trim().length < 2) {
+        return res.deliver(400, false, undefined, 'Search query must be at least 2 characters');
+      }
+
+      const searchQuery = search.trim();
+
+      // const cacheKey = `search:suggestions:${searchQuery}`;
+      // const cached = await cacheService.get(cacheKey);
+
+      // if (cached) {
+      //   return res.deliver(200, true,cached);  
+      // }
+
+      const tours = await prisma.tour.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            { title: { contains: searchQuery, mode: 'insensitive' } },
+            { slug: { contains: searchQuery, mode: 'insensitive' } },
+            { overview: { contains: searchQuery, mode: 'insensitive' } },
+            { description: { contains: searchQuery, mode: 'insensitive' } },
+          ],
+        },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+        orderBy: [
+          { isFeatured: 'desc' },
+          { rating: 'desc' },
+          { reviewCount: 'desc' },
+          { bookingCount: 'desc' },
+        ],
+      });
+
+      // await cacheService.set(cacheKey, JSON.stringify(tours), 300);
+
+      return res.deliver(200, true, tours);
+    } catch (error) {
+      console.error('Error fetching tour suggestions:', error);
+      return res.deliver(
+        500,
+        false,
+        undefined,
+        error instanceof Error ? error.message : 'Failed to fetch tour suggestions'
       );
     }
   }
