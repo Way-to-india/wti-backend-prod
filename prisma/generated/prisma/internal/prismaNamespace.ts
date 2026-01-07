@@ -415,7 +415,8 @@ export const ModelName = {
   PoiMetadata: 'PoiMetadata',
   PoiState: 'PoiState',
   PoiCity: 'PoiCity',
-  PoiMonument: 'PoiMonument'
+  PoiMonument: 'PoiMonument',
+  HeroSlide: 'HeroSlide'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -431,7 +432,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "tour" | "tourPriceGuide" | "theme" | "tourTheme" | "tourReview" | "reviewImage" | "tourItinerary" | "tourCity" | "city" | "faq" | "faqQuestion" | "travelGuideState" | "travelGuideCity" | "travelGuideData" | "admin" | "role" | "module" | "permission" | "lead" | "leadActivity" | "poiCategory" | "poiMetadata" | "poiState" | "poiCity" | "poiMonument"
+    modelProps: "user" | "tour" | "tourPriceGuide" | "theme" | "tourTheme" | "tourReview" | "reviewImage" | "tourItinerary" | "tourCity" | "city" | "faq" | "faqQuestion" | "travelGuideState" | "travelGuideCity" | "travelGuideData" | "admin" | "role" | "module" | "permission" | "lead" | "leadActivity" | "poiCategory" | "poiMetadata" | "poiState" | "poiCity" | "poiMonument" | "heroSlide"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2359,6 +2360,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    HeroSlide: {
+      payload: Prisma.$HeroSlidePayload<ExtArgs>
+      fields: Prisma.HeroSlideFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HeroSlideFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroSlidePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HeroSlideFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroSlidePayload>
+        }
+        findFirst: {
+          args: Prisma.HeroSlideFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroSlidePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HeroSlideFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroSlidePayload>
+        }
+        findMany: {
+          args: Prisma.HeroSlideFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroSlidePayload>[]
+        }
+        create: {
+          args: Prisma.HeroSlideCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroSlidePayload>
+        }
+        createMany: {
+          args: Prisma.HeroSlideCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HeroSlideCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroSlidePayload>[]
+        }
+        delete: {
+          args: Prisma.HeroSlideDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroSlidePayload>
+        }
+        update: {
+          args: Prisma.HeroSlideUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroSlidePayload>
+        }
+        deleteMany: {
+          args: Prisma.HeroSlideDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HeroSlideUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HeroSlideUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroSlidePayload>[]
+        }
+        upsert: {
+          args: Prisma.HeroSlideUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HeroSlidePayload>
+        }
+        aggregate: {
+          args: Prisma.HeroSlideAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHeroSlide>
+        }
+        groupBy: {
+          args: Prisma.HeroSlideGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HeroSlideGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HeroSlideCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HeroSlideCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2815,6 +2890,25 @@ export const PoiMonumentScalarFieldEnum = {
 export type PoiMonumentScalarFieldEnum = (typeof PoiMonumentScalarFieldEnum)[keyof typeof PoiMonumentScalarFieldEnum]
 
 
+export const HeroSlideScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  subtitle: 'subtitle',
+  location: 'location',
+  duration: 'duration',
+  imageKey: 'imageKey',
+  imageUrl: 'imageUrl',
+  ctaText: 'ctaText',
+  ctaLink: 'ctaLink',
+  isActive: 'isActive',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HeroSlideScalarFieldEnum = (typeof HeroSlideScalarFieldEnum)[keyof typeof HeroSlideScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -3100,6 +3194,7 @@ export type GlobalOmitConfig = {
   poiState?: Prisma.PoiStateOmit
   poiCity?: Prisma.PoiCityOmit
   poiMonument?: Prisma.PoiMonumentOmit
+  heroSlide?: Prisma.HeroSlideOmit
 }
 
 /* Types for Logging */

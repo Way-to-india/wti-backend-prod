@@ -186,7 +186,7 @@ model TourItinerary {
 
 model TourCity {
   tourId    String
-  cityId    String   
+  cityId    String
   order     Int      @default(0) @db.SmallInt
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
@@ -251,10 +251,6 @@ model FaqQuestion {
   @@index([faqId])
   @@map("faq_questions")
 }
-
-// ============================================
-// TRAVEL GUIDE MODELS (NEW)
-// ============================================
 
 model TravelGuideState {
   id        String            @id @default(cuid())
@@ -322,10 +318,6 @@ model TravelGuideData {
   @@index([isActive])
   @@map("travel_guide_data")
 }
-
-// ============================================
-// ADMIN & RBAC MODELS
-// ============================================
 
 model Admin {
   id                 String         @id @default(uuid())
@@ -400,10 +392,6 @@ model Permission {
   @@map("permissions")
 }
 
-// ============================================
-// LEAD MANAGEMENT MODELS
-// ============================================
-
 enum LeadStatus {
   NEW
   CONTACTED
@@ -465,10 +453,6 @@ model LeadActivity {
   @@index([leadId, createdAt(sort: Desc)])
   @@map("lead_activities")
 }
-
-// ============================================
-// POI (PLACES OF INTEREST) MODELS
-// ============================================
 
 model PoiCategory {
   id            String   @id @default(uuid())
@@ -554,4 +538,25 @@ model PoiMonument {
   @@index([monumentName])
   @@index([typeofPlace])
   @@map("poi_monuments")
+}
+
+model HeroSlide {
+  id        String   @id @default(cuid())
+  title     String   @db.VarChar(255)
+  subtitle  String?  @db.VarChar(500)
+  location  String?  @db.VarChar(150)
+  duration  String?  @db.VarChar(100)
+  imageKey  String   @db.VarChar(500)
+  imageUrl  String   @db.VarChar(1000)
+  ctaText   String   @default("Explore Tours") @db.VarChar(100)
+  ctaLink   String   @default("/india-tour-packages") @db.VarChar(500)
+  isActive  Boolean  @default(true)
+  order     Int      @default(0) @db.SmallInt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([order])
+  @@index([isActive, order])
+  @@index([order])
+  @@map("hero_slides")
 }

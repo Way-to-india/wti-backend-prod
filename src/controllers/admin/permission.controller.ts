@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { PermissionService } from '../../services/admin/permission.service';
 
 export class PermissionController {
+  
   static async setPermissions(req: Request, res: Response) {
     try {
       const { roleId, moduleId, view, create, edit, delete: del } = req.body;

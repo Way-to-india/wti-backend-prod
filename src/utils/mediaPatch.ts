@@ -11,6 +11,7 @@ const MEDIA_FIELDS = [
   'brochures',
   'images',
   'videos',
+  'imageUrl'
 ];
 
 export const prependCloudFrontURL = (destination: string): string => {
