@@ -74,7 +74,8 @@ export const ModelName = {
   PoiMetadata: 'PoiMetadata',
   PoiState: 'PoiState',
   PoiCity: 'PoiCity',
-  PoiMonument: 'PoiMonument'
+  PoiMonument: 'PoiMonument',
+  HeroSlide: 'HeroSlide'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -508,6 +509,25 @@ export const PoiMonumentScalarFieldEnum = {
 } as const
 
 export type PoiMonumentScalarFieldEnum = (typeof PoiMonumentScalarFieldEnum)[keyof typeof PoiMonumentScalarFieldEnum]
+
+
+export const HeroSlideScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  subtitle: 'subtitle',
+  location: 'location',
+  duration: 'duration',
+  imageKey: 'imageKey',
+  imageUrl: 'imageUrl',
+  ctaText: 'ctaText',
+  ctaLink: 'ctaLink',
+  isActive: 'isActive',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HeroSlideScalarFieldEnum = (typeof HeroSlideScalarFieldEnum)[keyof typeof HeroSlideScalarFieldEnum]
 
 
 export const SortOrder = {

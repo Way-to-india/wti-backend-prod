@@ -5,6 +5,7 @@ import type { CreateTourData, UpdateTourData } from '@/types/tour';
 import type { Prisma } from 'prisma/generated/prisma/client';
 
 export class TourService {
+  
   static async getAllTours(
     page: number,
     limit: number,

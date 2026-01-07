@@ -147,3 +147,8 @@ export type PoiCity = Prisma.PoiCityModel
  * 
  */
 export type PoiMonument = Prisma.PoiMonumentModel
+/**
+ * Model HeroSlide
+ * 
+ */
+export type HeroSlide = Prisma.HeroSlideModel

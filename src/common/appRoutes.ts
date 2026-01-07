@@ -14,6 +14,7 @@ enum Routes {
   REVIEW = '/reviews',
   TRAVEL_GUIDE = '/travel-guide',
   POI = '/poi',
+  HERO_SLIDES = '/hero-slides',
 }
 
 const AppRoutes = { ...Routes } as const;

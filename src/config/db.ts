@@ -22,8 +22,24 @@ const prisma = base.$extends({
         return result;
       },
     },
+    heroSlide: {
+      async findMany({ args, query }) {
+        const result = await query(args);
+        if (Array.isArray(result)) result.forEach(patchCloudFrontURLs);
+        return result;
+      },
+      async findFirst({ args, query }) {
+        const result = await query(args);
+        if (result) patchCloudFrontURLs(result);
+        return result;
+      },
+      async findUnique({ args, query }) {
+        const result = await query(args);
+        if (result) patchCloudFrontURLs(result);
+        return result;
+      },
+    },
   },
 });
 
 export default prisma;
-
