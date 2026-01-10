@@ -68,8 +68,16 @@ export const ModelName = {
   Role: 'Role',
   Module: 'Module',
   Permission: 'Permission',
+  LeadTag: 'LeadTag',
+  LeadSourceMaster: 'LeadSourceMaster',
+  LeadCategory: 'LeadCategory',
   Lead: 'Lead',
   LeadActivity: 'LeadActivity',
+  LeadStatusHistory: 'LeadStatusHistory',
+  LeadNote: 'LeadNote',
+  LeadQuotation: 'LeadQuotation',
+  LeadCommunication: 'LeadCommunication',
+  LeadReminder: 'LeadReminder',
   PoiCategory: 'PoiCategory',
   PoiMetadata: 'PoiMetadata',
   PoiState: 'PoiState',
@@ -399,21 +407,92 @@ export const PermissionScalarFieldEnum = {
 export type PermissionScalarFieldEnum = (typeof PermissionScalarFieldEnum)[keyof typeof PermissionScalarFieldEnum]
 
 
+export const LeadTagScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  label: 'label',
+  color: 'color',
+  icon: 'icon',
+  description: 'description',
+  isActive: 'isActive',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LeadTagScalarFieldEnum = (typeof LeadTagScalarFieldEnum)[keyof typeof LeadTagScalarFieldEnum]
+
+
+export const LeadSourceMasterScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  label: 'label',
+  icon: 'icon',
+  color: 'color',
+  description: 'description',
+  isActive: 'isActive',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LeadSourceMasterScalarFieldEnum = (typeof LeadSourceMasterScalarFieldEnum)[keyof typeof LeadSourceMasterScalarFieldEnum]
+
+
+export const LeadCategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  label: 'label',
+  icon: 'icon',
+  description: 'description',
+  isActive: 'isActive',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LeadCategoryScalarFieldEnum = (typeof LeadCategoryScalarFieldEnum)[keyof typeof LeadCategoryScalarFieldEnum]
+
+
 export const LeadScalarFieldEnum = {
   id: 'id',
   referenceNumber: 'referenceNumber',
   source: 'source',
   status: 'status',
+  priority: 'priority',
+  quality: 'quality',
+  serviceType: 'serviceType',
   fullName: 'fullName',
   email: 'email',
   phoneNumber: 'phoneNumber',
-  details: 'details',
+  alternatePhone: 'alternatePhone',
+  city: 'city',
+  destination: 'destination',
+  travelStartDate: 'travelStartDate',
+  travelEndDate: 'travelEndDate',
+  numberOfTravelers: 'numberOfTravelers',
+  numberOfAdults: 'numberOfAdults',
+  numberOfChildren: 'numberOfChildren',
+  budgetMin: 'budgetMin',
+  budgetMax: 'budgetMax',
+  specialRequests: 'specialRequests',
+  tagId: 'tagId',
+  categoryId: 'categoryId',
   assignedToId: 'assignedToId',
-  priority: 'priority',
-  notes: 'notes',
-  zohoLeadId: 'zohoLeadId',
-  syncedToZoho: 'syncedToZoho',
-  lastSyncedAt: 'lastSyncedAt',
+  assignedAt: 'assignedAt',
+  firstResponseAt: 'firstResponseAt',
+  responseTimeMinutes: 'responseTimeMinutes',
+  lastActivityAt: 'lastActivityAt',
+  nextFollowUpAt: 'nextFollowUpAt',
+  followUpCount: 'followUpCount',
+  isOverdue: 'isOverdue',
+  leadScore: 'leadScore',
+  conversionProbability: 'conversionProbability',
+  estimatedValue: 'estimatedValue',
+  actualValue: 'actualValue',
+  lostReason: 'lostReason',
+  closedAt: 'closedAt',
+  details: 'details',
   ipAddress: 'ipAddress',
   userAgent: 'userAgent',
   createdAt: 'createdAt',
@@ -429,11 +508,100 @@ export const LeadActivityScalarFieldEnum = {
   leadId: 'leadId',
   activityType: 'activityType',
   description: 'description',
+  metadata: 'metadata',
   performedById: 'performedById',
   createdAt: 'createdAt'
 } as const
 
 export type LeadActivityScalarFieldEnum = (typeof LeadActivityScalarFieldEnum)[keyof typeof LeadActivityScalarFieldEnum]
+
+
+export const LeadStatusHistoryScalarFieldEnum = {
+  id: 'id',
+  leadId: 'leadId',
+  fromStatus: 'fromStatus',
+  toStatus: 'toStatus',
+  fromTag: 'fromTag',
+  toTag: 'toTag',
+  notes: 'notes',
+  changedById: 'changedById',
+  createdAt: 'createdAt'
+} as const
+
+export type LeadStatusHistoryScalarFieldEnum = (typeof LeadStatusHistoryScalarFieldEnum)[keyof typeof LeadStatusHistoryScalarFieldEnum]
+
+
+export const LeadNoteScalarFieldEnum = {
+  id: 'id',
+  leadId: 'leadId',
+  content: 'content',
+  attachments: 'attachments',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LeadNoteScalarFieldEnum = (typeof LeadNoteScalarFieldEnum)[keyof typeof LeadNoteScalarFieldEnum]
+
+
+export const LeadQuotationScalarFieldEnum = {
+  id: 'id',
+  leadId: 'leadId',
+  version: 'version',
+  fileName: 'fileName',
+  fileKey: 'fileKey',
+  fileUrl: 'fileUrl',
+  fileSize: 'fileSize',
+  fileType: 'fileType',
+  description: 'description',
+  amount: 'amount',
+  isAccepted: 'isAccepted',
+  acceptedAt: 'acceptedAt',
+  sentViaEmail: 'sentViaEmail',
+  emailOpenedAt: 'emailOpenedAt',
+  uploadedById: 'uploadedById',
+  createdAt: 'createdAt'
+} as const
+
+export type LeadQuotationScalarFieldEnum = (typeof LeadQuotationScalarFieldEnum)[keyof typeof LeadQuotationScalarFieldEnum]
+
+
+export const LeadCommunicationScalarFieldEnum = {
+  id: 'id',
+  leadId: 'leadId',
+  type: 'type',
+  direction: 'direction',
+  subject: 'subject',
+  content: 'content',
+  duration: 'duration',
+  status: 'status',
+  metadata: 'metadata',
+  performedById: 'performedById',
+  createdAt: 'createdAt'
+} as const
+
+export type LeadCommunicationScalarFieldEnum = (typeof LeadCommunicationScalarFieldEnum)[keyof typeof LeadCommunicationScalarFieldEnum]
+
+
+export const LeadReminderScalarFieldEnum = {
+  id: 'id',
+  leadId: 'leadId',
+  scheduledFor: 'scheduledFor',
+  reminderType: 'reminderType',
+  notes: 'notes',
+  isCompleted: 'isCompleted',
+  completedAt: 'completedAt',
+  isSnoozed: 'isSnoozed',
+  snoozeReason: 'snoozeReason',
+  snoozedUntil: 'snoozedUntil',
+  notificationSent: 'notificationSent',
+  assignedToId: 'assignedToId',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LeadReminderScalarFieldEnum = (typeof LeadReminderScalarFieldEnum)[keyof typeof LeadReminderScalarFieldEnum]
 
 
 export const PoiCategoryScalarFieldEnum = {
@@ -538,19 +706,19 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
-export const JsonNullValueInput = {
-  JsonNull: JsonNull
-} as const
-
-export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
-
-
 export const NullableJsonNullValueInput = {
   DbNull: DbNull,
   JsonNull: JsonNull
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {

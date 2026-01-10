@@ -113,6 +113,21 @@ export type Module = Prisma.ModuleModel
  */
 export type Permission = Prisma.PermissionModel
 /**
+ * Model LeadTag
+ * 
+ */
+export type LeadTag = Prisma.LeadTagModel
+/**
+ * Model LeadSourceMaster
+ * 
+ */
+export type LeadSourceMaster = Prisma.LeadSourceMasterModel
+/**
+ * Model LeadCategory
+ * 
+ */
+export type LeadCategory = Prisma.LeadCategoryModel
+/**
  * Model Lead
  * 
  */
@@ -122,6 +137,31 @@ export type Lead = Prisma.LeadModel
  * 
  */
 export type LeadActivity = Prisma.LeadActivityModel
+/**
+ * Model LeadStatusHistory
+ * 
+ */
+export type LeadStatusHistory = Prisma.LeadStatusHistoryModel
+/**
+ * Model LeadNote
+ * 
+ */
+export type LeadNote = Prisma.LeadNoteModel
+/**
+ * Model LeadQuotation
+ * 
+ */
+export type LeadQuotation = Prisma.LeadQuotationModel
+/**
+ * Model LeadCommunication
+ * 
+ */
+export type LeadCommunication = Prisma.LeadCommunicationModel
+/**
+ * Model LeadReminder
+ * 
+ */
+export type LeadReminder = Prisma.LeadReminderModel
 /**
  * Model PoiCategory
  * 

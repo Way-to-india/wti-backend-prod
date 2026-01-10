@@ -12,20 +12,92 @@
 export const LeadStatus = {
   NEW: 'NEW',
   CONTACTED: 'CONTACTED',
-  QUALIFIED: 'QUALIFIED',
-  CONVERTED: 'CONVERTED',
-  REJECTED: 'REJECTED',
-  FOLLOW_UP: 'FOLLOW_UP'
+  INTERESTED: 'INTERESTED',
+  QUOTED: 'QUOTED',
+  NEGOTIATING: 'NEGOTIATING',
+  FOLLOW_UP_SCHEDULED: 'FOLLOW_UP_SCHEDULED',
+  CONFIRMED: 'CONFIRMED',
+  CLOSED_WON: 'CLOSED_WON',
+  CLOSED_LOST: 'CLOSED_LOST',
+  NOT_INTERESTED: 'NOT_INTERESTED'
 } as const
 
 export type LeadStatus = (typeof LeadStatus)[keyof typeof LeadStatus]
 
 
 export const LeadSource = {
+  WEBSITE_FORM: 'WEBSITE_FORM',
+  PHONE_CALL: 'PHONE_CALL',
+  EMAIL: 'EMAIL',
+  WHATSAPP: 'WHATSAPP',
+  FACEBOOK: 'FACEBOOK',
+  INSTAGRAM: 'INSTAGRAM',
+  GOOGLE_ADS: 'GOOGLE_ADS',
+  REFERRAL: 'REFERRAL',
+  WALK_IN: 'WALK_IN',
   TOUR_QUERY: 'TOUR_QUERY',
   HOTEL_QUERY: 'HOTEL_QUERY',
   TRANSPORT_QUERY: 'TRANSPORT_QUERY',
-  CONTACT_US: 'CONTACT_US'
+  CONTACT_US: 'CONTACT_US',
+  OTHER: 'OTHER'
 } as const
 
 export type LeadSource = (typeof LeadSource)[keyof typeof LeadSource]
+
+
+export const LeadPriority = {
+  HOT: 'HOT',
+  WARM: 'WARM',
+  COLD: 'COLD'
+} as const
+
+export type LeadPriority = (typeof LeadPriority)[keyof typeof LeadPriority]
+
+
+export const LeadQuality = {
+  A: 'A',
+  B: 'B',
+  C: 'C'
+} as const
+
+export type LeadQuality = (typeof LeadQuality)[keyof typeof LeadQuality]
+
+
+export const LeadServiceType = {
+  TOUR: 'TOUR',
+  HOTEL: 'HOTEL',
+  TRANSPORT: 'TRANSPORT',
+  MIXED: 'MIXED'
+} as const
+
+export type LeadServiceType = (typeof LeadServiceType)[keyof typeof LeadServiceType]
+
+
+export const CommunicationType = {
+  CALL: 'CALL',
+  EMAIL: 'EMAIL',
+  WHATSAPP: 'WHATSAPP',
+  SMS: 'SMS',
+  MEETING: 'MEETING',
+  OTHER: 'OTHER'
+} as const
+
+export type CommunicationType = (typeof CommunicationType)[keyof typeof CommunicationType]
+
+
+export const CommunicationDirection = {
+  INBOUND: 'INBOUND',
+  OUTBOUND: 'OUTBOUND'
+} as const
+
+export type CommunicationDirection = (typeof CommunicationDirection)[keyof typeof CommunicationDirection]
+
+
+export const ReminderType = {
+  FOLLOW_UP: 'FOLLOW_UP',
+  CALLBACK: 'CALLBACK',
+  QUOTE_FOLLOW_UP: 'QUOTE_FOLLOW_UP',
+  GENERAL: 'GENERAL'
+} as const
+
+export type ReminderType = (typeof ReminderType)[keyof typeof ReminderType]
