@@ -1,16 +1,22 @@
-import { Router } from 'express';
 import { ModuleController } from '@/controllers/admin/module.controller';
 import { authMiddleware } from '@/middlewares/admin/auth.middleware';
-import { checkPermission } from '@/middlewares/permission.middleware';
+import { checkSuperAdmin } from '@/middlewares/super-admin.middleware';
+import { Router } from 'express';
 
 const router = Router();
 
+// All routes require authentication and super admin privileges
 router.use(authMiddleware);
+router.use(checkSuperAdmin);
 
-router.post('/', checkPermission('Modules', 'create'), ModuleController.createModule);
-router.get('/', checkPermission('Modules', 'view'), ModuleController.getAllModules);
-router.get('/:id', checkPermission('Modules', 'view'), ModuleController.getModuleById);
-router.put('/:id', checkPermission('Modules', 'edit'), ModuleController.updateModule);
-router.delete('/:id', checkPermission('Modules', 'delete'), ModuleController.deleteModule);
+router.post('/', ModuleController.createModule);
+
+router.get('/', ModuleController.getAllModules);
+
+router.get('/:id', ModuleController.getModuleById);
+
+router.put('/:id', ModuleController.updateModule);
+
+router.delete('/:id', ModuleController.deleteModule);
 
 export default router;

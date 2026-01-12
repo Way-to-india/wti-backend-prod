@@ -10,6 +10,7 @@ import PoiRouter from './poi.routes';
 import RoleRouter from './role.routes';
 import TourRouter from './tour.routes';
 import TravelGuideRouter from './travel-guide.routes';
+import UserRouter from './user.routes';
 import ZohoRouter from './zoho.routes';
 
 const router = Router();
@@ -25,5 +26,6 @@ router.use(AppRoutes.MODULE, ModuleRouter);
 router.use(AppRoutes.TRAVEL_GUIDE, TravelGuideRouter);
 router.use(AppRoutes.POI, PoiRouter);
 router.use(AppRoutes.HERO_SLIDES, HeroSlideRouter);
+router.use(AppRoutes.USERS, UserRouter);
 
 export default router;

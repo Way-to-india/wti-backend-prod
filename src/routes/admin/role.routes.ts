@@ -1,16 +1,22 @@
-import { Router } from 'express';
 import { RoleController } from '@/controllers/admin/role.controller';
 import { authMiddleware } from '@/middlewares/admin/auth.middleware';
-import { checkPermission } from '@/middlewares/permission.middleware';
+import { checkSuperAdmin } from '@/middlewares/super-admin.middleware';
+import { Router } from 'express';
 
 const router = Router();
 
+// All routes require authentication and super admin privileges
 router.use(authMiddleware);
+router.use(checkSuperAdmin);
 
-router.post('/', checkPermission('Roles', 'create'), RoleController.createRole);
-router.get('/', checkPermission('Roles', 'view'), RoleController.getAllRoles);
-router.get('/:id', checkPermission('Roles', 'view'), RoleController.getRoleById);
-router.put('/:id', checkPermission('Roles', 'edit'), RoleController.updateRole);
-router.delete('/:id', checkPermission('Roles', 'delete'), RoleController.deleteRole);
+router.post('/', RoleController.createRole);
+
+router.get('/', RoleController.getAllRoles);
+
+router.get('/:id', RoleController.getRoleById);
+
+router.put('/:id', RoleController.updateRole);
+
+router.delete('/:id', RoleController.deleteRole);
 
 export default router;
