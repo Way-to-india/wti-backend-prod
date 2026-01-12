@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import type { Prisma } from 'prisma/generated/prisma/client';
 
 export class TourController {
+  
   static async getAllTours(req: Request, res: Response) {
     try {
       const {
@@ -409,18 +410,123 @@ export class TourController {
       if (includeSimilar === 'true') {
         const themeIds = tour.themes.map((t) => t.themeId);
         const cityIds = tour.cities.map((c) => c.cityId);
-        const priceRange = tour.price * 0.3;
         const limit = parseInt(similarLimit as string);
 
-        const similarWhere: Prisma.TourWhereInput = {
-          AND: [
-            { id: { not: tour.id } },
-            { isActive: true },
-            {
+        const baseSelect = {
+          id: true,
+          title: true,
+          slug: true,
+          overview: true,
+          durationDays: true,
+          durationNights: true,
+          price: true,
+          discountPrice: true,
+          currency: true,
+          rating: true,
+          reviewCount: true,
+          difficulty: true,
+          images: true,
+          startCity: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              imageUrl: true,
+            },
+          },
+          themes: {
+            include: {
+              theme: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  icon: true,
+                },
+              },
+            },
+            take: 3,
+          },
+          cities: {
+            include: {
+              city: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
+            },
+          },
+        };
+
+        const baseWhere = {
+          id: { not: tour.id },
+          isActive: true,
+        };
+
+        const orderBy = [
+          { isFeatured: 'desc' as const },
+          { rating: 'desc' as const },
+          { reviewCount: 'desc' as const },
+          { bookingCount: 'desc' as const },
+        ];
+
+        // Priority 1: Tours with matching cities (highest priority)
+        let toursFromSameCities: any[] = [];
+        if (cityIds.length > 0) {
+          toursFromSameCities = await prisma.tour.findMany({
+            where: {
+              ...baseWhere,
+              cities: { some: { cityId: { in: cityIds } } },
+            },
+            select: baseSelect,
+            orderBy,
+            take: limit,
+          });
+        }
+
+        // Priority 2: Tours with same start city
+        let toursFromSameStartCity: any[] = [];
+        if (toursFromSameCities.length < limit && tour.startCityId) {
+          toursFromSameStartCity = await prisma.tour.findMany({
+            where: {
+              ...baseWhere,
+              startCityId: tour.startCityId,
+              id: { notIn: toursFromSameCities.map((t) => t.id) },
+            },
+            select: baseSelect,
+            orderBy,
+            take: limit - toursFromSameCities.length,
+          });
+        }
+
+        // Priority 3: Tours with matching themes
+        let toursWithSameThemes: any[] = [];
+        const existingIds = [...toursFromSameCities, ...toursFromSameStartCity].map((t) => t.id);
+        if (existingIds.length < limit && themeIds.length > 0) {
+          toursWithSameThemes = await prisma.tour.findMany({
+            where: {
+              ...baseWhere,
+              themes: { some: { themeId: { in: themeIds } } },
+              id: { notIn: existingIds },
+            },
+            select: baseSelect,
+            orderBy,
+            take: limit - existingIds.length,
+          });
+        }
+
+        // Priority 4: Tours with similar duration and price (fallback)
+        let similarPriceAndDuration: any[] = [];
+        const allExistingIds = [...existingIds, ...toursWithSameThemes.map((t) => t.id)];
+        if (allExistingIds.length < limit) {
+          const priceRange = tour.price * 0.3;
+          similarPriceAndDuration = await prisma.tour.findMany({
+            where: {
+              ...baseWhere,
+              id: { notIn: allExistingIds },
               OR: [
-                themeIds.length > 0 ? { themes: { some: { themeId: { in: themeIds } } } } : {},
-                cityIds.length > 0 ? { cities: { some: { cityId: { in: cityIds } } } } : {},
-                tour.startCityId ? { startCityId: tour.startCityId } : {},
                 {
                   price: {
                     gte: Math.max(0, tour.price - priceRange),
@@ -436,50 +542,22 @@ export class TourController {
                 tour.difficulty ? { difficulty: tour.difficulty } : {},
               ].filter((condition) => Object.keys(condition).length > 0),
             },
-          ],
-        };
+            select: baseSelect,
+            orderBy,
+            take: limit - allExistingIds.length,
+          });
+        }
 
-        similarTours = await prisma.tour.findMany({
-          where: similarWhere,
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            overview: true,
-            durationDays: true,
-            durationNights: true,
-            price: true,
-            discountPrice: true,
-            currency: true,
-            rating: true,
-            reviewCount: true,
-            difficulty: true,
-            images: true,
-            startCity: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-                imageUrl: true,
-              },
-            },
-            themes: {
-              include: {
-                theme: {
-                  select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                    icon: true,
-                  },
-                },
-              },
-              take: 3,
-            },
-          },
-          orderBy: [{ rating: 'desc' }, { reviewCount: 'desc' }, { bookingCount: 'desc' }],
-          take: limit,
-        });
+        // Combine all results in priority order
+        similarTours = [
+          ...toursFromSameCities,
+          ...toursFromSameStartCity,
+          ...toursWithSameThemes,
+          ...similarPriceAndDuration,
+        ].slice(0, limit);
+
+        // Remove the cities field from the response as it's only needed for matching
+        similarTours = similarTours.map(({ cities, ...tour }) => tour);
       }
 
       return res.deliver(200, true, {
@@ -495,13 +573,12 @@ export class TourController {
         error instanceof Error ? error.message : 'Failed to fetch tour'
       );
     }
-  } 
+  }
 
   static async getSearchSuggestion(req: Request, res: Response) {
     const { search } = req.params;
 
     try {
-      
       if (!search || search.trim().length < 2) {
         return res.deliver(400, false, undefined, 'Search query must be at least 2 characters');
       }
@@ -512,7 +589,7 @@ export class TourController {
       // const cached = await cacheService.get(cacheKey);
 
       // if (cached) {
-      //   return res.deliver(200, true,cached);  
+      //   return res.deliver(200, true,cached);
       // }
 
       const tours = await prisma.tour.findMany({
