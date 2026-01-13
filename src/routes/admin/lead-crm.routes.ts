@@ -29,19 +29,23 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get('/leads', checkPermission('CRM', 'view'), LeadCRMController.getAllLeads);
+
 router.get('/leads/:id', checkPermission('CRM', 'view'), LeadCRMController.getLeadById);
+
 router.post(
   '/leads',
   checkPermission('CRM', 'create'),
   validateRequest(createLeadSchema),
   LeadCRMController.createLead
 );
+
 router.put(
   '/leads/:id',
   checkPermission('CRM', 'edit'),
   validateRequest(updateLeadSchema),
   LeadCRMController.updateLead
 );
+
 router.delete('/leads/:id', checkPermission('CRM', 'delete'), LeadCRMController.deleteLead);
 
 router.post(
