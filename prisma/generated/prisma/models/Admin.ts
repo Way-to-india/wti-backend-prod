@@ -231,8 +231,14 @@ export type AdminWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Admin"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Admin"> | Date | string
   role?: Prisma.XOR<Prisma.RoleScalarRelationFilter, Prisma.RoleWhereInput>
-  leads?: Prisma.LeadListRelationFilter
-  leadActivities?: Prisma.LeadActivityListRelationFilter
+  assignedLeads?: Prisma.LeadListRelationFilter
+  performedActivities?: Prisma.LeadActivityListRelationFilter
+  statusChanges?: Prisma.LeadStatusHistoryListRelationFilter
+  createdNotes?: Prisma.LeadNoteListRelationFilter
+  uploadedQuotations?: Prisma.LeadQuotationListRelationFilter
+  performedCommunications?: Prisma.LeadCommunicationListRelationFilter
+  assignedReminders?: Prisma.LeadReminderListRelationFilter
+  createdReminders?: Prisma.LeadReminderListRelationFilter
 }
 
 export type AdminOrderByWithRelationInput = {
@@ -248,8 +254,14 @@ export type AdminOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   role?: Prisma.RoleOrderByWithRelationInput
-  leads?: Prisma.LeadOrderByRelationAggregateInput
-  leadActivities?: Prisma.LeadActivityOrderByRelationAggregateInput
+  assignedLeads?: Prisma.LeadOrderByRelationAggregateInput
+  performedActivities?: Prisma.LeadActivityOrderByRelationAggregateInput
+  statusChanges?: Prisma.LeadStatusHistoryOrderByRelationAggregateInput
+  createdNotes?: Prisma.LeadNoteOrderByRelationAggregateInput
+  uploadedQuotations?: Prisma.LeadQuotationOrderByRelationAggregateInput
+  performedCommunications?: Prisma.LeadCommunicationOrderByRelationAggregateInput
+  assignedReminders?: Prisma.LeadReminderOrderByRelationAggregateInput
+  createdReminders?: Prisma.LeadReminderOrderByRelationAggregateInput
 }
 
 export type AdminWhereUniqueInput = Prisma.AtLeast<{
@@ -268,8 +280,14 @@ export type AdminWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Admin"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Admin"> | Date | string
   role?: Prisma.XOR<Prisma.RoleScalarRelationFilter, Prisma.RoleWhereInput>
-  leads?: Prisma.LeadListRelationFilter
-  leadActivities?: Prisma.LeadActivityListRelationFilter
+  assignedLeads?: Prisma.LeadListRelationFilter
+  performedActivities?: Prisma.LeadActivityListRelationFilter
+  statusChanges?: Prisma.LeadStatusHistoryListRelationFilter
+  createdNotes?: Prisma.LeadNoteListRelationFilter
+  uploadedQuotations?: Prisma.LeadQuotationListRelationFilter
+  performedCommunications?: Prisma.LeadCommunicationListRelationFilter
+  assignedReminders?: Prisma.LeadReminderListRelationFilter
+  createdReminders?: Prisma.LeadReminderListRelationFilter
 }, "id" | "email">
 
 export type AdminOrderByWithAggregationInput = {
@@ -318,8 +336,14 @@ export type AdminCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   role: Prisma.RoleCreateNestedOneWithoutAdminsInput
-  leads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
-  leadActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  assignedLeads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderCreateNestedManyWithoutCreatedByInput
 }
 
 export type AdminUncheckedCreateInput = {
@@ -334,8 +358,14 @@ export type AdminUncheckedCreateInput = {
   refreshTokenExpiry?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  leads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
-  leadActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  assignedLeads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type AdminUpdateInput = {
@@ -350,8 +380,14 @@ export type AdminUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   role?: Prisma.RoleUpdateOneRequiredWithoutAdminsNestedInput
-  leads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
-  leadActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  assignedLeads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUpdateManyWithoutCreatedByNestedInput
 }
 
 export type AdminUncheckedUpdateInput = {
@@ -366,8 +402,14 @@ export type AdminUncheckedUpdateInput = {
   refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  leads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
-  leadActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  assignedLeads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type AdminCreateManyInput = {
@@ -468,6 +510,11 @@ export type AdminNullableScalarRelationFilter = {
   isNot?: Prisma.AdminWhereInput | null
 }
 
+export type AdminScalarRelationFilter = {
+  is?: Prisma.AdminWhereInput
+  isNot?: Prisma.AdminWhereInput
+}
+
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
@@ -514,36 +561,122 @@ export type AdminUncheckedUpdateManyWithoutRoleNestedInput = {
   deleteMany?: Prisma.AdminScalarWhereInput | Prisma.AdminScalarWhereInput[]
 }
 
-export type AdminCreateNestedOneWithoutLeadsInput = {
-  create?: Prisma.XOR<Prisma.AdminCreateWithoutLeadsInput, Prisma.AdminUncheckedCreateWithoutLeadsInput>
-  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutLeadsInput
+export type AdminCreateNestedOneWithoutAssignedLeadsInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutAssignedLeadsInput, Prisma.AdminUncheckedCreateWithoutAssignedLeadsInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutAssignedLeadsInput
   connect?: Prisma.AdminWhereUniqueInput
 }
 
-export type AdminUpdateOneWithoutLeadsNestedInput = {
-  create?: Prisma.XOR<Prisma.AdminCreateWithoutLeadsInput, Prisma.AdminUncheckedCreateWithoutLeadsInput>
-  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutLeadsInput
-  upsert?: Prisma.AdminUpsertWithoutLeadsInput
+export type AdminUpdateOneWithoutAssignedLeadsNestedInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutAssignedLeadsInput, Prisma.AdminUncheckedCreateWithoutAssignedLeadsInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutAssignedLeadsInput
+  upsert?: Prisma.AdminUpsertWithoutAssignedLeadsInput
   disconnect?: Prisma.AdminWhereInput | boolean
   delete?: Prisma.AdminWhereInput | boolean
   connect?: Prisma.AdminWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUpdateToOneWithWhereWithoutLeadsInput, Prisma.AdminUpdateWithoutLeadsInput>, Prisma.AdminUncheckedUpdateWithoutLeadsInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUpdateToOneWithWhereWithoutAssignedLeadsInput, Prisma.AdminUpdateWithoutAssignedLeadsInput>, Prisma.AdminUncheckedUpdateWithoutAssignedLeadsInput>
 }
 
-export type AdminCreateNestedOneWithoutLeadActivitiesInput = {
-  create?: Prisma.XOR<Prisma.AdminCreateWithoutLeadActivitiesInput, Prisma.AdminUncheckedCreateWithoutLeadActivitiesInput>
-  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutLeadActivitiesInput
+export type AdminCreateNestedOneWithoutPerformedActivitiesInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutPerformedActivitiesInput, Prisma.AdminUncheckedCreateWithoutPerformedActivitiesInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutPerformedActivitiesInput
   connect?: Prisma.AdminWhereUniqueInput
 }
 
-export type AdminUpdateOneWithoutLeadActivitiesNestedInput = {
-  create?: Prisma.XOR<Prisma.AdminCreateWithoutLeadActivitiesInput, Prisma.AdminUncheckedCreateWithoutLeadActivitiesInput>
-  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutLeadActivitiesInput
-  upsert?: Prisma.AdminUpsertWithoutLeadActivitiesInput
+export type AdminUpdateOneWithoutPerformedActivitiesNestedInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutPerformedActivitiesInput, Prisma.AdminUncheckedCreateWithoutPerformedActivitiesInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutPerformedActivitiesInput
+  upsert?: Prisma.AdminUpsertWithoutPerformedActivitiesInput
   disconnect?: Prisma.AdminWhereInput | boolean
   delete?: Prisma.AdminWhereInput | boolean
   connect?: Prisma.AdminWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUpdateToOneWithWhereWithoutLeadActivitiesInput, Prisma.AdminUpdateWithoutLeadActivitiesInput>, Prisma.AdminUncheckedUpdateWithoutLeadActivitiesInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUpdateToOneWithWhereWithoutPerformedActivitiesInput, Prisma.AdminUpdateWithoutPerformedActivitiesInput>, Prisma.AdminUncheckedUpdateWithoutPerformedActivitiesInput>
+}
+
+export type AdminCreateNestedOneWithoutStatusChangesInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutStatusChangesInput, Prisma.AdminUncheckedCreateWithoutStatusChangesInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutStatusChangesInput
+  connect?: Prisma.AdminWhereUniqueInput
+}
+
+export type AdminUpdateOneRequiredWithoutStatusChangesNestedInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutStatusChangesInput, Prisma.AdminUncheckedCreateWithoutStatusChangesInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutStatusChangesInput
+  upsert?: Prisma.AdminUpsertWithoutStatusChangesInput
+  connect?: Prisma.AdminWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUpdateToOneWithWhereWithoutStatusChangesInput, Prisma.AdminUpdateWithoutStatusChangesInput>, Prisma.AdminUncheckedUpdateWithoutStatusChangesInput>
+}
+
+export type AdminCreateNestedOneWithoutCreatedNotesInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutCreatedNotesInput, Prisma.AdminUncheckedCreateWithoutCreatedNotesInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutCreatedNotesInput
+  connect?: Prisma.AdminWhereUniqueInput
+}
+
+export type AdminUpdateOneRequiredWithoutCreatedNotesNestedInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutCreatedNotesInput, Prisma.AdminUncheckedCreateWithoutCreatedNotesInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutCreatedNotesInput
+  upsert?: Prisma.AdminUpsertWithoutCreatedNotesInput
+  connect?: Prisma.AdminWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUpdateToOneWithWhereWithoutCreatedNotesInput, Prisma.AdminUpdateWithoutCreatedNotesInput>, Prisma.AdminUncheckedUpdateWithoutCreatedNotesInput>
+}
+
+export type AdminCreateNestedOneWithoutUploadedQuotationsInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutUploadedQuotationsInput, Prisma.AdminUncheckedCreateWithoutUploadedQuotationsInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutUploadedQuotationsInput
+  connect?: Prisma.AdminWhereUniqueInput
+}
+
+export type AdminUpdateOneRequiredWithoutUploadedQuotationsNestedInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutUploadedQuotationsInput, Prisma.AdminUncheckedCreateWithoutUploadedQuotationsInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutUploadedQuotationsInput
+  upsert?: Prisma.AdminUpsertWithoutUploadedQuotationsInput
+  connect?: Prisma.AdminWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUpdateToOneWithWhereWithoutUploadedQuotationsInput, Prisma.AdminUpdateWithoutUploadedQuotationsInput>, Prisma.AdminUncheckedUpdateWithoutUploadedQuotationsInput>
+}
+
+export type AdminCreateNestedOneWithoutPerformedCommunicationsInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutPerformedCommunicationsInput, Prisma.AdminUncheckedCreateWithoutPerformedCommunicationsInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutPerformedCommunicationsInput
+  connect?: Prisma.AdminWhereUniqueInput
+}
+
+export type AdminUpdateOneWithoutPerformedCommunicationsNestedInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutPerformedCommunicationsInput, Prisma.AdminUncheckedCreateWithoutPerformedCommunicationsInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutPerformedCommunicationsInput
+  upsert?: Prisma.AdminUpsertWithoutPerformedCommunicationsInput
+  disconnect?: Prisma.AdminWhereInput | boolean
+  delete?: Prisma.AdminWhereInput | boolean
+  connect?: Prisma.AdminWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUpdateToOneWithWhereWithoutPerformedCommunicationsInput, Prisma.AdminUpdateWithoutPerformedCommunicationsInput>, Prisma.AdminUncheckedUpdateWithoutPerformedCommunicationsInput>
+}
+
+export type AdminCreateNestedOneWithoutAssignedRemindersInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutAssignedRemindersInput, Prisma.AdminUncheckedCreateWithoutAssignedRemindersInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutAssignedRemindersInput
+  connect?: Prisma.AdminWhereUniqueInput
+}
+
+export type AdminCreateNestedOneWithoutCreatedRemindersInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutCreatedRemindersInput, Prisma.AdminUncheckedCreateWithoutCreatedRemindersInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutCreatedRemindersInput
+  connect?: Prisma.AdminWhereUniqueInput
+}
+
+export type AdminUpdateOneRequiredWithoutAssignedRemindersNestedInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutAssignedRemindersInput, Prisma.AdminUncheckedCreateWithoutAssignedRemindersInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutAssignedRemindersInput
+  upsert?: Prisma.AdminUpsertWithoutAssignedRemindersInput
+  connect?: Prisma.AdminWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUpdateToOneWithWhereWithoutAssignedRemindersInput, Prisma.AdminUpdateWithoutAssignedRemindersInput>, Prisma.AdminUncheckedUpdateWithoutAssignedRemindersInput>
+}
+
+export type AdminUpdateOneRequiredWithoutCreatedRemindersNestedInput = {
+  create?: Prisma.XOR<Prisma.AdminCreateWithoutCreatedRemindersInput, Prisma.AdminUncheckedCreateWithoutCreatedRemindersInput>
+  connectOrCreate?: Prisma.AdminCreateOrConnectWithoutCreatedRemindersInput
+  upsert?: Prisma.AdminUpsertWithoutCreatedRemindersInput
+  connect?: Prisma.AdminWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUpdateToOneWithWhereWithoutCreatedRemindersInput, Prisma.AdminUpdateWithoutCreatedRemindersInput>, Prisma.AdminUncheckedUpdateWithoutCreatedRemindersInput>
 }
 
 export type AdminCreateWithoutRoleInput = {
@@ -557,8 +690,14 @@ export type AdminCreateWithoutRoleInput = {
   refreshTokenExpiry?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  leads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
-  leadActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  assignedLeads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderCreateNestedManyWithoutCreatedByInput
 }
 
 export type AdminUncheckedCreateWithoutRoleInput = {
@@ -572,8 +711,14 @@ export type AdminUncheckedCreateWithoutRoleInput = {
   refreshTokenExpiry?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  leads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
-  leadActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  assignedLeads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type AdminCreateOrConnectWithoutRoleInput = {
@@ -619,7 +764,7 @@ export type AdminScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Admin"> | Date | string
 }
 
-export type AdminCreateWithoutLeadsInput = {
+export type AdminCreateWithoutAssignedLeadsInput = {
   id?: string
   name: string
   email: string
@@ -631,10 +776,16 @@ export type AdminCreateWithoutLeadsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   role: Prisma.RoleCreateNestedOneWithoutAdminsInput
-  leadActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  performedActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderCreateNestedManyWithoutCreatedByInput
 }
 
-export type AdminUncheckedCreateWithoutLeadsInput = {
+export type AdminUncheckedCreateWithoutAssignedLeadsInput = {
   id?: string
   name: string
   email: string
@@ -646,26 +797,32 @@ export type AdminUncheckedCreateWithoutLeadsInput = {
   refreshTokenExpiry?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  leadActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  performedActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
-export type AdminCreateOrConnectWithoutLeadsInput = {
+export type AdminCreateOrConnectWithoutAssignedLeadsInput = {
   where: Prisma.AdminWhereUniqueInput
-  create: Prisma.XOR<Prisma.AdminCreateWithoutLeadsInput, Prisma.AdminUncheckedCreateWithoutLeadsInput>
+  create: Prisma.XOR<Prisma.AdminCreateWithoutAssignedLeadsInput, Prisma.AdminUncheckedCreateWithoutAssignedLeadsInput>
 }
 
-export type AdminUpsertWithoutLeadsInput = {
-  update: Prisma.XOR<Prisma.AdminUpdateWithoutLeadsInput, Prisma.AdminUncheckedUpdateWithoutLeadsInput>
-  create: Prisma.XOR<Prisma.AdminCreateWithoutLeadsInput, Prisma.AdminUncheckedCreateWithoutLeadsInput>
+export type AdminUpsertWithoutAssignedLeadsInput = {
+  update: Prisma.XOR<Prisma.AdminUpdateWithoutAssignedLeadsInput, Prisma.AdminUncheckedUpdateWithoutAssignedLeadsInput>
+  create: Prisma.XOR<Prisma.AdminCreateWithoutAssignedLeadsInput, Prisma.AdminUncheckedCreateWithoutAssignedLeadsInput>
   where?: Prisma.AdminWhereInput
 }
 
-export type AdminUpdateToOneWithWhereWithoutLeadsInput = {
+export type AdminUpdateToOneWithWhereWithoutAssignedLeadsInput = {
   where?: Prisma.AdminWhereInput
-  data: Prisma.XOR<Prisma.AdminUpdateWithoutLeadsInput, Prisma.AdminUncheckedUpdateWithoutLeadsInput>
+  data: Prisma.XOR<Prisma.AdminUpdateWithoutAssignedLeadsInput, Prisma.AdminUncheckedUpdateWithoutAssignedLeadsInput>
 }
 
-export type AdminUpdateWithoutLeadsInput = {
+export type AdminUpdateWithoutAssignedLeadsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
@@ -677,10 +834,16 @@ export type AdminUpdateWithoutLeadsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   role?: Prisma.RoleUpdateOneRequiredWithoutAdminsNestedInput
-  leadActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  performedActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUpdateManyWithoutCreatedByNestedInput
 }
 
-export type AdminUncheckedUpdateWithoutLeadsInput = {
+export type AdminUncheckedUpdateWithoutAssignedLeadsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
@@ -692,10 +855,16 @@ export type AdminUncheckedUpdateWithoutLeadsInput = {
   refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  leadActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  performedActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
-export type AdminCreateWithoutLeadActivitiesInput = {
+export type AdminCreateWithoutPerformedActivitiesInput = {
   id?: string
   name: string
   email: string
@@ -707,10 +876,16 @@ export type AdminCreateWithoutLeadActivitiesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   role: Prisma.RoleCreateNestedOneWithoutAdminsInput
-  leads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
+  assignedLeads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
+  statusChanges?: Prisma.LeadStatusHistoryCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderCreateNestedManyWithoutCreatedByInput
 }
 
-export type AdminUncheckedCreateWithoutLeadActivitiesInput = {
+export type AdminUncheckedCreateWithoutPerformedActivitiesInput = {
   id?: string
   name: string
   email: string
@@ -722,26 +897,32 @@ export type AdminUncheckedCreateWithoutLeadActivitiesInput = {
   refreshTokenExpiry?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  leads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
+  assignedLeads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
-export type AdminCreateOrConnectWithoutLeadActivitiesInput = {
+export type AdminCreateOrConnectWithoutPerformedActivitiesInput = {
   where: Prisma.AdminWhereUniqueInput
-  create: Prisma.XOR<Prisma.AdminCreateWithoutLeadActivitiesInput, Prisma.AdminUncheckedCreateWithoutLeadActivitiesInput>
+  create: Prisma.XOR<Prisma.AdminCreateWithoutPerformedActivitiesInput, Prisma.AdminUncheckedCreateWithoutPerformedActivitiesInput>
 }
 
-export type AdminUpsertWithoutLeadActivitiesInput = {
-  update: Prisma.XOR<Prisma.AdminUpdateWithoutLeadActivitiesInput, Prisma.AdminUncheckedUpdateWithoutLeadActivitiesInput>
-  create: Prisma.XOR<Prisma.AdminCreateWithoutLeadActivitiesInput, Prisma.AdminUncheckedCreateWithoutLeadActivitiesInput>
+export type AdminUpsertWithoutPerformedActivitiesInput = {
+  update: Prisma.XOR<Prisma.AdminUpdateWithoutPerformedActivitiesInput, Prisma.AdminUncheckedUpdateWithoutPerformedActivitiesInput>
+  create: Prisma.XOR<Prisma.AdminCreateWithoutPerformedActivitiesInput, Prisma.AdminUncheckedCreateWithoutPerformedActivitiesInput>
   where?: Prisma.AdminWhereInput
 }
 
-export type AdminUpdateToOneWithWhereWithoutLeadActivitiesInput = {
+export type AdminUpdateToOneWithWhereWithoutPerformedActivitiesInput = {
   where?: Prisma.AdminWhereInput
-  data: Prisma.XOR<Prisma.AdminUpdateWithoutLeadActivitiesInput, Prisma.AdminUncheckedUpdateWithoutLeadActivitiesInput>
+  data: Prisma.XOR<Prisma.AdminUpdateWithoutPerformedActivitiesInput, Prisma.AdminUncheckedUpdateWithoutPerformedActivitiesInput>
 }
 
-export type AdminUpdateWithoutLeadActivitiesInput = {
+export type AdminUpdateWithoutPerformedActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
@@ -753,10 +934,16 @@ export type AdminUpdateWithoutLeadActivitiesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   role?: Prisma.RoleUpdateOneRequiredWithoutAdminsNestedInput
-  leads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
+  assignedLeads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUpdateManyWithoutCreatedByNestedInput
 }
 
-export type AdminUncheckedUpdateWithoutLeadActivitiesInput = {
+export type AdminUncheckedUpdateWithoutPerformedActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
@@ -768,7 +955,613 @@ export type AdminUncheckedUpdateWithoutLeadActivitiesInput = {
   refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  leads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
+  assignedLeads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
+export type AdminCreateWithoutStatusChangesInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  role: Prisma.RoleCreateNestedOneWithoutAdminsInput
+  assignedLeads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  createdNotes?: Prisma.LeadNoteCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderCreateNestedManyWithoutCreatedByInput
+}
+
+export type AdminUncheckedCreateWithoutStatusChangesInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  roleId: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignedLeads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  createdNotes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutCreatedByInput
+}
+
+export type AdminCreateOrConnectWithoutStatusChangesInput = {
+  where: Prisma.AdminWhereUniqueInput
+  create: Prisma.XOR<Prisma.AdminCreateWithoutStatusChangesInput, Prisma.AdminUncheckedCreateWithoutStatusChangesInput>
+}
+
+export type AdminUpsertWithoutStatusChangesInput = {
+  update: Prisma.XOR<Prisma.AdminUpdateWithoutStatusChangesInput, Prisma.AdminUncheckedUpdateWithoutStatusChangesInput>
+  create: Prisma.XOR<Prisma.AdminCreateWithoutStatusChangesInput, Prisma.AdminUncheckedCreateWithoutStatusChangesInput>
+  where?: Prisma.AdminWhereInput
+}
+
+export type AdminUpdateToOneWithWhereWithoutStatusChangesInput = {
+  where?: Prisma.AdminWhereInput
+  data: Prisma.XOR<Prisma.AdminUpdateWithoutStatusChangesInput, Prisma.AdminUncheckedUpdateWithoutStatusChangesInput>
+}
+
+export type AdminUpdateWithoutStatusChangesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role?: Prisma.RoleUpdateOneRequiredWithoutAdminsNestedInput
+  assignedLeads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  createdNotes?: Prisma.LeadNoteUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUpdateManyWithoutCreatedByNestedInput
+}
+
+export type AdminUncheckedUpdateWithoutStatusChangesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  roleId?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignedLeads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  createdNotes?: Prisma.LeadNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
+export type AdminCreateWithoutCreatedNotesInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  role: Prisma.RoleCreateNestedOneWithoutAdminsInput
+  assignedLeads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryCreateNestedManyWithoutChangedByInput
+  uploadedQuotations?: Prisma.LeadQuotationCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderCreateNestedManyWithoutCreatedByInput
+}
+
+export type AdminUncheckedCreateWithoutCreatedNotesInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  roleId: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignedLeads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutCreatedByInput
+}
+
+export type AdminCreateOrConnectWithoutCreatedNotesInput = {
+  where: Prisma.AdminWhereUniqueInput
+  create: Prisma.XOR<Prisma.AdminCreateWithoutCreatedNotesInput, Prisma.AdminUncheckedCreateWithoutCreatedNotesInput>
+}
+
+export type AdminUpsertWithoutCreatedNotesInput = {
+  update: Prisma.XOR<Prisma.AdminUpdateWithoutCreatedNotesInput, Prisma.AdminUncheckedUpdateWithoutCreatedNotesInput>
+  create: Prisma.XOR<Prisma.AdminCreateWithoutCreatedNotesInput, Prisma.AdminUncheckedCreateWithoutCreatedNotesInput>
+  where?: Prisma.AdminWhereInput
+}
+
+export type AdminUpdateToOneWithWhereWithoutCreatedNotesInput = {
+  where?: Prisma.AdminWhereInput
+  data: Prisma.XOR<Prisma.AdminUpdateWithoutCreatedNotesInput, Prisma.AdminUncheckedUpdateWithoutCreatedNotesInput>
+}
+
+export type AdminUpdateWithoutCreatedNotesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role?: Prisma.RoleUpdateOneRequiredWithoutAdminsNestedInput
+  assignedLeads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUpdateManyWithoutChangedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUpdateManyWithoutCreatedByNestedInput
+}
+
+export type AdminUncheckedUpdateWithoutCreatedNotesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  roleId?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignedLeads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
+export type AdminCreateWithoutUploadedQuotationsInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  role: Prisma.RoleCreateNestedOneWithoutAdminsInput
+  assignedLeads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteCreateNestedManyWithoutCreatedByInput
+  performedCommunications?: Prisma.LeadCommunicationCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderCreateNestedManyWithoutCreatedByInput
+}
+
+export type AdminUncheckedCreateWithoutUploadedQuotationsInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  roleId: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignedLeads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutCreatedByInput
+}
+
+export type AdminCreateOrConnectWithoutUploadedQuotationsInput = {
+  where: Prisma.AdminWhereUniqueInput
+  create: Prisma.XOR<Prisma.AdminCreateWithoutUploadedQuotationsInput, Prisma.AdminUncheckedCreateWithoutUploadedQuotationsInput>
+}
+
+export type AdminUpsertWithoutUploadedQuotationsInput = {
+  update: Prisma.XOR<Prisma.AdminUpdateWithoutUploadedQuotationsInput, Prisma.AdminUncheckedUpdateWithoutUploadedQuotationsInput>
+  create: Prisma.XOR<Prisma.AdminCreateWithoutUploadedQuotationsInput, Prisma.AdminUncheckedCreateWithoutUploadedQuotationsInput>
+  where?: Prisma.AdminWhereInput
+}
+
+export type AdminUpdateToOneWithWhereWithoutUploadedQuotationsInput = {
+  where?: Prisma.AdminWhereInput
+  data: Prisma.XOR<Prisma.AdminUpdateWithoutUploadedQuotationsInput, Prisma.AdminUncheckedUpdateWithoutUploadedQuotationsInput>
+}
+
+export type AdminUpdateWithoutUploadedQuotationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role?: Prisma.RoleUpdateOneRequiredWithoutAdminsNestedInput
+  assignedLeads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUpdateManyWithoutCreatedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUpdateManyWithoutCreatedByNestedInput
+}
+
+export type AdminUncheckedUpdateWithoutUploadedQuotationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  roleId?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignedLeads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
+export type AdminCreateWithoutPerformedCommunicationsInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  role: Prisma.RoleCreateNestedOneWithoutAdminsInput
+  assignedLeads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationCreateNestedManyWithoutUploadedByInput
+  assignedReminders?: Prisma.LeadReminderCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderCreateNestedManyWithoutCreatedByInput
+}
+
+export type AdminUncheckedCreateWithoutPerformedCommunicationsInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  roleId: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignedLeads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutUploadedByInput
+  assignedReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutAssignedToInput
+  createdReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutCreatedByInput
+}
+
+export type AdminCreateOrConnectWithoutPerformedCommunicationsInput = {
+  where: Prisma.AdminWhereUniqueInput
+  create: Prisma.XOR<Prisma.AdminCreateWithoutPerformedCommunicationsInput, Prisma.AdminUncheckedCreateWithoutPerformedCommunicationsInput>
+}
+
+export type AdminUpsertWithoutPerformedCommunicationsInput = {
+  update: Prisma.XOR<Prisma.AdminUpdateWithoutPerformedCommunicationsInput, Prisma.AdminUncheckedUpdateWithoutPerformedCommunicationsInput>
+  create: Prisma.XOR<Prisma.AdminCreateWithoutPerformedCommunicationsInput, Prisma.AdminUncheckedCreateWithoutPerformedCommunicationsInput>
+  where?: Prisma.AdminWhereInput
+}
+
+export type AdminUpdateToOneWithWhereWithoutPerformedCommunicationsInput = {
+  where?: Prisma.AdminWhereInput
+  data: Prisma.XOR<Prisma.AdminUpdateWithoutPerformedCommunicationsInput, Prisma.AdminUncheckedUpdateWithoutPerformedCommunicationsInput>
+}
+
+export type AdminUpdateWithoutPerformedCommunicationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role?: Prisma.RoleUpdateOneRequiredWithoutAdminsNestedInput
+  assignedLeads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUpdateManyWithoutUploadedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUpdateManyWithoutCreatedByNestedInput
+}
+
+export type AdminUncheckedUpdateWithoutPerformedCommunicationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  roleId?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignedLeads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutUploadedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
+export type AdminCreateWithoutAssignedRemindersInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  role: Prisma.RoleCreateNestedOneWithoutAdminsInput
+  assignedLeads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationCreateNestedManyWithoutPerformedByInput
+  createdReminders?: Prisma.LeadReminderCreateNestedManyWithoutCreatedByInput
+}
+
+export type AdminUncheckedCreateWithoutAssignedRemindersInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  roleId: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignedLeads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutPerformedByInput
+  createdReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutCreatedByInput
+}
+
+export type AdminCreateOrConnectWithoutAssignedRemindersInput = {
+  where: Prisma.AdminWhereUniqueInput
+  create: Prisma.XOR<Prisma.AdminCreateWithoutAssignedRemindersInput, Prisma.AdminUncheckedCreateWithoutAssignedRemindersInput>
+}
+
+export type AdminCreateWithoutCreatedRemindersInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  role: Prisma.RoleCreateNestedOneWithoutAdminsInput
+  assignedLeads?: Prisma.LeadCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderCreateNestedManyWithoutAssignedToInput
+}
+
+export type AdminUncheckedCreateWithoutCreatedRemindersInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  roleId: string
+  isActive?: boolean
+  lastLoginAt?: Date | string | null
+  refreshToken?: string | null
+  refreshTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignedLeads?: Prisma.LeadUncheckedCreateNestedManyWithoutAssignedToInput
+  performedActivities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutPerformedByInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
+  createdNotes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutUploadedByInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutPerformedByInput
+  assignedReminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutAssignedToInput
+}
+
+export type AdminCreateOrConnectWithoutCreatedRemindersInput = {
+  where: Prisma.AdminWhereUniqueInput
+  create: Prisma.XOR<Prisma.AdminCreateWithoutCreatedRemindersInput, Prisma.AdminUncheckedCreateWithoutCreatedRemindersInput>
+}
+
+export type AdminUpsertWithoutAssignedRemindersInput = {
+  update: Prisma.XOR<Prisma.AdminUpdateWithoutAssignedRemindersInput, Prisma.AdminUncheckedUpdateWithoutAssignedRemindersInput>
+  create: Prisma.XOR<Prisma.AdminCreateWithoutAssignedRemindersInput, Prisma.AdminUncheckedCreateWithoutAssignedRemindersInput>
+  where?: Prisma.AdminWhereInput
+}
+
+export type AdminUpdateToOneWithWhereWithoutAssignedRemindersInput = {
+  where?: Prisma.AdminWhereInput
+  data: Prisma.XOR<Prisma.AdminUpdateWithoutAssignedRemindersInput, Prisma.AdminUncheckedUpdateWithoutAssignedRemindersInput>
+}
+
+export type AdminUpdateWithoutAssignedRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role?: Prisma.RoleUpdateOneRequiredWithoutAdminsNestedInput
+  assignedLeads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUpdateManyWithoutPerformedByNestedInput
+  createdReminders?: Prisma.LeadReminderUpdateManyWithoutCreatedByNestedInput
+}
+
+export type AdminUncheckedUpdateWithoutAssignedRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  roleId?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignedLeads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutPerformedByNestedInput
+  createdReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
+export type AdminUpsertWithoutCreatedRemindersInput = {
+  update: Prisma.XOR<Prisma.AdminUpdateWithoutCreatedRemindersInput, Prisma.AdminUncheckedUpdateWithoutCreatedRemindersInput>
+  create: Prisma.XOR<Prisma.AdminCreateWithoutCreatedRemindersInput, Prisma.AdminUncheckedCreateWithoutCreatedRemindersInput>
+  where?: Prisma.AdminWhereInput
+}
+
+export type AdminUpdateToOneWithWhereWithoutCreatedRemindersInput = {
+  where?: Prisma.AdminWhereInput
+  data: Prisma.XOR<Prisma.AdminUpdateWithoutCreatedRemindersInput, Prisma.AdminUncheckedUpdateWithoutCreatedRemindersInput>
+}
+
+export type AdminUpdateWithoutCreatedRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role?: Prisma.RoleUpdateOneRequiredWithoutAdminsNestedInput
+  assignedLeads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUpdateManyWithoutAssignedToNestedInput
+}
+
+export type AdminUncheckedUpdateWithoutCreatedRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  roleId?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  refreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignedLeads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutAssignedToNestedInput
 }
 
 export type AdminCreateManyRoleInput = {
@@ -795,8 +1588,14 @@ export type AdminUpdateWithoutRoleInput = {
   refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  leads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
-  leadActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  assignedLeads?: Prisma.LeadUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUpdateManyWithoutCreatedByNestedInput
 }
 
 export type AdminUncheckedUpdateWithoutRoleInput = {
@@ -810,8 +1609,14 @@ export type AdminUncheckedUpdateWithoutRoleInput = {
   refreshTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  leads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
-  leadActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  assignedLeads?: Prisma.LeadUncheckedUpdateManyWithoutAssignedToNestedInput
+  performedActivities?: Prisma.LeadActivityUncheckedUpdateManyWithoutPerformedByNestedInput
+  statusChanges?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
+  createdNotes?: Prisma.LeadNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  uploadedQuotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutUploadedByNestedInput
+  performedCommunications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutPerformedByNestedInput
+  assignedReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutAssignedToNestedInput
+  createdReminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type AdminUncheckedUpdateManyWithoutRoleInput = {
@@ -833,13 +1638,25 @@ export type AdminUncheckedUpdateManyWithoutRoleInput = {
  */
 
 export type AdminCountOutputType = {
-  leads: number
-  leadActivities: number
+  assignedLeads: number
+  performedActivities: number
+  statusChanges: number
+  createdNotes: number
+  uploadedQuotations: number
+  performedCommunications: number
+  assignedReminders: number
+  createdReminders: number
 }
 
 export type AdminCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  leads?: boolean | AdminCountOutputTypeCountLeadsArgs
-  leadActivities?: boolean | AdminCountOutputTypeCountLeadActivitiesArgs
+  assignedLeads?: boolean | AdminCountOutputTypeCountAssignedLeadsArgs
+  performedActivities?: boolean | AdminCountOutputTypeCountPerformedActivitiesArgs
+  statusChanges?: boolean | AdminCountOutputTypeCountStatusChangesArgs
+  createdNotes?: boolean | AdminCountOutputTypeCountCreatedNotesArgs
+  uploadedQuotations?: boolean | AdminCountOutputTypeCountUploadedQuotationsArgs
+  performedCommunications?: boolean | AdminCountOutputTypeCountPerformedCommunicationsArgs
+  assignedReminders?: boolean | AdminCountOutputTypeCountAssignedRemindersArgs
+  createdReminders?: boolean | AdminCountOutputTypeCountCreatedRemindersArgs
 }
 
 /**
@@ -855,15 +1672,57 @@ export type AdminCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extens
 /**
  * AdminCountOutputType without action
  */
-export type AdminCountOutputTypeCountLeadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type AdminCountOutputTypeCountAssignedLeadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.LeadWhereInput
 }
 
 /**
  * AdminCountOutputType without action
  */
-export type AdminCountOutputTypeCountLeadActivitiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type AdminCountOutputTypeCountPerformedActivitiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.LeadActivityWhereInput
+}
+
+/**
+ * AdminCountOutputType without action
+ */
+export type AdminCountOutputTypeCountStatusChangesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LeadStatusHistoryWhereInput
+}
+
+/**
+ * AdminCountOutputType without action
+ */
+export type AdminCountOutputTypeCountCreatedNotesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LeadNoteWhereInput
+}
+
+/**
+ * AdminCountOutputType without action
+ */
+export type AdminCountOutputTypeCountUploadedQuotationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LeadQuotationWhereInput
+}
+
+/**
+ * AdminCountOutputType without action
+ */
+export type AdminCountOutputTypeCountPerformedCommunicationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LeadCommunicationWhereInput
+}
+
+/**
+ * AdminCountOutputType without action
+ */
+export type AdminCountOutputTypeCountAssignedRemindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LeadReminderWhereInput
+}
+
+/**
+ * AdminCountOutputType without action
+ */
+export type AdminCountOutputTypeCountCreatedRemindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LeadReminderWhereInput
 }
 
 
@@ -880,8 +1739,14 @@ export type AdminSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   createdAt?: boolean
   updatedAt?: boolean
   role?: boolean | Prisma.RoleDefaultArgs<ExtArgs>
-  leads?: boolean | Prisma.Admin$leadsArgs<ExtArgs>
-  leadActivities?: boolean | Prisma.Admin$leadActivitiesArgs<ExtArgs>
+  assignedLeads?: boolean | Prisma.Admin$assignedLeadsArgs<ExtArgs>
+  performedActivities?: boolean | Prisma.Admin$performedActivitiesArgs<ExtArgs>
+  statusChanges?: boolean | Prisma.Admin$statusChangesArgs<ExtArgs>
+  createdNotes?: boolean | Prisma.Admin$createdNotesArgs<ExtArgs>
+  uploadedQuotations?: boolean | Prisma.Admin$uploadedQuotationsArgs<ExtArgs>
+  performedCommunications?: boolean | Prisma.Admin$performedCommunicationsArgs<ExtArgs>
+  assignedReminders?: boolean | Prisma.Admin$assignedRemindersArgs<ExtArgs>
+  createdReminders?: boolean | Prisma.Admin$createdRemindersArgs<ExtArgs>
   _count?: boolean | Prisma.AdminCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["admin"]>
 
@@ -932,8 +1797,14 @@ export type AdminSelectScalar = {
 export type AdminOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "password" | "roleId" | "isActive" | "lastLoginAt" | "refreshToken" | "refreshTokenExpiry" | "createdAt" | "updatedAt", ExtArgs["result"]["admin"]>
 export type AdminInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   role?: boolean | Prisma.RoleDefaultArgs<ExtArgs>
-  leads?: boolean | Prisma.Admin$leadsArgs<ExtArgs>
-  leadActivities?: boolean | Prisma.Admin$leadActivitiesArgs<ExtArgs>
+  assignedLeads?: boolean | Prisma.Admin$assignedLeadsArgs<ExtArgs>
+  performedActivities?: boolean | Prisma.Admin$performedActivitiesArgs<ExtArgs>
+  statusChanges?: boolean | Prisma.Admin$statusChangesArgs<ExtArgs>
+  createdNotes?: boolean | Prisma.Admin$createdNotesArgs<ExtArgs>
+  uploadedQuotations?: boolean | Prisma.Admin$uploadedQuotationsArgs<ExtArgs>
+  performedCommunications?: boolean | Prisma.Admin$performedCommunicationsArgs<ExtArgs>
+  assignedReminders?: boolean | Prisma.Admin$assignedRemindersArgs<ExtArgs>
+  createdReminders?: boolean | Prisma.Admin$createdRemindersArgs<ExtArgs>
   _count?: boolean | Prisma.AdminCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AdminIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -947,8 +1818,14 @@ export type $AdminPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   name: "Admin"
   objects: {
     role: Prisma.$RolePayload<ExtArgs>
-    leads: Prisma.$LeadPayload<ExtArgs>[]
-    leadActivities: Prisma.$LeadActivityPayload<ExtArgs>[]
+    assignedLeads: Prisma.$LeadPayload<ExtArgs>[]
+    performedActivities: Prisma.$LeadActivityPayload<ExtArgs>[]
+    statusChanges: Prisma.$LeadStatusHistoryPayload<ExtArgs>[]
+    createdNotes: Prisma.$LeadNotePayload<ExtArgs>[]
+    uploadedQuotations: Prisma.$LeadQuotationPayload<ExtArgs>[]
+    performedCommunications: Prisma.$LeadCommunicationPayload<ExtArgs>[]
+    assignedReminders: Prisma.$LeadReminderPayload<ExtArgs>[]
+    createdReminders: Prisma.$LeadReminderPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1357,8 +2234,14 @@ readonly fields: AdminFieldRefs;
 export interface Prisma__AdminClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   role<T extends Prisma.RoleDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RoleDefaultArgs<ExtArgs>>): Prisma.Prisma__RoleClient<runtime.Types.Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  leads<T extends Prisma.Admin$leadsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Admin$leadsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  leadActivities<T extends Prisma.Admin$leadActivitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Admin$leadActivitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  assignedLeads<T extends Prisma.Admin$assignedLeadsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Admin$assignedLeadsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  performedActivities<T extends Prisma.Admin$performedActivitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Admin$performedActivitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  statusChanges<T extends Prisma.Admin$statusChangesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Admin$statusChangesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadStatusHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  createdNotes<T extends Prisma.Admin$createdNotesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Admin$createdNotesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadNotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  uploadedQuotations<T extends Prisma.Admin$uploadedQuotationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Admin$uploadedQuotationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadQuotationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  performedCommunications<T extends Prisma.Admin$performedCommunicationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Admin$performedCommunicationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadCommunicationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  assignedReminders<T extends Prisma.Admin$assignedRemindersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Admin$assignedRemindersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadReminderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  createdReminders<T extends Prisma.Admin$createdRemindersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Admin$createdRemindersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadReminderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1795,9 +2678,9 @@ export type AdminDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
 }
 
 /**
- * Admin.leads
+ * Admin.assignedLeads
  */
-export type Admin$leadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Admin$assignedLeadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the Lead
    */
@@ -1819,9 +2702,9 @@ export type Admin$leadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 }
 
 /**
- * Admin.leadActivities
+ * Admin.performedActivities
  */
-export type Admin$leadActivitiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Admin$performedActivitiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the LeadActivity
    */
@@ -1840,6 +2723,150 @@ export type Admin$leadActivitiesArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.LeadActivityScalarFieldEnum | Prisma.LeadActivityScalarFieldEnum[]
+}
+
+/**
+ * Admin.statusChanges
+ */
+export type Admin$statusChangesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadStatusHistory
+   */
+  select?: Prisma.LeadStatusHistorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadStatusHistory
+   */
+  omit?: Prisma.LeadStatusHistoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadStatusHistoryInclude<ExtArgs> | null
+  where?: Prisma.LeadStatusHistoryWhereInput
+  orderBy?: Prisma.LeadStatusHistoryOrderByWithRelationInput | Prisma.LeadStatusHistoryOrderByWithRelationInput[]
+  cursor?: Prisma.LeadStatusHistoryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LeadStatusHistoryScalarFieldEnum | Prisma.LeadStatusHistoryScalarFieldEnum[]
+}
+
+/**
+ * Admin.createdNotes
+ */
+export type Admin$createdNotesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadNote
+   */
+  select?: Prisma.LeadNoteSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadNote
+   */
+  omit?: Prisma.LeadNoteOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadNoteInclude<ExtArgs> | null
+  where?: Prisma.LeadNoteWhereInput
+  orderBy?: Prisma.LeadNoteOrderByWithRelationInput | Prisma.LeadNoteOrderByWithRelationInput[]
+  cursor?: Prisma.LeadNoteWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LeadNoteScalarFieldEnum | Prisma.LeadNoteScalarFieldEnum[]
+}
+
+/**
+ * Admin.uploadedQuotations
+ */
+export type Admin$uploadedQuotationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadQuotation
+   */
+  select?: Prisma.LeadQuotationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadQuotation
+   */
+  omit?: Prisma.LeadQuotationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadQuotationInclude<ExtArgs> | null
+  where?: Prisma.LeadQuotationWhereInput
+  orderBy?: Prisma.LeadQuotationOrderByWithRelationInput | Prisma.LeadQuotationOrderByWithRelationInput[]
+  cursor?: Prisma.LeadQuotationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LeadQuotationScalarFieldEnum | Prisma.LeadQuotationScalarFieldEnum[]
+}
+
+/**
+ * Admin.performedCommunications
+ */
+export type Admin$performedCommunicationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadCommunication
+   */
+  select?: Prisma.LeadCommunicationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadCommunication
+   */
+  omit?: Prisma.LeadCommunicationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadCommunicationInclude<ExtArgs> | null
+  where?: Prisma.LeadCommunicationWhereInput
+  orderBy?: Prisma.LeadCommunicationOrderByWithRelationInput | Prisma.LeadCommunicationOrderByWithRelationInput[]
+  cursor?: Prisma.LeadCommunicationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LeadCommunicationScalarFieldEnum | Prisma.LeadCommunicationScalarFieldEnum[]
+}
+
+/**
+ * Admin.assignedReminders
+ */
+export type Admin$assignedRemindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadReminder
+   */
+  select?: Prisma.LeadReminderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadReminder
+   */
+  omit?: Prisma.LeadReminderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadReminderInclude<ExtArgs> | null
+  where?: Prisma.LeadReminderWhereInput
+  orderBy?: Prisma.LeadReminderOrderByWithRelationInput | Prisma.LeadReminderOrderByWithRelationInput[]
+  cursor?: Prisma.LeadReminderWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LeadReminderScalarFieldEnum | Prisma.LeadReminderScalarFieldEnum[]
+}
+
+/**
+ * Admin.createdReminders
+ */
+export type Admin$createdRemindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadReminder
+   */
+  select?: Prisma.LeadReminderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadReminder
+   */
+  omit?: Prisma.LeadReminderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadReminderInclude<ExtArgs> | null
+  where?: Prisma.LeadReminderWhereInput
+  orderBy?: Prisma.LeadReminderOrderByWithRelationInput | Prisma.LeadReminderOrderByWithRelationInput[]
+  cursor?: Prisma.LeadReminderWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LeadReminderScalarFieldEnum | Prisma.LeadReminderScalarFieldEnum[]
 }
 
 /**

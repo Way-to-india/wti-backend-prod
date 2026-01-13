@@ -27,11 +27,31 @@ export type AggregateLead = {
 }
 
 export type LeadAvgAggregateOutputType = {
-  priority: number | null
+  numberOfTravelers: number | null
+  numberOfAdults: number | null
+  numberOfChildren: number | null
+  budgetMin: number | null
+  budgetMax: number | null
+  responseTimeMinutes: number | null
+  followUpCount: number | null
+  leadScore: number | null
+  conversionProbability: runtime.Decimal | null
+  estimatedValue: number | null
+  actualValue: number | null
 }
 
 export type LeadSumAggregateOutputType = {
-  priority: number | null
+  numberOfTravelers: number | null
+  numberOfAdults: number | null
+  numberOfChildren: number | null
+  budgetMin: number | null
+  budgetMax: number | null
+  responseTimeMinutes: number | null
+  followUpCount: number | null
+  leadScore: number | null
+  conversionProbability: runtime.Decimal | null
+  estimatedValue: number | null
+  actualValue: number | null
 }
 
 export type LeadMinAggregateOutputType = {
@@ -39,15 +59,39 @@ export type LeadMinAggregateOutputType = {
   referenceNumber: string | null
   source: $Enums.LeadSource | null
   status: $Enums.LeadStatus | null
+  priority: $Enums.LeadPriority | null
+  quality: $Enums.LeadQuality | null
+  serviceType: $Enums.LeadServiceType | null
   fullName: string | null
   email: string | null
   phoneNumber: string | null
+  alternatePhone: string | null
+  city: string | null
+  destination: string | null
+  travelStartDate: Date | null
+  travelEndDate: Date | null
+  numberOfTravelers: number | null
+  numberOfAdults: number | null
+  numberOfChildren: number | null
+  budgetMin: number | null
+  budgetMax: number | null
+  specialRequests: string | null
+  tagId: string | null
+  categoryId: string | null
   assignedToId: string | null
-  priority: number | null
-  notes: string | null
-  zohoLeadId: string | null
-  syncedToZoho: boolean | null
-  lastSyncedAt: Date | null
+  assignedAt: Date | null
+  firstResponseAt: Date | null
+  responseTimeMinutes: number | null
+  lastActivityAt: Date | null
+  nextFollowUpAt: Date | null
+  followUpCount: number | null
+  isOverdue: boolean | null
+  leadScore: number | null
+  conversionProbability: runtime.Decimal | null
+  estimatedValue: number | null
+  actualValue: number | null
+  lostReason: string | null
+  closedAt: Date | null
   ipAddress: string | null
   userAgent: string | null
   createdAt: Date | null
@@ -60,15 +104,39 @@ export type LeadMaxAggregateOutputType = {
   referenceNumber: string | null
   source: $Enums.LeadSource | null
   status: $Enums.LeadStatus | null
+  priority: $Enums.LeadPriority | null
+  quality: $Enums.LeadQuality | null
+  serviceType: $Enums.LeadServiceType | null
   fullName: string | null
   email: string | null
   phoneNumber: string | null
+  alternatePhone: string | null
+  city: string | null
+  destination: string | null
+  travelStartDate: Date | null
+  travelEndDate: Date | null
+  numberOfTravelers: number | null
+  numberOfAdults: number | null
+  numberOfChildren: number | null
+  budgetMin: number | null
+  budgetMax: number | null
+  specialRequests: string | null
+  tagId: string | null
+  categoryId: string | null
   assignedToId: string | null
-  priority: number | null
-  notes: string | null
-  zohoLeadId: string | null
-  syncedToZoho: boolean | null
-  lastSyncedAt: Date | null
+  assignedAt: Date | null
+  firstResponseAt: Date | null
+  responseTimeMinutes: number | null
+  lastActivityAt: Date | null
+  nextFollowUpAt: Date | null
+  followUpCount: number | null
+  isOverdue: boolean | null
+  leadScore: number | null
+  conversionProbability: runtime.Decimal | null
+  estimatedValue: number | null
+  actualValue: number | null
+  lostReason: string | null
+  closedAt: Date | null
   ipAddress: string | null
   userAgent: string | null
   createdAt: Date | null
@@ -81,16 +149,40 @@ export type LeadCountAggregateOutputType = {
   referenceNumber: number
   source: number
   status: number
+  priority: number
+  quality: number
+  serviceType: number
   fullName: number
   email: number
   phoneNumber: number
-  details: number
+  alternatePhone: number
+  city: number
+  destination: number
+  travelStartDate: number
+  travelEndDate: number
+  numberOfTravelers: number
+  numberOfAdults: number
+  numberOfChildren: number
+  budgetMin: number
+  budgetMax: number
+  specialRequests: number
+  tagId: number
+  categoryId: number
   assignedToId: number
-  priority: number
-  notes: number
-  zohoLeadId: number
-  syncedToZoho: number
-  lastSyncedAt: number
+  assignedAt: number
+  firstResponseAt: number
+  responseTimeMinutes: number
+  lastActivityAt: number
+  nextFollowUpAt: number
+  followUpCount: number
+  isOverdue: number
+  leadScore: number
+  conversionProbability: number
+  estimatedValue: number
+  actualValue: number
+  lostReason: number
+  closedAt: number
+  details: number
   ipAddress: number
   userAgent: number
   createdAt: number
@@ -101,11 +193,31 @@ export type LeadCountAggregateOutputType = {
 
 
 export type LeadAvgAggregateInputType = {
-  priority?: true
+  numberOfTravelers?: true
+  numberOfAdults?: true
+  numberOfChildren?: true
+  budgetMin?: true
+  budgetMax?: true
+  responseTimeMinutes?: true
+  followUpCount?: true
+  leadScore?: true
+  conversionProbability?: true
+  estimatedValue?: true
+  actualValue?: true
 }
 
 export type LeadSumAggregateInputType = {
-  priority?: true
+  numberOfTravelers?: true
+  numberOfAdults?: true
+  numberOfChildren?: true
+  budgetMin?: true
+  budgetMax?: true
+  responseTimeMinutes?: true
+  followUpCount?: true
+  leadScore?: true
+  conversionProbability?: true
+  estimatedValue?: true
+  actualValue?: true
 }
 
 export type LeadMinAggregateInputType = {
@@ -113,15 +225,39 @@ export type LeadMinAggregateInputType = {
   referenceNumber?: true
   source?: true
   status?: true
+  priority?: true
+  quality?: true
+  serviceType?: true
   fullName?: true
   email?: true
   phoneNumber?: true
+  alternatePhone?: true
+  city?: true
+  destination?: true
+  travelStartDate?: true
+  travelEndDate?: true
+  numberOfTravelers?: true
+  numberOfAdults?: true
+  numberOfChildren?: true
+  budgetMin?: true
+  budgetMax?: true
+  specialRequests?: true
+  tagId?: true
+  categoryId?: true
   assignedToId?: true
-  priority?: true
-  notes?: true
-  zohoLeadId?: true
-  syncedToZoho?: true
-  lastSyncedAt?: true
+  assignedAt?: true
+  firstResponseAt?: true
+  responseTimeMinutes?: true
+  lastActivityAt?: true
+  nextFollowUpAt?: true
+  followUpCount?: true
+  isOverdue?: true
+  leadScore?: true
+  conversionProbability?: true
+  estimatedValue?: true
+  actualValue?: true
+  lostReason?: true
+  closedAt?: true
   ipAddress?: true
   userAgent?: true
   createdAt?: true
@@ -134,15 +270,39 @@ export type LeadMaxAggregateInputType = {
   referenceNumber?: true
   source?: true
   status?: true
+  priority?: true
+  quality?: true
+  serviceType?: true
   fullName?: true
   email?: true
   phoneNumber?: true
+  alternatePhone?: true
+  city?: true
+  destination?: true
+  travelStartDate?: true
+  travelEndDate?: true
+  numberOfTravelers?: true
+  numberOfAdults?: true
+  numberOfChildren?: true
+  budgetMin?: true
+  budgetMax?: true
+  specialRequests?: true
+  tagId?: true
+  categoryId?: true
   assignedToId?: true
-  priority?: true
-  notes?: true
-  zohoLeadId?: true
-  syncedToZoho?: true
-  lastSyncedAt?: true
+  assignedAt?: true
+  firstResponseAt?: true
+  responseTimeMinutes?: true
+  lastActivityAt?: true
+  nextFollowUpAt?: true
+  followUpCount?: true
+  isOverdue?: true
+  leadScore?: true
+  conversionProbability?: true
+  estimatedValue?: true
+  actualValue?: true
+  lostReason?: true
+  closedAt?: true
   ipAddress?: true
   userAgent?: true
   createdAt?: true
@@ -155,16 +315,40 @@ export type LeadCountAggregateInputType = {
   referenceNumber?: true
   source?: true
   status?: true
+  priority?: true
+  quality?: true
+  serviceType?: true
   fullName?: true
   email?: true
   phoneNumber?: true
-  details?: true
+  alternatePhone?: true
+  city?: true
+  destination?: true
+  travelStartDate?: true
+  travelEndDate?: true
+  numberOfTravelers?: true
+  numberOfAdults?: true
+  numberOfChildren?: true
+  budgetMin?: true
+  budgetMax?: true
+  specialRequests?: true
+  tagId?: true
+  categoryId?: true
   assignedToId?: true
-  priority?: true
-  notes?: true
-  zohoLeadId?: true
-  syncedToZoho?: true
-  lastSyncedAt?: true
+  assignedAt?: true
+  firstResponseAt?: true
+  responseTimeMinutes?: true
+  lastActivityAt?: true
+  nextFollowUpAt?: true
+  followUpCount?: true
+  isOverdue?: true
+  leadScore?: true
+  conversionProbability?: true
+  estimatedValue?: true
+  actualValue?: true
+  lostReason?: true
+  closedAt?: true
+  details?: true
   ipAddress?: true
   userAgent?: true
   createdAt?: true
@@ -264,16 +448,40 @@ export type LeadGroupByOutputType = {
   referenceNumber: string
   source: $Enums.LeadSource
   status: $Enums.LeadStatus
+  priority: $Enums.LeadPriority
+  quality: $Enums.LeadQuality | null
+  serviceType: $Enums.LeadServiceType | null
   fullName: string
   email: string
   phoneNumber: string | null
-  details: runtime.JsonValue
+  alternatePhone: string | null
+  city: string | null
+  destination: string | null
+  travelStartDate: Date | null
+  travelEndDate: Date | null
+  numberOfTravelers: number | null
+  numberOfAdults: number | null
+  numberOfChildren: number | null
+  budgetMin: number | null
+  budgetMax: number | null
+  specialRequests: string | null
+  tagId: string | null
+  categoryId: string | null
   assignedToId: string | null
-  priority: number
-  notes: string | null
-  zohoLeadId: string | null
-  syncedToZoho: boolean
-  lastSyncedAt: Date | null
+  assignedAt: Date | null
+  firstResponseAt: Date | null
+  responseTimeMinutes: number | null
+  lastActivityAt: Date | null
+  nextFollowUpAt: Date | null
+  followUpCount: number
+  isOverdue: boolean
+  leadScore: number
+  conversionProbability: runtime.Decimal | null
+  estimatedValue: number | null
+  actualValue: number | null
+  lostReason: string | null
+  closedAt: Date | null
+  details: runtime.JsonValue | null
   ipAddress: string | null
   userAgent: string | null
   createdAt: Date
@@ -309,23 +517,54 @@ export type LeadWhereInput = {
   referenceNumber?: Prisma.StringFilter<"Lead"> | string
   source?: Prisma.EnumLeadSourceFilter<"Lead"> | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFilter<"Lead"> | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFilter<"Lead"> | $Enums.LeadPriority
+  quality?: Prisma.EnumLeadQualityNullableFilter<"Lead"> | $Enums.LeadQuality | null
+  serviceType?: Prisma.EnumLeadServiceTypeNullableFilter<"Lead"> | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFilter<"Lead"> | string
   email?: Prisma.StringFilter<"Lead"> | string
   phoneNumber?: Prisma.StringNullableFilter<"Lead"> | string | null
-  details?: Prisma.JsonFilter<"Lead">
+  alternatePhone?: Prisma.StringNullableFilter<"Lead"> | string | null
+  city?: Prisma.StringNullableFilter<"Lead"> | string | null
+  destination?: Prisma.StringNullableFilter<"Lead"> | string | null
+  travelStartDate?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  travelEndDate?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  numberOfTravelers?: Prisma.IntNullableFilter<"Lead"> | number | null
+  numberOfAdults?: Prisma.IntNullableFilter<"Lead"> | number | null
+  numberOfChildren?: Prisma.IntNullableFilter<"Lead"> | number | null
+  budgetMin?: Prisma.IntNullableFilter<"Lead"> | number | null
+  budgetMax?: Prisma.IntNullableFilter<"Lead"> | number | null
+  specialRequests?: Prisma.StringNullableFilter<"Lead"> | string | null
+  tagId?: Prisma.StringNullableFilter<"Lead"> | string | null
+  categoryId?: Prisma.StringNullableFilter<"Lead"> | string | null
   assignedToId?: Prisma.StringNullableFilter<"Lead"> | string | null
-  priority?: Prisma.IntFilter<"Lead"> | number
-  notes?: Prisma.StringNullableFilter<"Lead"> | string | null
-  zohoLeadId?: Prisma.StringNullableFilter<"Lead"> | string | null
-  syncedToZoho?: Prisma.BoolFilter<"Lead"> | boolean
-  lastSyncedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  assignedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  firstResponseAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  responseTimeMinutes?: Prisma.IntNullableFilter<"Lead"> | number | null
+  lastActivityAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  nextFollowUpAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  followUpCount?: Prisma.IntFilter<"Lead"> | number
+  isOverdue?: Prisma.BoolFilter<"Lead"> | boolean
+  leadScore?: Prisma.IntFilter<"Lead"> | number
+  conversionProbability?: Prisma.DecimalNullableFilter<"Lead"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.IntNullableFilter<"Lead"> | number | null
+  actualValue?: Prisma.IntNullableFilter<"Lead"> | number | null
+  lostReason?: Prisma.StringNullableFilter<"Lead"> | string | null
+  closedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  details?: Prisma.JsonNullableFilter<"Lead">
   ipAddress?: Prisma.StringNullableFilter<"Lead"> | string | null
   userAgent?: Prisma.StringNullableFilter<"Lead"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Lead"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Lead"> | Date | string
   contactedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  tag?: Prisma.XOR<Prisma.LeadTagNullableScalarRelationFilter, Prisma.LeadTagWhereInput> | null
+  category?: Prisma.XOR<Prisma.LeadCategoryNullableScalarRelationFilter, Prisma.LeadCategoryWhereInput> | null
   assignedTo?: Prisma.XOR<Prisma.AdminNullableScalarRelationFilter, Prisma.AdminWhereInput> | null
   activities?: Prisma.LeadActivityListRelationFilter
+  notes?: Prisma.LeadNoteListRelationFilter
+  quotations?: Prisma.LeadQuotationListRelationFilter
+  communications?: Prisma.LeadCommunicationListRelationFilter
+  reminders?: Prisma.LeadReminderListRelationFilter
+  statusHistory?: Prisma.LeadStatusHistoryListRelationFilter
 }
 
 export type LeadOrderByWithRelationInput = {
@@ -333,23 +572,54 @@ export type LeadOrderByWithRelationInput = {
   referenceNumber?: Prisma.SortOrder
   source?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  quality?: Prisma.SortOrderInput | Prisma.SortOrder
+  serviceType?: Prisma.SortOrderInput | Prisma.SortOrder
   fullName?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
-  details?: Prisma.SortOrder
+  alternatePhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  city?: Prisma.SortOrderInput | Prisma.SortOrder
+  destination?: Prisma.SortOrderInput | Prisma.SortOrder
+  travelStartDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  travelEndDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  numberOfTravelers?: Prisma.SortOrderInput | Prisma.SortOrder
+  numberOfAdults?: Prisma.SortOrderInput | Prisma.SortOrder
+  numberOfChildren?: Prisma.SortOrderInput | Prisma.SortOrder
+  budgetMin?: Prisma.SortOrderInput | Prisma.SortOrder
+  budgetMax?: Prisma.SortOrderInput | Prisma.SortOrder
+  specialRequests?: Prisma.SortOrderInput | Prisma.SortOrder
+  tagId?: Prisma.SortOrderInput | Prisma.SortOrder
+  categoryId?: Prisma.SortOrderInput | Prisma.SortOrder
   assignedToId?: Prisma.SortOrderInput | Prisma.SortOrder
-  priority?: Prisma.SortOrder
-  notes?: Prisma.SortOrderInput | Prisma.SortOrder
-  zohoLeadId?: Prisma.SortOrderInput | Prisma.SortOrder
-  syncedToZoho?: Prisma.SortOrder
-  lastSyncedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  assignedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  firstResponseAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  responseTimeMinutes?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastActivityAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  nextFollowUpAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  followUpCount?: Prisma.SortOrder
+  isOverdue?: Prisma.SortOrder
+  leadScore?: Prisma.SortOrder
+  conversionProbability?: Prisma.SortOrderInput | Prisma.SortOrder
+  estimatedValue?: Prisma.SortOrderInput | Prisma.SortOrder
+  actualValue?: Prisma.SortOrderInput | Prisma.SortOrder
+  lostReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  closedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  details?: Prisma.SortOrderInput | Prisma.SortOrder
   ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   userAgent?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   contactedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  tag?: Prisma.LeadTagOrderByWithRelationInput
+  category?: Prisma.LeadCategoryOrderByWithRelationInput
   assignedTo?: Prisma.AdminOrderByWithRelationInput
   activities?: Prisma.LeadActivityOrderByRelationAggregateInput
+  notes?: Prisma.LeadNoteOrderByRelationAggregateInput
+  quotations?: Prisma.LeadQuotationOrderByRelationAggregateInput
+  communications?: Prisma.LeadCommunicationOrderByRelationAggregateInput
+  reminders?: Prisma.LeadReminderOrderByRelationAggregateInput
+  statusHistory?: Prisma.LeadStatusHistoryOrderByRelationAggregateInput
 }
 
 export type LeadWhereUniqueInput = Prisma.AtLeast<{
@@ -360,23 +630,54 @@ export type LeadWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.LeadWhereInput | Prisma.LeadWhereInput[]
   source?: Prisma.EnumLeadSourceFilter<"Lead"> | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFilter<"Lead"> | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFilter<"Lead"> | $Enums.LeadPriority
+  quality?: Prisma.EnumLeadQualityNullableFilter<"Lead"> | $Enums.LeadQuality | null
+  serviceType?: Prisma.EnumLeadServiceTypeNullableFilter<"Lead"> | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFilter<"Lead"> | string
   email?: Prisma.StringFilter<"Lead"> | string
   phoneNumber?: Prisma.StringNullableFilter<"Lead"> | string | null
-  details?: Prisma.JsonFilter<"Lead">
+  alternatePhone?: Prisma.StringNullableFilter<"Lead"> | string | null
+  city?: Prisma.StringNullableFilter<"Lead"> | string | null
+  destination?: Prisma.StringNullableFilter<"Lead"> | string | null
+  travelStartDate?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  travelEndDate?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  numberOfTravelers?: Prisma.IntNullableFilter<"Lead"> | number | null
+  numberOfAdults?: Prisma.IntNullableFilter<"Lead"> | number | null
+  numberOfChildren?: Prisma.IntNullableFilter<"Lead"> | number | null
+  budgetMin?: Prisma.IntNullableFilter<"Lead"> | number | null
+  budgetMax?: Prisma.IntNullableFilter<"Lead"> | number | null
+  specialRequests?: Prisma.StringNullableFilter<"Lead"> | string | null
+  tagId?: Prisma.StringNullableFilter<"Lead"> | string | null
+  categoryId?: Prisma.StringNullableFilter<"Lead"> | string | null
   assignedToId?: Prisma.StringNullableFilter<"Lead"> | string | null
-  priority?: Prisma.IntFilter<"Lead"> | number
-  notes?: Prisma.StringNullableFilter<"Lead"> | string | null
-  zohoLeadId?: Prisma.StringNullableFilter<"Lead"> | string | null
-  syncedToZoho?: Prisma.BoolFilter<"Lead"> | boolean
-  lastSyncedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  assignedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  firstResponseAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  responseTimeMinutes?: Prisma.IntNullableFilter<"Lead"> | number | null
+  lastActivityAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  nextFollowUpAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  followUpCount?: Prisma.IntFilter<"Lead"> | number
+  isOverdue?: Prisma.BoolFilter<"Lead"> | boolean
+  leadScore?: Prisma.IntFilter<"Lead"> | number
+  conversionProbability?: Prisma.DecimalNullableFilter<"Lead"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.IntNullableFilter<"Lead"> | number | null
+  actualValue?: Prisma.IntNullableFilter<"Lead"> | number | null
+  lostReason?: Prisma.StringNullableFilter<"Lead"> | string | null
+  closedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  details?: Prisma.JsonNullableFilter<"Lead">
   ipAddress?: Prisma.StringNullableFilter<"Lead"> | string | null
   userAgent?: Prisma.StringNullableFilter<"Lead"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Lead"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Lead"> | Date | string
   contactedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  tag?: Prisma.XOR<Prisma.LeadTagNullableScalarRelationFilter, Prisma.LeadTagWhereInput> | null
+  category?: Prisma.XOR<Prisma.LeadCategoryNullableScalarRelationFilter, Prisma.LeadCategoryWhereInput> | null
   assignedTo?: Prisma.XOR<Prisma.AdminNullableScalarRelationFilter, Prisma.AdminWhereInput> | null
   activities?: Prisma.LeadActivityListRelationFilter
+  notes?: Prisma.LeadNoteListRelationFilter
+  quotations?: Prisma.LeadQuotationListRelationFilter
+  communications?: Prisma.LeadCommunicationListRelationFilter
+  reminders?: Prisma.LeadReminderListRelationFilter
+  statusHistory?: Prisma.LeadStatusHistoryListRelationFilter
 }, "id" | "referenceNumber">
 
 export type LeadOrderByWithAggregationInput = {
@@ -384,16 +685,40 @@ export type LeadOrderByWithAggregationInput = {
   referenceNumber?: Prisma.SortOrder
   source?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  quality?: Prisma.SortOrderInput | Prisma.SortOrder
+  serviceType?: Prisma.SortOrderInput | Prisma.SortOrder
   fullName?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
-  details?: Prisma.SortOrder
+  alternatePhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  city?: Prisma.SortOrderInput | Prisma.SortOrder
+  destination?: Prisma.SortOrderInput | Prisma.SortOrder
+  travelStartDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  travelEndDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  numberOfTravelers?: Prisma.SortOrderInput | Prisma.SortOrder
+  numberOfAdults?: Prisma.SortOrderInput | Prisma.SortOrder
+  numberOfChildren?: Prisma.SortOrderInput | Prisma.SortOrder
+  budgetMin?: Prisma.SortOrderInput | Prisma.SortOrder
+  budgetMax?: Prisma.SortOrderInput | Prisma.SortOrder
+  specialRequests?: Prisma.SortOrderInput | Prisma.SortOrder
+  tagId?: Prisma.SortOrderInput | Prisma.SortOrder
+  categoryId?: Prisma.SortOrderInput | Prisma.SortOrder
   assignedToId?: Prisma.SortOrderInput | Prisma.SortOrder
-  priority?: Prisma.SortOrder
-  notes?: Prisma.SortOrderInput | Prisma.SortOrder
-  zohoLeadId?: Prisma.SortOrderInput | Prisma.SortOrder
-  syncedToZoho?: Prisma.SortOrder
-  lastSyncedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  assignedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  firstResponseAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  responseTimeMinutes?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastActivityAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  nextFollowUpAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  followUpCount?: Prisma.SortOrder
+  isOverdue?: Prisma.SortOrder
+  leadScore?: Prisma.SortOrder
+  conversionProbability?: Prisma.SortOrderInput | Prisma.SortOrder
+  estimatedValue?: Prisma.SortOrderInput | Prisma.SortOrder
+  actualValue?: Prisma.SortOrderInput | Prisma.SortOrder
+  lostReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  closedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  details?: Prisma.SortOrderInput | Prisma.SortOrder
   ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   userAgent?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -414,16 +739,40 @@ export type LeadScalarWhereWithAggregatesInput = {
   referenceNumber?: Prisma.StringWithAggregatesFilter<"Lead"> | string
   source?: Prisma.EnumLeadSourceWithAggregatesFilter<"Lead"> | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusWithAggregatesFilter<"Lead"> | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityWithAggregatesFilter<"Lead"> | $Enums.LeadPriority
+  quality?: Prisma.EnumLeadQualityNullableWithAggregatesFilter<"Lead"> | $Enums.LeadQuality | null
+  serviceType?: Prisma.EnumLeadServiceTypeNullableWithAggregatesFilter<"Lead"> | $Enums.LeadServiceType | null
   fullName?: Prisma.StringWithAggregatesFilter<"Lead"> | string
   email?: Prisma.StringWithAggregatesFilter<"Lead"> | string
   phoneNumber?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
-  details?: Prisma.JsonWithAggregatesFilter<"Lead">
+  alternatePhone?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
+  city?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
+  destination?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
+  travelStartDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+  travelEndDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+  numberOfTravelers?: Prisma.IntNullableWithAggregatesFilter<"Lead"> | number | null
+  numberOfAdults?: Prisma.IntNullableWithAggregatesFilter<"Lead"> | number | null
+  numberOfChildren?: Prisma.IntNullableWithAggregatesFilter<"Lead"> | number | null
+  budgetMin?: Prisma.IntNullableWithAggregatesFilter<"Lead"> | number | null
+  budgetMax?: Prisma.IntNullableWithAggregatesFilter<"Lead"> | number | null
+  specialRequests?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
+  tagId?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
+  categoryId?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
   assignedToId?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
-  priority?: Prisma.IntWithAggregatesFilter<"Lead"> | number
-  notes?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
-  zohoLeadId?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
-  syncedToZoho?: Prisma.BoolWithAggregatesFilter<"Lead"> | boolean
-  lastSyncedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+  assignedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+  firstResponseAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+  responseTimeMinutes?: Prisma.IntNullableWithAggregatesFilter<"Lead"> | number | null
+  lastActivityAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+  nextFollowUpAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+  followUpCount?: Prisma.IntWithAggregatesFilter<"Lead"> | number
+  isOverdue?: Prisma.BoolWithAggregatesFilter<"Lead"> | boolean
+  leadScore?: Prisma.IntWithAggregatesFilter<"Lead"> | number
+  conversionProbability?: Prisma.DecimalNullableWithAggregatesFilter<"Lead"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.IntNullableWithAggregatesFilter<"Lead"> | number | null
+  actualValue?: Prisma.IntNullableWithAggregatesFilter<"Lead"> | number | null
+  lostReason?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
+  closedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+  details?: Prisma.JsonNullableWithAggregatesFilter<"Lead">
   ipAddress?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
   userAgent?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Lead"> | Date | string
@@ -436,22 +785,51 @@ export type LeadCreateInput = {
   referenceNumber: string
   source: $Enums.LeadSource
   status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
   fullName: string
   email: string
   phoneNumber?: string | null
-  details: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  priority?: number
-  notes?: string | null
-  zohoLeadId?: string | null
-  syncedToZoho?: boolean
-  lastSyncedAt?: Date | string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: string | null
   userAgent?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   contactedAt?: Date | string | null
-  assignedTo?: Prisma.AdminCreateNestedOneWithoutLeadsInput
+  tag?: Prisma.LeadTagCreateNestedOneWithoutLeadsInput
+  category?: Prisma.LeadCategoryCreateNestedOneWithoutLeadsInput
+  assignedTo?: Prisma.AdminCreateNestedOneWithoutAssignedLeadsInput
   activities?: Prisma.LeadActivityCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryCreateNestedManyWithoutLeadInput
 }
 
 export type LeadUncheckedCreateInput = {
@@ -459,22 +837,51 @@ export type LeadUncheckedCreateInput = {
   referenceNumber: string
   source: $Enums.LeadSource
   status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
   fullName: string
   email: string
   phoneNumber?: string | null
-  details: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  categoryId?: string | null
   assignedToId?: string | null
-  priority?: number
-  notes?: string | null
-  zohoLeadId?: string | null
-  syncedToZoho?: boolean
-  lastSyncedAt?: Date | string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: string | null
   userAgent?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   contactedAt?: Date | string | null
   activities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutLeadInput
 }
 
 export type LeadUpdateInput = {
@@ -482,22 +889,51 @@ export type LeadUpdateInput = {
   referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
-  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zohoLeadId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  syncedToZoho?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  assignedTo?: Prisma.AdminUpdateOneWithoutLeadsNestedInput
+  tag?: Prisma.LeadTagUpdateOneWithoutLeadsNestedInput
+  category?: Prisma.LeadCategoryUpdateOneWithoutLeadsNestedInput
+  assignedTo?: Prisma.AdminUpdateOneWithoutAssignedLeadsNestedInput
   activities?: Prisma.LeadActivityUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUpdateManyWithoutLeadNestedInput
 }
 
 export type LeadUncheckedUpdateInput = {
@@ -505,22 +941,51 @@ export type LeadUncheckedUpdateInput = {
   referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
-  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zohoLeadId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  syncedToZoho?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   activities?: Prisma.LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUncheckedUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutLeadNestedInput
 }
 
 export type LeadCreateManyInput = {
@@ -528,16 +993,40 @@ export type LeadCreateManyInput = {
   referenceNumber: string
   source: $Enums.LeadSource
   status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
   fullName: string
   email: string
   phoneNumber?: string | null
-  details: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  categoryId?: string | null
   assignedToId?: string | null
-  priority?: number
-  notes?: string | null
-  zohoLeadId?: string | null
-  syncedToZoho?: boolean
-  lastSyncedAt?: Date | string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: string | null
   userAgent?: string | null
   createdAt?: Date | string
@@ -550,15 +1039,37 @@ export type LeadUpdateManyMutationInput = {
   referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
-  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zohoLeadId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  syncedToZoho?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -571,16 +1082,40 @@ export type LeadUncheckedUpdateManyInput = {
   referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
-  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zohoLeadId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  syncedToZoho?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -603,16 +1138,40 @@ export type LeadCountOrderByAggregateInput = {
   referenceNumber?: Prisma.SortOrder
   source?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  quality?: Prisma.SortOrder
+  serviceType?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
-  details?: Prisma.SortOrder
+  alternatePhone?: Prisma.SortOrder
+  city?: Prisma.SortOrder
+  destination?: Prisma.SortOrder
+  travelStartDate?: Prisma.SortOrder
+  travelEndDate?: Prisma.SortOrder
+  numberOfTravelers?: Prisma.SortOrder
+  numberOfAdults?: Prisma.SortOrder
+  numberOfChildren?: Prisma.SortOrder
+  budgetMin?: Prisma.SortOrder
+  budgetMax?: Prisma.SortOrder
+  specialRequests?: Prisma.SortOrder
+  tagId?: Prisma.SortOrder
+  categoryId?: Prisma.SortOrder
   assignedToId?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
-  notes?: Prisma.SortOrder
-  zohoLeadId?: Prisma.SortOrder
-  syncedToZoho?: Prisma.SortOrder
-  lastSyncedAt?: Prisma.SortOrder
+  assignedAt?: Prisma.SortOrder
+  firstResponseAt?: Prisma.SortOrder
+  responseTimeMinutes?: Prisma.SortOrder
+  lastActivityAt?: Prisma.SortOrder
+  nextFollowUpAt?: Prisma.SortOrder
+  followUpCount?: Prisma.SortOrder
+  isOverdue?: Prisma.SortOrder
+  leadScore?: Prisma.SortOrder
+  conversionProbability?: Prisma.SortOrder
+  estimatedValue?: Prisma.SortOrder
+  actualValue?: Prisma.SortOrder
+  lostReason?: Prisma.SortOrder
+  closedAt?: Prisma.SortOrder
+  details?: Prisma.SortOrder
   ipAddress?: Prisma.SortOrder
   userAgent?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -621,7 +1180,17 @@ export type LeadCountOrderByAggregateInput = {
 }
 
 export type LeadAvgOrderByAggregateInput = {
-  priority?: Prisma.SortOrder
+  numberOfTravelers?: Prisma.SortOrder
+  numberOfAdults?: Prisma.SortOrder
+  numberOfChildren?: Prisma.SortOrder
+  budgetMin?: Prisma.SortOrder
+  budgetMax?: Prisma.SortOrder
+  responseTimeMinutes?: Prisma.SortOrder
+  followUpCount?: Prisma.SortOrder
+  leadScore?: Prisma.SortOrder
+  conversionProbability?: Prisma.SortOrder
+  estimatedValue?: Prisma.SortOrder
+  actualValue?: Prisma.SortOrder
 }
 
 export type LeadMaxOrderByAggregateInput = {
@@ -629,15 +1198,39 @@ export type LeadMaxOrderByAggregateInput = {
   referenceNumber?: Prisma.SortOrder
   source?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  quality?: Prisma.SortOrder
+  serviceType?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
+  alternatePhone?: Prisma.SortOrder
+  city?: Prisma.SortOrder
+  destination?: Prisma.SortOrder
+  travelStartDate?: Prisma.SortOrder
+  travelEndDate?: Prisma.SortOrder
+  numberOfTravelers?: Prisma.SortOrder
+  numberOfAdults?: Prisma.SortOrder
+  numberOfChildren?: Prisma.SortOrder
+  budgetMin?: Prisma.SortOrder
+  budgetMax?: Prisma.SortOrder
+  specialRequests?: Prisma.SortOrder
+  tagId?: Prisma.SortOrder
+  categoryId?: Prisma.SortOrder
   assignedToId?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
-  notes?: Prisma.SortOrder
-  zohoLeadId?: Prisma.SortOrder
-  syncedToZoho?: Prisma.SortOrder
-  lastSyncedAt?: Prisma.SortOrder
+  assignedAt?: Prisma.SortOrder
+  firstResponseAt?: Prisma.SortOrder
+  responseTimeMinutes?: Prisma.SortOrder
+  lastActivityAt?: Prisma.SortOrder
+  nextFollowUpAt?: Prisma.SortOrder
+  followUpCount?: Prisma.SortOrder
+  isOverdue?: Prisma.SortOrder
+  leadScore?: Prisma.SortOrder
+  conversionProbability?: Prisma.SortOrder
+  estimatedValue?: Prisma.SortOrder
+  actualValue?: Prisma.SortOrder
+  lostReason?: Prisma.SortOrder
+  closedAt?: Prisma.SortOrder
   ipAddress?: Prisma.SortOrder
   userAgent?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -650,15 +1243,39 @@ export type LeadMinOrderByAggregateInput = {
   referenceNumber?: Prisma.SortOrder
   source?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  quality?: Prisma.SortOrder
+  serviceType?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
+  alternatePhone?: Prisma.SortOrder
+  city?: Prisma.SortOrder
+  destination?: Prisma.SortOrder
+  travelStartDate?: Prisma.SortOrder
+  travelEndDate?: Prisma.SortOrder
+  numberOfTravelers?: Prisma.SortOrder
+  numberOfAdults?: Prisma.SortOrder
+  numberOfChildren?: Prisma.SortOrder
+  budgetMin?: Prisma.SortOrder
+  budgetMax?: Prisma.SortOrder
+  specialRequests?: Prisma.SortOrder
+  tagId?: Prisma.SortOrder
+  categoryId?: Prisma.SortOrder
   assignedToId?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
-  notes?: Prisma.SortOrder
-  zohoLeadId?: Prisma.SortOrder
-  syncedToZoho?: Prisma.SortOrder
-  lastSyncedAt?: Prisma.SortOrder
+  assignedAt?: Prisma.SortOrder
+  firstResponseAt?: Prisma.SortOrder
+  responseTimeMinutes?: Prisma.SortOrder
+  lastActivityAt?: Prisma.SortOrder
+  nextFollowUpAt?: Prisma.SortOrder
+  followUpCount?: Prisma.SortOrder
+  isOverdue?: Prisma.SortOrder
+  leadScore?: Prisma.SortOrder
+  conversionProbability?: Prisma.SortOrder
+  estimatedValue?: Prisma.SortOrder
+  actualValue?: Prisma.SortOrder
+  lostReason?: Prisma.SortOrder
+  closedAt?: Prisma.SortOrder
   ipAddress?: Prisma.SortOrder
   userAgent?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -667,7 +1284,17 @@ export type LeadMinOrderByAggregateInput = {
 }
 
 export type LeadSumOrderByAggregateInput = {
-  priority?: Prisma.SortOrder
+  numberOfTravelers?: Prisma.SortOrder
+  numberOfAdults?: Prisma.SortOrder
+  numberOfChildren?: Prisma.SortOrder
+  budgetMin?: Prisma.SortOrder
+  budgetMax?: Prisma.SortOrder
+  responseTimeMinutes?: Prisma.SortOrder
+  followUpCount?: Prisma.SortOrder
+  leadScore?: Prisma.SortOrder
+  conversionProbability?: Prisma.SortOrder
+  estimatedValue?: Prisma.SortOrder
+  actualValue?: Prisma.SortOrder
 }
 
 export type LeadScalarRelationFilter = {
@@ -717,12 +1344,108 @@ export type LeadUncheckedUpdateManyWithoutAssignedToNestedInput = {
   deleteMany?: Prisma.LeadScalarWhereInput | Prisma.LeadScalarWhereInput[]
 }
 
+export type LeadCreateNestedManyWithoutTagInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutTagInput, Prisma.LeadUncheckedCreateWithoutTagInput> | Prisma.LeadCreateWithoutTagInput[] | Prisma.LeadUncheckedCreateWithoutTagInput[]
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutTagInput | Prisma.LeadCreateOrConnectWithoutTagInput[]
+  createMany?: Prisma.LeadCreateManyTagInputEnvelope
+  connect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+}
+
+export type LeadUncheckedCreateNestedManyWithoutTagInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutTagInput, Prisma.LeadUncheckedCreateWithoutTagInput> | Prisma.LeadCreateWithoutTagInput[] | Prisma.LeadUncheckedCreateWithoutTagInput[]
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutTagInput | Prisma.LeadCreateOrConnectWithoutTagInput[]
+  createMany?: Prisma.LeadCreateManyTagInputEnvelope
+  connect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+}
+
+export type LeadUpdateManyWithoutTagNestedInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutTagInput, Prisma.LeadUncheckedCreateWithoutTagInput> | Prisma.LeadCreateWithoutTagInput[] | Prisma.LeadUncheckedCreateWithoutTagInput[]
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutTagInput | Prisma.LeadCreateOrConnectWithoutTagInput[]
+  upsert?: Prisma.LeadUpsertWithWhereUniqueWithoutTagInput | Prisma.LeadUpsertWithWhereUniqueWithoutTagInput[]
+  createMany?: Prisma.LeadCreateManyTagInputEnvelope
+  set?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  disconnect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  delete?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  connect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  update?: Prisma.LeadUpdateWithWhereUniqueWithoutTagInput | Prisma.LeadUpdateWithWhereUniqueWithoutTagInput[]
+  updateMany?: Prisma.LeadUpdateManyWithWhereWithoutTagInput | Prisma.LeadUpdateManyWithWhereWithoutTagInput[]
+  deleteMany?: Prisma.LeadScalarWhereInput | Prisma.LeadScalarWhereInput[]
+}
+
+export type LeadUncheckedUpdateManyWithoutTagNestedInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutTagInput, Prisma.LeadUncheckedCreateWithoutTagInput> | Prisma.LeadCreateWithoutTagInput[] | Prisma.LeadUncheckedCreateWithoutTagInput[]
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutTagInput | Prisma.LeadCreateOrConnectWithoutTagInput[]
+  upsert?: Prisma.LeadUpsertWithWhereUniqueWithoutTagInput | Prisma.LeadUpsertWithWhereUniqueWithoutTagInput[]
+  createMany?: Prisma.LeadCreateManyTagInputEnvelope
+  set?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  disconnect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  delete?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  connect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  update?: Prisma.LeadUpdateWithWhereUniqueWithoutTagInput | Prisma.LeadUpdateWithWhereUniqueWithoutTagInput[]
+  updateMany?: Prisma.LeadUpdateManyWithWhereWithoutTagInput | Prisma.LeadUpdateManyWithWhereWithoutTagInput[]
+  deleteMany?: Prisma.LeadScalarWhereInput | Prisma.LeadScalarWhereInput[]
+}
+
+export type LeadCreateNestedManyWithoutCategoryInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutCategoryInput, Prisma.LeadUncheckedCreateWithoutCategoryInput> | Prisma.LeadCreateWithoutCategoryInput[] | Prisma.LeadUncheckedCreateWithoutCategoryInput[]
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutCategoryInput | Prisma.LeadCreateOrConnectWithoutCategoryInput[]
+  createMany?: Prisma.LeadCreateManyCategoryInputEnvelope
+  connect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+}
+
+export type LeadUncheckedCreateNestedManyWithoutCategoryInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutCategoryInput, Prisma.LeadUncheckedCreateWithoutCategoryInput> | Prisma.LeadCreateWithoutCategoryInput[] | Prisma.LeadUncheckedCreateWithoutCategoryInput[]
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutCategoryInput | Prisma.LeadCreateOrConnectWithoutCategoryInput[]
+  createMany?: Prisma.LeadCreateManyCategoryInputEnvelope
+  connect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+}
+
+export type LeadUpdateManyWithoutCategoryNestedInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutCategoryInput, Prisma.LeadUncheckedCreateWithoutCategoryInput> | Prisma.LeadCreateWithoutCategoryInput[] | Prisma.LeadUncheckedCreateWithoutCategoryInput[]
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutCategoryInput | Prisma.LeadCreateOrConnectWithoutCategoryInput[]
+  upsert?: Prisma.LeadUpsertWithWhereUniqueWithoutCategoryInput | Prisma.LeadUpsertWithWhereUniqueWithoutCategoryInput[]
+  createMany?: Prisma.LeadCreateManyCategoryInputEnvelope
+  set?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  disconnect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  delete?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  connect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  update?: Prisma.LeadUpdateWithWhereUniqueWithoutCategoryInput | Prisma.LeadUpdateWithWhereUniqueWithoutCategoryInput[]
+  updateMany?: Prisma.LeadUpdateManyWithWhereWithoutCategoryInput | Prisma.LeadUpdateManyWithWhereWithoutCategoryInput[]
+  deleteMany?: Prisma.LeadScalarWhereInput | Prisma.LeadScalarWhereInput[]
+}
+
+export type LeadUncheckedUpdateManyWithoutCategoryNestedInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutCategoryInput, Prisma.LeadUncheckedCreateWithoutCategoryInput> | Prisma.LeadCreateWithoutCategoryInput[] | Prisma.LeadUncheckedCreateWithoutCategoryInput[]
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutCategoryInput | Prisma.LeadCreateOrConnectWithoutCategoryInput[]
+  upsert?: Prisma.LeadUpsertWithWhereUniqueWithoutCategoryInput | Prisma.LeadUpsertWithWhereUniqueWithoutCategoryInput[]
+  createMany?: Prisma.LeadCreateManyCategoryInputEnvelope
+  set?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  disconnect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  delete?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  connect?: Prisma.LeadWhereUniqueInput | Prisma.LeadWhereUniqueInput[]
+  update?: Prisma.LeadUpdateWithWhereUniqueWithoutCategoryInput | Prisma.LeadUpdateWithWhereUniqueWithoutCategoryInput[]
+  updateMany?: Prisma.LeadUpdateManyWithWhereWithoutCategoryInput | Prisma.LeadUpdateManyWithWhereWithoutCategoryInput[]
+  deleteMany?: Prisma.LeadScalarWhereInput | Prisma.LeadScalarWhereInput[]
+}
+
 export type EnumLeadSourceFieldUpdateOperationsInput = {
   set?: $Enums.LeadSource
 }
 
 export type EnumLeadStatusFieldUpdateOperationsInput = {
   set?: $Enums.LeadStatus
+}
+
+export type EnumLeadPriorityFieldUpdateOperationsInput = {
+  set?: $Enums.LeadPriority
+}
+
+export type NullableEnumLeadQualityFieldUpdateOperationsInput = {
+  set?: $Enums.LeadQuality | null
+}
+
+export type NullableEnumLeadServiceTypeFieldUpdateOperationsInput = {
+  set?: $Enums.LeadServiceType | null
 }
 
 export type LeadCreateNestedOneWithoutActivitiesInput = {
@@ -739,26 +1462,125 @@ export type LeadUpdateOneRequiredWithoutActivitiesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.LeadUpdateToOneWithWhereWithoutActivitiesInput, Prisma.LeadUpdateWithoutActivitiesInput>, Prisma.LeadUncheckedUpdateWithoutActivitiesInput>
 }
 
+export type LeadCreateNestedOneWithoutStatusHistoryInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutStatusHistoryInput, Prisma.LeadUncheckedCreateWithoutStatusHistoryInput>
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutStatusHistoryInput
+  connect?: Prisma.LeadWhereUniqueInput
+}
+
+export type LeadUpdateOneRequiredWithoutStatusHistoryNestedInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutStatusHistoryInput, Prisma.LeadUncheckedCreateWithoutStatusHistoryInput>
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutStatusHistoryInput
+  upsert?: Prisma.LeadUpsertWithoutStatusHistoryInput
+  connect?: Prisma.LeadWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LeadUpdateToOneWithWhereWithoutStatusHistoryInput, Prisma.LeadUpdateWithoutStatusHistoryInput>, Prisma.LeadUncheckedUpdateWithoutStatusHistoryInput>
+}
+
+export type LeadCreateNestedOneWithoutNotesInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutNotesInput, Prisma.LeadUncheckedCreateWithoutNotesInput>
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutNotesInput
+  connect?: Prisma.LeadWhereUniqueInput
+}
+
+export type LeadUpdateOneRequiredWithoutNotesNestedInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutNotesInput, Prisma.LeadUncheckedCreateWithoutNotesInput>
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutNotesInput
+  upsert?: Prisma.LeadUpsertWithoutNotesInput
+  connect?: Prisma.LeadWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LeadUpdateToOneWithWhereWithoutNotesInput, Prisma.LeadUpdateWithoutNotesInput>, Prisma.LeadUncheckedUpdateWithoutNotesInput>
+}
+
+export type LeadCreateNestedOneWithoutQuotationsInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutQuotationsInput, Prisma.LeadUncheckedCreateWithoutQuotationsInput>
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutQuotationsInput
+  connect?: Prisma.LeadWhereUniqueInput
+}
+
+export type LeadUpdateOneRequiredWithoutQuotationsNestedInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutQuotationsInput, Prisma.LeadUncheckedCreateWithoutQuotationsInput>
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutQuotationsInput
+  upsert?: Prisma.LeadUpsertWithoutQuotationsInput
+  connect?: Prisma.LeadWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LeadUpdateToOneWithWhereWithoutQuotationsInput, Prisma.LeadUpdateWithoutQuotationsInput>, Prisma.LeadUncheckedUpdateWithoutQuotationsInput>
+}
+
+export type LeadCreateNestedOneWithoutCommunicationsInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutCommunicationsInput, Prisma.LeadUncheckedCreateWithoutCommunicationsInput>
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutCommunicationsInput
+  connect?: Prisma.LeadWhereUniqueInput
+}
+
+export type LeadUpdateOneRequiredWithoutCommunicationsNestedInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutCommunicationsInput, Prisma.LeadUncheckedCreateWithoutCommunicationsInput>
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutCommunicationsInput
+  upsert?: Prisma.LeadUpsertWithoutCommunicationsInput
+  connect?: Prisma.LeadWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LeadUpdateToOneWithWhereWithoutCommunicationsInput, Prisma.LeadUpdateWithoutCommunicationsInput>, Prisma.LeadUncheckedUpdateWithoutCommunicationsInput>
+}
+
+export type LeadCreateNestedOneWithoutRemindersInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutRemindersInput, Prisma.LeadUncheckedCreateWithoutRemindersInput>
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutRemindersInput
+  connect?: Prisma.LeadWhereUniqueInput
+}
+
+export type LeadUpdateOneRequiredWithoutRemindersNestedInput = {
+  create?: Prisma.XOR<Prisma.LeadCreateWithoutRemindersInput, Prisma.LeadUncheckedCreateWithoutRemindersInput>
+  connectOrCreate?: Prisma.LeadCreateOrConnectWithoutRemindersInput
+  upsert?: Prisma.LeadUpsertWithoutRemindersInput
+  connect?: Prisma.LeadWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LeadUpdateToOneWithWhereWithoutRemindersInput, Prisma.LeadUpdateWithoutRemindersInput>, Prisma.LeadUncheckedUpdateWithoutRemindersInput>
+}
+
 export type LeadCreateWithoutAssignedToInput = {
   id?: string
   referenceNumber: string
   source: $Enums.LeadSource
   status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
   fullName: string
   email: string
   phoneNumber?: string | null
-  details: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  priority?: number
-  notes?: string | null
-  zohoLeadId?: string | null
-  syncedToZoho?: boolean
-  lastSyncedAt?: Date | string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: string | null
   userAgent?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   contactedAt?: Date | string | null
+  tag?: Prisma.LeadTagCreateNestedOneWithoutLeadsInput
+  category?: Prisma.LeadCategoryCreateNestedOneWithoutLeadsInput
   activities?: Prisma.LeadActivityCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryCreateNestedManyWithoutLeadInput
 }
 
 export type LeadUncheckedCreateWithoutAssignedToInput = {
@@ -766,21 +1588,50 @@ export type LeadUncheckedCreateWithoutAssignedToInput = {
   referenceNumber: string
   source: $Enums.LeadSource
   status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
   fullName: string
   email: string
   phoneNumber?: string | null
-  details: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  priority?: number
-  notes?: string | null
-  zohoLeadId?: string | null
-  syncedToZoho?: boolean
-  lastSyncedAt?: Date | string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  categoryId?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: string | null
   userAgent?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   contactedAt?: Date | string | null
   activities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutLeadInput
 }
 
 export type LeadCreateOrConnectWithoutAssignedToInput = {
@@ -817,16 +1668,40 @@ export type LeadScalarWhereInput = {
   referenceNumber?: Prisma.StringFilter<"Lead"> | string
   source?: Prisma.EnumLeadSourceFilter<"Lead"> | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFilter<"Lead"> | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFilter<"Lead"> | $Enums.LeadPriority
+  quality?: Prisma.EnumLeadQualityNullableFilter<"Lead"> | $Enums.LeadQuality | null
+  serviceType?: Prisma.EnumLeadServiceTypeNullableFilter<"Lead"> | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFilter<"Lead"> | string
   email?: Prisma.StringFilter<"Lead"> | string
   phoneNumber?: Prisma.StringNullableFilter<"Lead"> | string | null
-  details?: Prisma.JsonFilter<"Lead">
+  alternatePhone?: Prisma.StringNullableFilter<"Lead"> | string | null
+  city?: Prisma.StringNullableFilter<"Lead"> | string | null
+  destination?: Prisma.StringNullableFilter<"Lead"> | string | null
+  travelStartDate?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  travelEndDate?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  numberOfTravelers?: Prisma.IntNullableFilter<"Lead"> | number | null
+  numberOfAdults?: Prisma.IntNullableFilter<"Lead"> | number | null
+  numberOfChildren?: Prisma.IntNullableFilter<"Lead"> | number | null
+  budgetMin?: Prisma.IntNullableFilter<"Lead"> | number | null
+  budgetMax?: Prisma.IntNullableFilter<"Lead"> | number | null
+  specialRequests?: Prisma.StringNullableFilter<"Lead"> | string | null
+  tagId?: Prisma.StringNullableFilter<"Lead"> | string | null
+  categoryId?: Prisma.StringNullableFilter<"Lead"> | string | null
   assignedToId?: Prisma.StringNullableFilter<"Lead"> | string | null
-  priority?: Prisma.IntFilter<"Lead"> | number
-  notes?: Prisma.StringNullableFilter<"Lead"> | string | null
-  zohoLeadId?: Prisma.StringNullableFilter<"Lead"> | string | null
-  syncedToZoho?: Prisma.BoolFilter<"Lead"> | boolean
-  lastSyncedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  assignedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  firstResponseAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  responseTimeMinutes?: Prisma.IntNullableFilter<"Lead"> | number | null
+  lastActivityAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  nextFollowUpAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  followUpCount?: Prisma.IntFilter<"Lead"> | number
+  isOverdue?: Prisma.BoolFilter<"Lead"> | boolean
+  leadScore?: Prisma.IntFilter<"Lead"> | number
+  conversionProbability?: Prisma.DecimalNullableFilter<"Lead"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.IntNullableFilter<"Lead"> | number | null
+  actualValue?: Prisma.IntNullableFilter<"Lead"> | number | null
+  lostReason?: Prisma.StringNullableFilter<"Lead"> | string | null
+  closedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
+  details?: Prisma.JsonNullableFilter<"Lead">
   ipAddress?: Prisma.StringNullableFilter<"Lead"> | string | null
   userAgent?: Prisma.StringNullableFilter<"Lead"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Lead"> | Date | string
@@ -834,26 +1709,311 @@ export type LeadScalarWhereInput = {
   contactedAt?: Prisma.DateTimeNullableFilter<"Lead"> | Date | string | null
 }
 
-export type LeadCreateWithoutActivitiesInput = {
+export type LeadCreateWithoutTagInput = {
   id?: string
   referenceNumber: string
   source: $Enums.LeadSource
   status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
   fullName: string
   email: string
   phoneNumber?: string | null
-  details: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  priority?: number
-  notes?: string | null
-  zohoLeadId?: string | null
-  syncedToZoho?: boolean
-  lastSyncedAt?: Date | string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: string | null
   userAgent?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   contactedAt?: Date | string | null
-  assignedTo?: Prisma.AdminCreateNestedOneWithoutLeadsInput
+  category?: Prisma.LeadCategoryCreateNestedOneWithoutLeadsInput
+  assignedTo?: Prisma.AdminCreateNestedOneWithoutAssignedLeadsInput
+  activities?: Prisma.LeadActivityCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryCreateNestedManyWithoutLeadInput
+}
+
+export type LeadUncheckedCreateWithoutTagInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  categoryId?: string | null
+  assignedToId?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  activities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutLeadInput
+}
+
+export type LeadCreateOrConnectWithoutTagInput = {
+  where: Prisma.LeadWhereUniqueInput
+  create: Prisma.XOR<Prisma.LeadCreateWithoutTagInput, Prisma.LeadUncheckedCreateWithoutTagInput>
+}
+
+export type LeadCreateManyTagInputEnvelope = {
+  data: Prisma.LeadCreateManyTagInput | Prisma.LeadCreateManyTagInput[]
+  skipDuplicates?: boolean
+}
+
+export type LeadUpsertWithWhereUniqueWithoutTagInput = {
+  where: Prisma.LeadWhereUniqueInput
+  update: Prisma.XOR<Prisma.LeadUpdateWithoutTagInput, Prisma.LeadUncheckedUpdateWithoutTagInput>
+  create: Prisma.XOR<Prisma.LeadCreateWithoutTagInput, Prisma.LeadUncheckedCreateWithoutTagInput>
+}
+
+export type LeadUpdateWithWhereUniqueWithoutTagInput = {
+  where: Prisma.LeadWhereUniqueInput
+  data: Prisma.XOR<Prisma.LeadUpdateWithoutTagInput, Prisma.LeadUncheckedUpdateWithoutTagInput>
+}
+
+export type LeadUpdateManyWithWhereWithoutTagInput = {
+  where: Prisma.LeadScalarWhereInput
+  data: Prisma.XOR<Prisma.LeadUpdateManyMutationInput, Prisma.LeadUncheckedUpdateManyWithoutTagInput>
+}
+
+export type LeadCreateWithoutCategoryInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  tag?: Prisma.LeadTagCreateNestedOneWithoutLeadsInput
+  assignedTo?: Prisma.AdminCreateNestedOneWithoutAssignedLeadsInput
+  activities?: Prisma.LeadActivityCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryCreateNestedManyWithoutLeadInput
+}
+
+export type LeadUncheckedCreateWithoutCategoryInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  assignedToId?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  activities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutLeadInput
+}
+
+export type LeadCreateOrConnectWithoutCategoryInput = {
+  where: Prisma.LeadWhereUniqueInput
+  create: Prisma.XOR<Prisma.LeadCreateWithoutCategoryInput, Prisma.LeadUncheckedCreateWithoutCategoryInput>
+}
+
+export type LeadCreateManyCategoryInputEnvelope = {
+  data: Prisma.LeadCreateManyCategoryInput | Prisma.LeadCreateManyCategoryInput[]
+  skipDuplicates?: boolean
+}
+
+export type LeadUpsertWithWhereUniqueWithoutCategoryInput = {
+  where: Prisma.LeadWhereUniqueInput
+  update: Prisma.XOR<Prisma.LeadUpdateWithoutCategoryInput, Prisma.LeadUncheckedUpdateWithoutCategoryInput>
+  create: Prisma.XOR<Prisma.LeadCreateWithoutCategoryInput, Prisma.LeadUncheckedCreateWithoutCategoryInput>
+}
+
+export type LeadUpdateWithWhereUniqueWithoutCategoryInput = {
+  where: Prisma.LeadWhereUniqueInput
+  data: Prisma.XOR<Prisma.LeadUpdateWithoutCategoryInput, Prisma.LeadUncheckedUpdateWithoutCategoryInput>
+}
+
+export type LeadUpdateManyWithWhereWithoutCategoryInput = {
+  where: Prisma.LeadScalarWhereInput
+  data: Prisma.XOR<Prisma.LeadUpdateManyMutationInput, Prisma.LeadUncheckedUpdateManyWithoutCategoryInput>
+}
+
+export type LeadCreateWithoutActivitiesInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  tag?: Prisma.LeadTagCreateNestedOneWithoutLeadsInput
+  category?: Prisma.LeadCategoryCreateNestedOneWithoutLeadsInput
+  assignedTo?: Prisma.AdminCreateNestedOneWithoutAssignedLeadsInput
+  notes?: Prisma.LeadNoteCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryCreateNestedManyWithoutLeadInput
 }
 
 export type LeadUncheckedCreateWithoutActivitiesInput = {
@@ -861,21 +2021,50 @@ export type LeadUncheckedCreateWithoutActivitiesInput = {
   referenceNumber: string
   source: $Enums.LeadSource
   status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
   fullName: string
   email: string
   phoneNumber?: string | null
-  details: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  categoryId?: string | null
   assignedToId?: string | null
-  priority?: number
-  notes?: string | null
-  zohoLeadId?: string | null
-  syncedToZoho?: boolean
-  lastSyncedAt?: Date | string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: string | null
   userAgent?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   contactedAt?: Date | string | null
+  notes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutLeadInput
 }
 
 export type LeadCreateOrConnectWithoutActivitiesInput = {
@@ -899,21 +2088,50 @@ export type LeadUpdateWithoutActivitiesInput = {
   referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
-  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zohoLeadId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  syncedToZoho?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  assignedTo?: Prisma.AdminUpdateOneWithoutLeadsNestedInput
+  tag?: Prisma.LeadTagUpdateOneWithoutLeadsNestedInput
+  category?: Prisma.LeadCategoryUpdateOneWithoutLeadsNestedInput
+  assignedTo?: Prisma.AdminUpdateOneWithoutAssignedLeadsNestedInput
+  notes?: Prisma.LeadNoteUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUpdateManyWithoutLeadNestedInput
 }
 
 export type LeadUncheckedUpdateWithoutActivitiesInput = {
@@ -921,21 +2139,1150 @@ export type LeadUncheckedUpdateWithoutActivitiesInput = {
   referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
-  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zohoLeadId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  syncedToZoho?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notes?: Prisma.LeadNoteUncheckedUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadCreateWithoutStatusHistoryInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  tag?: Prisma.LeadTagCreateNestedOneWithoutLeadsInput
+  category?: Prisma.LeadCategoryCreateNestedOneWithoutLeadsInput
+  assignedTo?: Prisma.AdminCreateNestedOneWithoutAssignedLeadsInput
+  activities?: Prisma.LeadActivityCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderCreateNestedManyWithoutLeadInput
+}
+
+export type LeadUncheckedCreateWithoutStatusHistoryInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  categoryId?: string | null
+  assignedToId?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  activities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutLeadInput
+}
+
+export type LeadCreateOrConnectWithoutStatusHistoryInput = {
+  where: Prisma.LeadWhereUniqueInput
+  create: Prisma.XOR<Prisma.LeadCreateWithoutStatusHistoryInput, Prisma.LeadUncheckedCreateWithoutStatusHistoryInput>
+}
+
+export type LeadUpsertWithoutStatusHistoryInput = {
+  update: Prisma.XOR<Prisma.LeadUpdateWithoutStatusHistoryInput, Prisma.LeadUncheckedUpdateWithoutStatusHistoryInput>
+  create: Prisma.XOR<Prisma.LeadCreateWithoutStatusHistoryInput, Prisma.LeadUncheckedCreateWithoutStatusHistoryInput>
+  where?: Prisma.LeadWhereInput
+}
+
+export type LeadUpdateToOneWithWhereWithoutStatusHistoryInput = {
+  where?: Prisma.LeadWhereInput
+  data: Prisma.XOR<Prisma.LeadUpdateWithoutStatusHistoryInput, Prisma.LeadUncheckedUpdateWithoutStatusHistoryInput>
+}
+
+export type LeadUpdateWithoutStatusHistoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  tag?: Prisma.LeadTagUpdateOneWithoutLeadsNestedInput
+  category?: Prisma.LeadCategoryUpdateOneWithoutLeadsNestedInput
+  assignedTo?: Prisma.AdminUpdateOneWithoutAssignedLeadsNestedInput
+  activities?: Prisma.LeadActivityUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadUncheckedUpdateWithoutStatusHistoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activities?: Prisma.LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUncheckedUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadCreateWithoutNotesInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  tag?: Prisma.LeadTagCreateNestedOneWithoutLeadsInput
+  category?: Prisma.LeadCategoryCreateNestedOneWithoutLeadsInput
+  assignedTo?: Prisma.AdminCreateNestedOneWithoutAssignedLeadsInput
+  activities?: Prisma.LeadActivityCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryCreateNestedManyWithoutLeadInput
+}
+
+export type LeadUncheckedCreateWithoutNotesInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  categoryId?: string | null
+  assignedToId?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  activities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutLeadInput
+}
+
+export type LeadCreateOrConnectWithoutNotesInput = {
+  where: Prisma.LeadWhereUniqueInput
+  create: Prisma.XOR<Prisma.LeadCreateWithoutNotesInput, Prisma.LeadUncheckedCreateWithoutNotesInput>
+}
+
+export type LeadUpsertWithoutNotesInput = {
+  update: Prisma.XOR<Prisma.LeadUpdateWithoutNotesInput, Prisma.LeadUncheckedUpdateWithoutNotesInput>
+  create: Prisma.XOR<Prisma.LeadCreateWithoutNotesInput, Prisma.LeadUncheckedCreateWithoutNotesInput>
+  where?: Prisma.LeadWhereInput
+}
+
+export type LeadUpdateToOneWithWhereWithoutNotesInput = {
+  where?: Prisma.LeadWhereInput
+  data: Prisma.XOR<Prisma.LeadUpdateWithoutNotesInput, Prisma.LeadUncheckedUpdateWithoutNotesInput>
+}
+
+export type LeadUpdateWithoutNotesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  tag?: Prisma.LeadTagUpdateOneWithoutLeadsNestedInput
+  category?: Prisma.LeadCategoryUpdateOneWithoutLeadsNestedInput
+  assignedTo?: Prisma.AdminUpdateOneWithoutAssignedLeadsNestedInput
+  activities?: Prisma.LeadActivityUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadUncheckedUpdateWithoutNotesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activities?: Prisma.LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadCreateWithoutQuotationsInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  tag?: Prisma.LeadTagCreateNestedOneWithoutLeadsInput
+  category?: Prisma.LeadCategoryCreateNestedOneWithoutLeadsInput
+  assignedTo?: Prisma.AdminCreateNestedOneWithoutAssignedLeadsInput
+  activities?: Prisma.LeadActivityCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryCreateNestedManyWithoutLeadInput
+}
+
+export type LeadUncheckedCreateWithoutQuotationsInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  categoryId?: string | null
+  assignedToId?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  activities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutLeadInput
+}
+
+export type LeadCreateOrConnectWithoutQuotationsInput = {
+  where: Prisma.LeadWhereUniqueInput
+  create: Prisma.XOR<Prisma.LeadCreateWithoutQuotationsInput, Prisma.LeadUncheckedCreateWithoutQuotationsInput>
+}
+
+export type LeadUpsertWithoutQuotationsInput = {
+  update: Prisma.XOR<Prisma.LeadUpdateWithoutQuotationsInput, Prisma.LeadUncheckedUpdateWithoutQuotationsInput>
+  create: Prisma.XOR<Prisma.LeadCreateWithoutQuotationsInput, Prisma.LeadUncheckedCreateWithoutQuotationsInput>
+  where?: Prisma.LeadWhereInput
+}
+
+export type LeadUpdateToOneWithWhereWithoutQuotationsInput = {
+  where?: Prisma.LeadWhereInput
+  data: Prisma.XOR<Prisma.LeadUpdateWithoutQuotationsInput, Prisma.LeadUncheckedUpdateWithoutQuotationsInput>
+}
+
+export type LeadUpdateWithoutQuotationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  tag?: Prisma.LeadTagUpdateOneWithoutLeadsNestedInput
+  category?: Prisma.LeadCategoryUpdateOneWithoutLeadsNestedInput
+  assignedTo?: Prisma.AdminUpdateOneWithoutAssignedLeadsNestedInput
+  activities?: Prisma.LeadActivityUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadUncheckedUpdateWithoutQuotationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activities?: Prisma.LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUncheckedUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadCreateWithoutCommunicationsInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  tag?: Prisma.LeadTagCreateNestedOneWithoutLeadsInput
+  category?: Prisma.LeadCategoryCreateNestedOneWithoutLeadsInput
+  assignedTo?: Prisma.AdminCreateNestedOneWithoutAssignedLeadsInput
+  activities?: Prisma.LeadActivityCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryCreateNestedManyWithoutLeadInput
+}
+
+export type LeadUncheckedCreateWithoutCommunicationsInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  categoryId?: string | null
+  assignedToId?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  activities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutLeadInput
+  reminders?: Prisma.LeadReminderUncheckedCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutLeadInput
+}
+
+export type LeadCreateOrConnectWithoutCommunicationsInput = {
+  where: Prisma.LeadWhereUniqueInput
+  create: Prisma.XOR<Prisma.LeadCreateWithoutCommunicationsInput, Prisma.LeadUncheckedCreateWithoutCommunicationsInput>
+}
+
+export type LeadUpsertWithoutCommunicationsInput = {
+  update: Prisma.XOR<Prisma.LeadUpdateWithoutCommunicationsInput, Prisma.LeadUncheckedUpdateWithoutCommunicationsInput>
+  create: Prisma.XOR<Prisma.LeadCreateWithoutCommunicationsInput, Prisma.LeadUncheckedCreateWithoutCommunicationsInput>
+  where?: Prisma.LeadWhereInput
+}
+
+export type LeadUpdateToOneWithWhereWithoutCommunicationsInput = {
+  where?: Prisma.LeadWhereInput
+  data: Prisma.XOR<Prisma.LeadUpdateWithoutCommunicationsInput, Prisma.LeadUncheckedUpdateWithoutCommunicationsInput>
+}
+
+export type LeadUpdateWithoutCommunicationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  tag?: Prisma.LeadTagUpdateOneWithoutLeadsNestedInput
+  category?: Prisma.LeadCategoryUpdateOneWithoutLeadsNestedInput
+  assignedTo?: Prisma.AdminUpdateOneWithoutAssignedLeadsNestedInput
+  activities?: Prisma.LeadActivityUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadUncheckedUpdateWithoutCommunicationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activities?: Prisma.LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUncheckedUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadCreateWithoutRemindersInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  tag?: Prisma.LeadTagCreateNestedOneWithoutLeadsInput
+  category?: Prisma.LeadCategoryCreateNestedOneWithoutLeadsInput
+  assignedTo?: Prisma.AdminCreateNestedOneWithoutAssignedLeadsInput
+  activities?: Prisma.LeadActivityCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryCreateNestedManyWithoutLeadInput
+}
+
+export type LeadUncheckedCreateWithoutRemindersInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  categoryId?: string | null
+  assignedToId?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+  activities?: Prisma.LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+  notes?: Prisma.LeadNoteUncheckedCreateNestedManyWithoutLeadInput
+  quotations?: Prisma.LeadQuotationUncheckedCreateNestedManyWithoutLeadInput
+  communications?: Prisma.LeadCommunicationUncheckedCreateNestedManyWithoutLeadInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedCreateNestedManyWithoutLeadInput
+}
+
+export type LeadCreateOrConnectWithoutRemindersInput = {
+  where: Prisma.LeadWhereUniqueInput
+  create: Prisma.XOR<Prisma.LeadCreateWithoutRemindersInput, Prisma.LeadUncheckedCreateWithoutRemindersInput>
+}
+
+export type LeadUpsertWithoutRemindersInput = {
+  update: Prisma.XOR<Prisma.LeadUpdateWithoutRemindersInput, Prisma.LeadUncheckedUpdateWithoutRemindersInput>
+  create: Prisma.XOR<Prisma.LeadCreateWithoutRemindersInput, Prisma.LeadUncheckedCreateWithoutRemindersInput>
+  where?: Prisma.LeadWhereInput
+}
+
+export type LeadUpdateToOneWithWhereWithoutRemindersInput = {
+  where?: Prisma.LeadWhereInput
+  data: Prisma.XOR<Prisma.LeadUpdateWithoutRemindersInput, Prisma.LeadUncheckedUpdateWithoutRemindersInput>
+}
+
+export type LeadUpdateWithoutRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  tag?: Prisma.LeadTagUpdateOneWithoutLeadsNestedInput
+  category?: Prisma.LeadCategoryUpdateOneWithoutLeadsNestedInput
+  assignedTo?: Prisma.AdminUpdateOneWithoutAssignedLeadsNestedInput
+  activities?: Prisma.LeadActivityUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadUncheckedUpdateWithoutRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activities?: Prisma.LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUncheckedUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutLeadNestedInput
 }
 
 export type LeadCreateManyAssignedToInput = {
@@ -943,15 +3290,39 @@ export type LeadCreateManyAssignedToInput = {
   referenceNumber: string
   source: $Enums.LeadSource
   status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
   fullName: string
   email: string
   phoneNumber?: string | null
-  details: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  priority?: number
-  notes?: string | null
-  zohoLeadId?: string | null
-  syncedToZoho?: boolean
-  lastSyncedAt?: Date | string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  categoryId?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: string | null
   userAgent?: string | null
   createdAt?: Date | string
@@ -964,21 +3335,50 @@ export type LeadUpdateWithoutAssignedToInput = {
   referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
-  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zohoLeadId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  syncedToZoho?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  tag?: Prisma.LeadTagUpdateOneWithoutLeadsNestedInput
+  category?: Prisma.LeadCategoryUpdateOneWithoutLeadsNestedInput
   activities?: Prisma.LeadActivityUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUpdateManyWithoutLeadNestedInput
 }
 
 export type LeadUncheckedUpdateWithoutAssignedToInput = {
@@ -986,21 +3386,50 @@ export type LeadUncheckedUpdateWithoutAssignedToInput = {
   referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
-  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zohoLeadId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  syncedToZoho?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   activities?: Prisma.LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUncheckedUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutLeadNestedInput
 }
 
 export type LeadUncheckedUpdateManyWithoutAssignedToInput = {
@@ -1008,15 +3437,423 @@ export type LeadUncheckedUpdateManyWithoutAssignedToInput = {
   referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
   status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
-  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  zohoLeadId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  syncedToZoho?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type LeadCreateManyTagInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  categoryId?: string | null
+  assignedToId?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+}
+
+export type LeadUpdateWithoutTagInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  category?: Prisma.LeadCategoryUpdateOneWithoutLeadsNestedInput
+  assignedTo?: Prisma.AdminUpdateOneWithoutAssignedLeadsNestedInput
+  activities?: Prisma.LeadActivityUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadUncheckedUpdateWithoutTagInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activities?: Prisma.LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUncheckedUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadUncheckedUpdateManyWithoutTagInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type LeadCreateManyCategoryInput = {
+  id?: string
+  referenceNumber: string
+  source: $Enums.LeadSource
+  status?: $Enums.LeadStatus
+  priority?: $Enums.LeadPriority
+  quality?: $Enums.LeadQuality | null
+  serviceType?: $Enums.LeadServiceType | null
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  alternatePhone?: string | null
+  city?: string | null
+  destination?: string | null
+  travelStartDate?: Date | string | null
+  travelEndDate?: Date | string | null
+  numberOfTravelers?: number | null
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
+  budgetMin?: number | null
+  budgetMax?: number | null
+  specialRequests?: string | null
+  tagId?: string | null
+  assignedToId?: string | null
+  assignedAt?: Date | string | null
+  firstResponseAt?: Date | string | null
+  responseTimeMinutes?: number | null
+  lastActivityAt?: Date | string | null
+  nextFollowUpAt?: Date | string | null
+  followUpCount?: number
+  isOverdue?: boolean
+  leadScore?: number
+  conversionProbability?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: number | null
+  actualValue?: number | null
+  lostReason?: string | null
+  closedAt?: Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  contactedAt?: Date | string | null
+}
+
+export type LeadUpdateWithoutCategoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  tag?: Prisma.LeadTagUpdateOneWithoutLeadsNestedInput
+  assignedTo?: Prisma.AdminUpdateOneWithoutAssignedLeadsNestedInput
+  activities?: Prisma.LeadActivityUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadUncheckedUpdateWithoutCategoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  contactedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activities?: Prisma.LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+  notes?: Prisma.LeadNoteUncheckedUpdateManyWithoutLeadNestedInput
+  quotations?: Prisma.LeadQuotationUncheckedUpdateManyWithoutLeadNestedInput
+  communications?: Prisma.LeadCommunicationUncheckedUpdateManyWithoutLeadNestedInput
+  reminders?: Prisma.LeadReminderUncheckedUpdateManyWithoutLeadNestedInput
+  statusHistory?: Prisma.LeadStatusHistoryUncheckedUpdateManyWithoutLeadNestedInput
+}
+
+export type LeadUncheckedUpdateManyWithoutCategoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  referenceNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  status?: Prisma.EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+  priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+  quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
+  serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  destination?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelStartDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  travelEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  numberOfTravelers?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfAdults?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  numberOfChildren?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  budgetMax?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  specialRequests?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  firstResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  responseTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextFollowUpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  followUpCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isOverdue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  leadScore?: Prisma.IntFieldUpdateOperationsInput | number
+  conversionProbability?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actualValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lostReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1031,10 +3868,20 @@ export type LeadUncheckedUpdateManyWithoutAssignedToInput = {
 
 export type LeadCountOutputType = {
   activities: number
+  notes: number
+  quotations: number
+  communications: number
+  reminders: number
+  statusHistory: number
 }
 
 export type LeadCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   activities?: boolean | LeadCountOutputTypeCountActivitiesArgs
+  notes?: boolean | LeadCountOutputTypeCountNotesArgs
+  quotations?: boolean | LeadCountOutputTypeCountQuotationsArgs
+  communications?: boolean | LeadCountOutputTypeCountCommunicationsArgs
+  reminders?: boolean | LeadCountOutputTypeCountRemindersArgs
+  statusHistory?: boolean | LeadCountOutputTypeCountStatusHistoryArgs
 }
 
 /**
@@ -1054,29 +3901,95 @@ export type LeadCountOutputTypeCountActivitiesArgs<ExtArgs extends runtime.Types
   where?: Prisma.LeadActivityWhereInput
 }
 
+/**
+ * LeadCountOutputType without action
+ */
+export type LeadCountOutputTypeCountNotesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LeadNoteWhereInput
+}
+
+/**
+ * LeadCountOutputType without action
+ */
+export type LeadCountOutputTypeCountQuotationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LeadQuotationWhereInput
+}
+
+/**
+ * LeadCountOutputType without action
+ */
+export type LeadCountOutputTypeCountCommunicationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LeadCommunicationWhereInput
+}
+
+/**
+ * LeadCountOutputType without action
+ */
+export type LeadCountOutputTypeCountRemindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LeadReminderWhereInput
+}
+
+/**
+ * LeadCountOutputType without action
+ */
+export type LeadCountOutputTypeCountStatusHistoryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LeadStatusHistoryWhereInput
+}
+
 
 export type LeadSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   referenceNumber?: boolean
   source?: boolean
   status?: boolean
+  priority?: boolean
+  quality?: boolean
+  serviceType?: boolean
   fullName?: boolean
   email?: boolean
   phoneNumber?: boolean
-  details?: boolean
+  alternatePhone?: boolean
+  city?: boolean
+  destination?: boolean
+  travelStartDate?: boolean
+  travelEndDate?: boolean
+  numberOfTravelers?: boolean
+  numberOfAdults?: boolean
+  numberOfChildren?: boolean
+  budgetMin?: boolean
+  budgetMax?: boolean
+  specialRequests?: boolean
+  tagId?: boolean
+  categoryId?: boolean
   assignedToId?: boolean
-  priority?: boolean
-  notes?: boolean
-  zohoLeadId?: boolean
-  syncedToZoho?: boolean
-  lastSyncedAt?: boolean
+  assignedAt?: boolean
+  firstResponseAt?: boolean
+  responseTimeMinutes?: boolean
+  lastActivityAt?: boolean
+  nextFollowUpAt?: boolean
+  followUpCount?: boolean
+  isOverdue?: boolean
+  leadScore?: boolean
+  conversionProbability?: boolean
+  estimatedValue?: boolean
+  actualValue?: boolean
+  lostReason?: boolean
+  closedAt?: boolean
+  details?: boolean
   ipAddress?: boolean
   userAgent?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   contactedAt?: boolean
+  tag?: boolean | Prisma.Lead$tagArgs<ExtArgs>
+  category?: boolean | Prisma.Lead$categoryArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Lead$assignedToArgs<ExtArgs>
   activities?: boolean | Prisma.Lead$activitiesArgs<ExtArgs>
+  notes?: boolean | Prisma.Lead$notesArgs<ExtArgs>
+  quotations?: boolean | Prisma.Lead$quotationsArgs<ExtArgs>
+  communications?: boolean | Prisma.Lead$communicationsArgs<ExtArgs>
+  reminders?: boolean | Prisma.Lead$remindersArgs<ExtArgs>
+  statusHistory?: boolean | Prisma.Lead$statusHistoryArgs<ExtArgs>
   _count?: boolean | Prisma.LeadCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lead"]>
 
@@ -1085,21 +3998,47 @@ export type LeadSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   referenceNumber?: boolean
   source?: boolean
   status?: boolean
+  priority?: boolean
+  quality?: boolean
+  serviceType?: boolean
   fullName?: boolean
   email?: boolean
   phoneNumber?: boolean
-  details?: boolean
+  alternatePhone?: boolean
+  city?: boolean
+  destination?: boolean
+  travelStartDate?: boolean
+  travelEndDate?: boolean
+  numberOfTravelers?: boolean
+  numberOfAdults?: boolean
+  numberOfChildren?: boolean
+  budgetMin?: boolean
+  budgetMax?: boolean
+  specialRequests?: boolean
+  tagId?: boolean
+  categoryId?: boolean
   assignedToId?: boolean
-  priority?: boolean
-  notes?: boolean
-  zohoLeadId?: boolean
-  syncedToZoho?: boolean
-  lastSyncedAt?: boolean
+  assignedAt?: boolean
+  firstResponseAt?: boolean
+  responseTimeMinutes?: boolean
+  lastActivityAt?: boolean
+  nextFollowUpAt?: boolean
+  followUpCount?: boolean
+  isOverdue?: boolean
+  leadScore?: boolean
+  conversionProbability?: boolean
+  estimatedValue?: boolean
+  actualValue?: boolean
+  lostReason?: boolean
+  closedAt?: boolean
+  details?: boolean
   ipAddress?: boolean
   userAgent?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   contactedAt?: boolean
+  tag?: boolean | Prisma.Lead$tagArgs<ExtArgs>
+  category?: boolean | Prisma.Lead$categoryArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Lead$assignedToArgs<ExtArgs>
 }, ExtArgs["result"]["lead"]>
 
@@ -1108,21 +4047,47 @@ export type LeadSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   referenceNumber?: boolean
   source?: boolean
   status?: boolean
+  priority?: boolean
+  quality?: boolean
+  serviceType?: boolean
   fullName?: boolean
   email?: boolean
   phoneNumber?: boolean
-  details?: boolean
+  alternatePhone?: boolean
+  city?: boolean
+  destination?: boolean
+  travelStartDate?: boolean
+  travelEndDate?: boolean
+  numberOfTravelers?: boolean
+  numberOfAdults?: boolean
+  numberOfChildren?: boolean
+  budgetMin?: boolean
+  budgetMax?: boolean
+  specialRequests?: boolean
+  tagId?: boolean
+  categoryId?: boolean
   assignedToId?: boolean
-  priority?: boolean
-  notes?: boolean
-  zohoLeadId?: boolean
-  syncedToZoho?: boolean
-  lastSyncedAt?: boolean
+  assignedAt?: boolean
+  firstResponseAt?: boolean
+  responseTimeMinutes?: boolean
+  lastActivityAt?: boolean
+  nextFollowUpAt?: boolean
+  followUpCount?: boolean
+  isOverdue?: boolean
+  leadScore?: boolean
+  conversionProbability?: boolean
+  estimatedValue?: boolean
+  actualValue?: boolean
+  lostReason?: boolean
+  closedAt?: boolean
+  details?: boolean
   ipAddress?: boolean
   userAgent?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   contactedAt?: boolean
+  tag?: boolean | Prisma.Lead$tagArgs<ExtArgs>
+  category?: boolean | Prisma.Lead$categoryArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Lead$assignedToArgs<ExtArgs>
 }, ExtArgs["result"]["lead"]>
 
@@ -1131,16 +4096,40 @@ export type LeadSelectScalar = {
   referenceNumber?: boolean
   source?: boolean
   status?: boolean
+  priority?: boolean
+  quality?: boolean
+  serviceType?: boolean
   fullName?: boolean
   email?: boolean
   phoneNumber?: boolean
-  details?: boolean
+  alternatePhone?: boolean
+  city?: boolean
+  destination?: boolean
+  travelStartDate?: boolean
+  travelEndDate?: boolean
+  numberOfTravelers?: boolean
+  numberOfAdults?: boolean
+  numberOfChildren?: boolean
+  budgetMin?: boolean
+  budgetMax?: boolean
+  specialRequests?: boolean
+  tagId?: boolean
+  categoryId?: boolean
   assignedToId?: boolean
-  priority?: boolean
-  notes?: boolean
-  zohoLeadId?: boolean
-  syncedToZoho?: boolean
-  lastSyncedAt?: boolean
+  assignedAt?: boolean
+  firstResponseAt?: boolean
+  responseTimeMinutes?: boolean
+  lastActivityAt?: boolean
+  nextFollowUpAt?: boolean
+  followUpCount?: boolean
+  isOverdue?: boolean
+  leadScore?: boolean
+  conversionProbability?: boolean
+  estimatedValue?: boolean
+  actualValue?: boolean
+  lostReason?: boolean
+  closedAt?: boolean
+  details?: boolean
   ipAddress?: boolean
   userAgent?: boolean
   createdAt?: boolean
@@ -1148,40 +4137,82 @@ export type LeadSelectScalar = {
   contactedAt?: boolean
 }
 
-export type LeadOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "referenceNumber" | "source" | "status" | "fullName" | "email" | "phoneNumber" | "details" | "assignedToId" | "priority" | "notes" | "zohoLeadId" | "syncedToZoho" | "lastSyncedAt" | "ipAddress" | "userAgent" | "createdAt" | "updatedAt" | "contactedAt", ExtArgs["result"]["lead"]>
+export type LeadOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "referenceNumber" | "source" | "status" | "priority" | "quality" | "serviceType" | "fullName" | "email" | "phoneNumber" | "alternatePhone" | "city" | "destination" | "travelStartDate" | "travelEndDate" | "numberOfTravelers" | "numberOfAdults" | "numberOfChildren" | "budgetMin" | "budgetMax" | "specialRequests" | "tagId" | "categoryId" | "assignedToId" | "assignedAt" | "firstResponseAt" | "responseTimeMinutes" | "lastActivityAt" | "nextFollowUpAt" | "followUpCount" | "isOverdue" | "leadScore" | "conversionProbability" | "estimatedValue" | "actualValue" | "lostReason" | "closedAt" | "details" | "ipAddress" | "userAgent" | "createdAt" | "updatedAt" | "contactedAt", ExtArgs["result"]["lead"]>
 export type LeadInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  tag?: boolean | Prisma.Lead$tagArgs<ExtArgs>
+  category?: boolean | Prisma.Lead$categoryArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Lead$assignedToArgs<ExtArgs>
   activities?: boolean | Prisma.Lead$activitiesArgs<ExtArgs>
+  notes?: boolean | Prisma.Lead$notesArgs<ExtArgs>
+  quotations?: boolean | Prisma.Lead$quotationsArgs<ExtArgs>
+  communications?: boolean | Prisma.Lead$communicationsArgs<ExtArgs>
+  reminders?: boolean | Prisma.Lead$remindersArgs<ExtArgs>
+  statusHistory?: boolean | Prisma.Lead$statusHistoryArgs<ExtArgs>
   _count?: boolean | Prisma.LeadCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type LeadIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  tag?: boolean | Prisma.Lead$tagArgs<ExtArgs>
+  category?: boolean | Prisma.Lead$categoryArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Lead$assignedToArgs<ExtArgs>
 }
 export type LeadIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  tag?: boolean | Prisma.Lead$tagArgs<ExtArgs>
+  category?: boolean | Prisma.Lead$categoryArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Lead$assignedToArgs<ExtArgs>
 }
 
 export type $LeadPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Lead"
   objects: {
+    tag: Prisma.$LeadTagPayload<ExtArgs> | null
+    category: Prisma.$LeadCategoryPayload<ExtArgs> | null
     assignedTo: Prisma.$AdminPayload<ExtArgs> | null
     activities: Prisma.$LeadActivityPayload<ExtArgs>[]
+    notes: Prisma.$LeadNotePayload<ExtArgs>[]
+    quotations: Prisma.$LeadQuotationPayload<ExtArgs>[]
+    communications: Prisma.$LeadCommunicationPayload<ExtArgs>[]
+    reminders: Prisma.$LeadReminderPayload<ExtArgs>[]
+    statusHistory: Prisma.$LeadStatusHistoryPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     referenceNumber: string
     source: $Enums.LeadSource
     status: $Enums.LeadStatus
+    priority: $Enums.LeadPriority
+    quality: $Enums.LeadQuality | null
+    serviceType: $Enums.LeadServiceType | null
     fullName: string
     email: string
     phoneNumber: string | null
-    details: runtime.JsonValue
+    alternatePhone: string | null
+    city: string | null
+    destination: string | null
+    travelStartDate: Date | null
+    travelEndDate: Date | null
+    numberOfTravelers: number | null
+    numberOfAdults: number | null
+    numberOfChildren: number | null
+    budgetMin: number | null
+    budgetMax: number | null
+    specialRequests: string | null
+    tagId: string | null
+    categoryId: string | null
     assignedToId: string | null
-    priority: number
-    notes: string | null
-    zohoLeadId: string | null
-    syncedToZoho: boolean
-    lastSyncedAt: Date | null
+    assignedAt: Date | null
+    firstResponseAt: Date | null
+    responseTimeMinutes: number | null
+    lastActivityAt: Date | null
+    nextFollowUpAt: Date | null
+    followUpCount: number
+    isOverdue: boolean
+    leadScore: number
+    conversionProbability: runtime.Decimal | null
+    estimatedValue: number | null
+    actualValue: number | null
+    lostReason: string | null
+    closedAt: Date | null
+    details: runtime.JsonValue | null
     ipAddress: string | null
     userAgent: string | null
     createdAt: Date
@@ -1581,8 +4612,15 @@ readonly fields: LeadFieldRefs;
  */
 export interface Prisma__LeadClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  tag<T extends Prisma.Lead$tagArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lead$tagArgs<ExtArgs>>): Prisma.Prisma__LeadTagClient<runtime.Types.Result.GetResult<Prisma.$LeadTagPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  category<T extends Prisma.Lead$categoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lead$categoryArgs<ExtArgs>>): Prisma.Prisma__LeadCategoryClient<runtime.Types.Result.GetResult<Prisma.$LeadCategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   assignedTo<T extends Prisma.Lead$assignedToArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lead$assignedToArgs<ExtArgs>>): Prisma.Prisma__AdminClient<runtime.Types.Result.GetResult<Prisma.$AdminPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   activities<T extends Prisma.Lead$activitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lead$activitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  notes<T extends Prisma.Lead$notesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lead$notesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadNotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  quotations<T extends Prisma.Lead$quotationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lead$quotationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadQuotationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  communications<T extends Prisma.Lead$communicationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lead$communicationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadCommunicationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reminders<T extends Prisma.Lead$remindersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lead$remindersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadReminderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  statusHistory<T extends Prisma.Lead$statusHistoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lead$statusHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeadStatusHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1616,16 +4654,40 @@ export interface LeadFieldRefs {
   readonly referenceNumber: Prisma.FieldRef<"Lead", 'String'>
   readonly source: Prisma.FieldRef<"Lead", 'LeadSource'>
   readonly status: Prisma.FieldRef<"Lead", 'LeadStatus'>
+  readonly priority: Prisma.FieldRef<"Lead", 'LeadPriority'>
+  readonly quality: Prisma.FieldRef<"Lead", 'LeadQuality'>
+  readonly serviceType: Prisma.FieldRef<"Lead", 'LeadServiceType'>
   readonly fullName: Prisma.FieldRef<"Lead", 'String'>
   readonly email: Prisma.FieldRef<"Lead", 'String'>
   readonly phoneNumber: Prisma.FieldRef<"Lead", 'String'>
-  readonly details: Prisma.FieldRef<"Lead", 'Json'>
+  readonly alternatePhone: Prisma.FieldRef<"Lead", 'String'>
+  readonly city: Prisma.FieldRef<"Lead", 'String'>
+  readonly destination: Prisma.FieldRef<"Lead", 'String'>
+  readonly travelStartDate: Prisma.FieldRef<"Lead", 'DateTime'>
+  readonly travelEndDate: Prisma.FieldRef<"Lead", 'DateTime'>
+  readonly numberOfTravelers: Prisma.FieldRef<"Lead", 'Int'>
+  readonly numberOfAdults: Prisma.FieldRef<"Lead", 'Int'>
+  readonly numberOfChildren: Prisma.FieldRef<"Lead", 'Int'>
+  readonly budgetMin: Prisma.FieldRef<"Lead", 'Int'>
+  readonly budgetMax: Prisma.FieldRef<"Lead", 'Int'>
+  readonly specialRequests: Prisma.FieldRef<"Lead", 'String'>
+  readonly tagId: Prisma.FieldRef<"Lead", 'String'>
+  readonly categoryId: Prisma.FieldRef<"Lead", 'String'>
   readonly assignedToId: Prisma.FieldRef<"Lead", 'String'>
-  readonly priority: Prisma.FieldRef<"Lead", 'Int'>
-  readonly notes: Prisma.FieldRef<"Lead", 'String'>
-  readonly zohoLeadId: Prisma.FieldRef<"Lead", 'String'>
-  readonly syncedToZoho: Prisma.FieldRef<"Lead", 'Boolean'>
-  readonly lastSyncedAt: Prisma.FieldRef<"Lead", 'DateTime'>
+  readonly assignedAt: Prisma.FieldRef<"Lead", 'DateTime'>
+  readonly firstResponseAt: Prisma.FieldRef<"Lead", 'DateTime'>
+  readonly responseTimeMinutes: Prisma.FieldRef<"Lead", 'Int'>
+  readonly lastActivityAt: Prisma.FieldRef<"Lead", 'DateTime'>
+  readonly nextFollowUpAt: Prisma.FieldRef<"Lead", 'DateTime'>
+  readonly followUpCount: Prisma.FieldRef<"Lead", 'Int'>
+  readonly isOverdue: Prisma.FieldRef<"Lead", 'Boolean'>
+  readonly leadScore: Prisma.FieldRef<"Lead", 'Int'>
+  readonly conversionProbability: Prisma.FieldRef<"Lead", 'Decimal'>
+  readonly estimatedValue: Prisma.FieldRef<"Lead", 'Int'>
+  readonly actualValue: Prisma.FieldRef<"Lead", 'Int'>
+  readonly lostReason: Prisma.FieldRef<"Lead", 'String'>
+  readonly closedAt: Prisma.FieldRef<"Lead", 'DateTime'>
+  readonly details: Prisma.FieldRef<"Lead", 'Json'>
   readonly ipAddress: Prisma.FieldRef<"Lead", 'String'>
   readonly userAgent: Prisma.FieldRef<"Lead", 'String'>
   readonly createdAt: Prisma.FieldRef<"Lead", 'DateTime'>
@@ -2027,6 +5089,44 @@ export type LeadDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
 }
 
 /**
+ * Lead.tag
+ */
+export type Lead$tagArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadTag
+   */
+  select?: Prisma.LeadTagSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadTag
+   */
+  omit?: Prisma.LeadTagOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadTagInclude<ExtArgs> | null
+  where?: Prisma.LeadTagWhereInput
+}
+
+/**
+ * Lead.category
+ */
+export type Lead$categoryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadCategory
+   */
+  select?: Prisma.LeadCategorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadCategory
+   */
+  omit?: Prisma.LeadCategoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadCategoryInclude<ExtArgs> | null
+  where?: Prisma.LeadCategoryWhereInput
+}
+
+/**
  * Lead.assignedTo
  */
 export type Lead$assignedToArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2067,6 +5167,126 @@ export type Lead$activitiesArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.LeadActivityScalarFieldEnum | Prisma.LeadActivityScalarFieldEnum[]
+}
+
+/**
+ * Lead.notes
+ */
+export type Lead$notesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadNote
+   */
+  select?: Prisma.LeadNoteSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadNote
+   */
+  omit?: Prisma.LeadNoteOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadNoteInclude<ExtArgs> | null
+  where?: Prisma.LeadNoteWhereInput
+  orderBy?: Prisma.LeadNoteOrderByWithRelationInput | Prisma.LeadNoteOrderByWithRelationInput[]
+  cursor?: Prisma.LeadNoteWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LeadNoteScalarFieldEnum | Prisma.LeadNoteScalarFieldEnum[]
+}
+
+/**
+ * Lead.quotations
+ */
+export type Lead$quotationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadQuotation
+   */
+  select?: Prisma.LeadQuotationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadQuotation
+   */
+  omit?: Prisma.LeadQuotationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadQuotationInclude<ExtArgs> | null
+  where?: Prisma.LeadQuotationWhereInput
+  orderBy?: Prisma.LeadQuotationOrderByWithRelationInput | Prisma.LeadQuotationOrderByWithRelationInput[]
+  cursor?: Prisma.LeadQuotationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LeadQuotationScalarFieldEnum | Prisma.LeadQuotationScalarFieldEnum[]
+}
+
+/**
+ * Lead.communications
+ */
+export type Lead$communicationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadCommunication
+   */
+  select?: Prisma.LeadCommunicationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadCommunication
+   */
+  omit?: Prisma.LeadCommunicationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadCommunicationInclude<ExtArgs> | null
+  where?: Prisma.LeadCommunicationWhereInput
+  orderBy?: Prisma.LeadCommunicationOrderByWithRelationInput | Prisma.LeadCommunicationOrderByWithRelationInput[]
+  cursor?: Prisma.LeadCommunicationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LeadCommunicationScalarFieldEnum | Prisma.LeadCommunicationScalarFieldEnum[]
+}
+
+/**
+ * Lead.reminders
+ */
+export type Lead$remindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadReminder
+   */
+  select?: Prisma.LeadReminderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadReminder
+   */
+  omit?: Prisma.LeadReminderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadReminderInclude<ExtArgs> | null
+  where?: Prisma.LeadReminderWhereInput
+  orderBy?: Prisma.LeadReminderOrderByWithRelationInput | Prisma.LeadReminderOrderByWithRelationInput[]
+  cursor?: Prisma.LeadReminderWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LeadReminderScalarFieldEnum | Prisma.LeadReminderScalarFieldEnum[]
+}
+
+/**
+ * Lead.statusHistory
+ */
+export type Lead$statusHistoryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LeadStatusHistory
+   */
+  select?: Prisma.LeadStatusHistorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LeadStatusHistory
+   */
+  omit?: Prisma.LeadStatusHistoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LeadStatusHistoryInclude<ExtArgs> | null
+  where?: Prisma.LeadStatusHistoryWhereInput
+  orderBy?: Prisma.LeadStatusHistoryOrderByWithRelationInput | Prisma.LeadStatusHistoryOrderByWithRelationInput[]
+  cursor?: Prisma.LeadStatusHistoryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LeadStatusHistoryScalarFieldEnum | Prisma.LeadStatusHistoryScalarFieldEnum[]
 }
 
 /**

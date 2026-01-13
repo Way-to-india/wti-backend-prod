@@ -320,20 +320,28 @@ model TravelGuideData {
 }
 
 model Admin {
-  id                 String         @id @default(uuid())
-  name               String         @db.VarChar(255)
-  email              String         @unique @db.VarChar(255)
-  password           String         @db.VarChar(255)
+  id                 String    @id @default(uuid())
+  name               String    @db.VarChar(255)
+  email              String    @unique @db.VarChar(255)
+  password           String    @db.VarChar(255)
   roleId             String
-  isActive           Boolean        @default(true)
-  lastLoginAt        DateTime?      @db.Timestamptz(3)
-  refreshToken       String?        @db.VarChar(500)
-  refreshTokenExpiry DateTime?      @db.Timestamptz(3)
-  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
-  updatedAt          DateTime       @updatedAt @db.Timestamptz(3)
-  role               Role           @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  leads              Lead[]
-  leadActivities     LeadActivity[]
+  isActive           Boolean   @default(true)
+  lastLoginAt        DateTime? @db.Timestamptz(3)
+  refreshToken       String?   @db.VarChar(500)
+  refreshTokenExpiry DateTime? @db.Timestamptz(3)
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @db.Timestamptz(3)
+  role               Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  // CRM Relations
+  assignedLeads           Lead[]              @relation("AssignedLeads")
+  performedActivities     LeadActivity[]      @relation("PerformedActivities")
+  statusChanges           LeadStatusHistory[] @relation("StatusChanges")
+  createdNotes            LeadNote[]          @relation("CreatedNotes")
+  uploadedQuotations      LeadQuotation[]     @relation("UploadedQuotations")
+  performedCommunications LeadCommunication[] @relation("PerformedCommunications")
+  assignedReminders       LeadReminder[]      @relation("AssignedReminders")
+  createdReminders        LeadReminder[]      @relation("CreatedReminders")
 
   @@index([email])
   @@index([isActive])
@@ -395,63 +403,349 @@ model Permission {
 enum LeadStatus {
   NEW
   CONTACTED
-  QUALIFIED
-  CONVERTED
-  REJECTED
-  FOLLOW_UP
+  INTERESTED
+  QUOTED
+  NEGOTIATING
+  FOLLOW_UP_SCHEDULED
+  CONFIRMED
+  CLOSED_WON
+  CLOSED_LOST
+  NOT_INTERESTED
 }
 
 enum LeadSource {
+  WEBSITE_FORM
+  PHONE_CALL
+  EMAIL
+  WHATSAPP
+  FACEBOOK
+  INSTAGRAM
+  GOOGLE_ADS
+  REFERRAL
+  WALK_IN
   TOUR_QUERY
   HOTEL_QUERY
   TRANSPORT_QUERY
   CONTACT_US
+  OTHER
 }
+
+enum LeadPriority {
+  HOT
+  WARM
+  COLD
+}
+
+enum LeadQuality {
+  A
+  B
+  C
+}
+
+enum LeadServiceType {
+  TOUR
+  HOTEL
+  TRANSPORT
+  MIXED
+}
+
+enum CommunicationType {
+  CALL
+  EMAIL
+  WHATSAPP
+  SMS
+  MEETING
+  OTHER
+}
+
+enum CommunicationDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum ReminderType {
+  FOLLOW_UP
+  CALLBACK
+  QUOTE_FOLLOW_UP
+  GENERAL
+}
+
+model LeadTag {
+  id          String   @id @default(cuid())
+  name        String   @unique @db.VarChar(100)
+  label       String   @db.VarChar(150)
+  color       String   @db.VarChar(7)
+  icon        String?  @db.VarChar(50)
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  order       Int      @default(0) @db.SmallInt
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  leads       Lead[]
+
+  @@index([isActive, order])
+  @@index([name])
+  @@map("lead_tags")
+}
+
+model LeadSourceMaster {
+  id          String   @id @default(cuid())
+  name        String   @unique @db.VarChar(100)
+  label       String   @db.VarChar(150)
+  icon        String?  @db.VarChar(50)
+  color       String?  @db.VarChar(7)
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  order       Int      @default(0) @db.SmallInt
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([isActive, order])
+  @@index([name])
+  @@map("lead_source_masters")
+}
+
+model LeadCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique @db.VarChar(100)
+  label       String   @db.VarChar(150)
+  icon        String?  @db.VarChar(50)
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  order       Int      @default(0) @db.SmallInt
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  leads       Lead[]
+
+  @@index([isActive, order])
+  @@index([name])
+  @@map("lead_categories")
+}
+
+// ============================================
+// MAIN LEAD MODEL
+// ============================================
 
 model Lead {
-  id              String         @id @default(cuid())
-  referenceNumber String         @unique @db.VarChar(20)
+  id              String           @id @default(cuid())
+  referenceNumber String           @unique @db.VarChar(20)
   source          LeadSource
-  status          LeadStatus     @default(NEW)
-  fullName        String         @db.VarChar(255)
-  email           String         @db.VarChar(255)
-  phoneNumber     String?        @db.VarChar(20)
-  details         Json
-  assignedToId    String?
-  assignedTo      Admin?         @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
-  priority        Int            @default(0) @db.SmallInt
-  notes           String?        @db.Text
-  zohoLeadId      String?        @db.VarChar(100)
-  syncedToZoho    Boolean        @default(false)
-  lastSyncedAt    DateTime?      @db.Timestamptz(3)
-  ipAddress       String?        @db.VarChar(50)
-  userAgent       String?        @db.VarChar(500)
-  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime       @updatedAt @db.Timestamptz(3)
-  contactedAt     DateTime?      @db.Timestamptz(3)
-  activities      LeadActivity[]
+  status          LeadStatus       @default(NEW)
+  priority        LeadPriority     @default(WARM)
+  quality         LeadQuality?
+  serviceType     LeadServiceType?
+
+  // Customer Information
+  fullName       String  @db.VarChar(255)
+  email          String  @db.VarChar(255)
+  phoneNumber    String? @db.VarChar(20)
+  alternatePhone String? @db.VarChar(20)
+  city           String? @db.VarChar(150)
+
+  // Service Requirements
+  destination       String?   @db.VarChar(255)
+  travelStartDate   DateTime? @db.Timestamptz(3)
+  travelEndDate     DateTime? @db.Timestamptz(3)
+  numberOfTravelers Int?      @db.SmallInt
+  numberOfAdults    Int?      @db.SmallInt
+  numberOfChildren  Int?      @db.SmallInt
+  budgetMin         Int?
+  budgetMax         Int?
+  specialRequests   String?   @db.Text
+
+  // Classification
+  tagId      String?
+  tag        LeadTag?      @relation(fields: [tagId], references: [id], onDelete: SetNull)
+  categoryId String?
+  category   LeadCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  // Assignment
+  assignedToId String?
+  assignedTo   Admin?    @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedAt   DateTime? @db.Timestamptz(3)
+
+  // Tracking & Metrics
+  firstResponseAt       DateTime? @db.Timestamptz(3)
+  responseTimeMinutes   Int?
+  lastActivityAt        DateTime? @db.Timestamptz(3)
+  nextFollowUpAt        DateTime? @db.Timestamptz(3)
+  followUpCount         Int       @default(0)
+  isOverdue             Boolean   @default(false)
+  leadScore             Int       @default(0) @db.SmallInt
+  conversionProbability Decimal?  @db.Decimal(5, 2)
+
+  // Financial
+  estimatedValue Int?
+  actualValue    Int?
+
+  // Closure
+  lostReason String?   @db.Text
+  closedAt   DateTime? @db.Timestamptz(3)
+
+  // Legacy & Metadata
+  details     Json?
+  ipAddress   String?   @db.VarChar(50)
+  userAgent   String?   @db.VarChar(500)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  contactedAt DateTime? @db.Timestamptz(3)
+
+  // Relations
+  activities     LeadActivity[]
+  notes          LeadNote[]
+  quotations     LeadQuotation[]
+  communications LeadCommunication[]
+  reminders      LeadReminder[]
+  statusHistory  LeadStatusHistory[]
 
   @@index([source, status, createdAt(sort: Desc)])
-  @@index([status, createdAt(sort: Desc)])
+  @@index([status, priority, createdAt(sort: Desc)])
+  @@index([assignedToId, status, priority])
+  @@index([priority, leadScore(sort: Desc)])
+  @@index([nextFollowUpAt])
+  @@index([isOverdue, assignedToId])
   @@index([email])
   @@index([referenceNumber])
-  @@index([assignedToId, status])
   @@index([createdAt(sort: Desc)])
+  @@index([tagId])
+  @@index([categoryId])
   @@map("leads")
 }
+
+// ============================================
+// LEAD ACTIVITY & HISTORY
+// ============================================
 
 model LeadActivity {
   id            String   @id @default(cuid())
   leadId        String
   activityType  String   @db.VarChar(50)
   description   String   @db.Text
+  metadata      Json?
   performedById String?
-  performedBy   Admin?   @relation(fields: [performedById], references: [id], onDelete: SetNull)
+  performedBy   Admin?   @relation("PerformedActivities", fields: [performedById], references: [id], onDelete: SetNull)
   createdAt     DateTime @default(now()) @db.Timestamptz(3)
   lead          Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@index([leadId, createdAt(sort: Desc)])
+  @@index([activityType])
   @@map("lead_activities")
+}
+
+model LeadStatusHistory {
+  id          String   @id @default(cuid())
+  leadId      String
+  fromStatus  String?  @db.VarChar(50)
+  toStatus    String   @db.VarChar(50)
+  fromTag     String?  @db.VarChar(100)
+  toTag       String?  @db.VarChar(100)
+  notes       String?  @db.Text
+  changedById String
+  changedBy   Admin    @relation("StatusChanges", fields: [changedById], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt(sort: Desc)])
+  @@map("lead_status_history")
+}
+
+// ============================================
+// NOTES & DOCUMENTATION
+// ============================================
+
+model LeadNote {
+  id          String   @id @default(cuid())
+  leadId      String
+  content     String   @db.Text
+  attachments String[]
+  createdById String
+  createdBy   Admin    @relation("CreatedNotes", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt(sort: Desc)])
+  @@map("lead_notes")
+}
+
+// ============================================
+// QUOTATIONS
+// ============================================
+
+model LeadQuotation {
+  id            String    @id @default(cuid())
+  leadId        String
+  version       Int       @db.SmallInt
+  fileName      String    @db.VarChar(255)
+  fileKey       String    @db.VarChar(500)
+  fileUrl       String    @db.VarChar(1000)
+  fileSize      Int
+  fileType      String    @db.VarChar(50)
+  description   String?   @db.Text
+  amount        Int?
+  isAccepted    Boolean   @default(false)
+  acceptedAt    DateTime? @db.Timestamptz(3)
+  sentViaEmail  Boolean   @default(false)
+  emailOpenedAt DateTime? @db.Timestamptz(3)
+  uploadedById  String
+  uploadedBy    Admin     @relation("UploadedQuotations", fields: [uploadedById], references: [id], onDelete: Restrict)
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  lead          Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, version])
+  @@index([leadId, createdAt(sort: Desc)])
+  @@index([isAccepted])
+  @@map("lead_quotations")
+}
+
+// ============================================
+// COMMUNICATIONS
+// ============================================
+
+model LeadCommunication {
+  id            String                 @id @default(cuid())
+  leadId        String
+  type          CommunicationType
+  direction     CommunicationDirection
+  subject       String?                @db.VarChar(255)
+  content       String?                @db.Text
+  duration      Int?
+  status        String?                @db.VarChar(50)
+  metadata      Json?
+  performedById String?
+  performedBy   Admin?                 @relation("PerformedCommunications", fields: [performedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime               @default(now()) @db.Timestamptz(3)
+  lead          Lead                   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt(sort: Desc)])
+  @@index([type, createdAt(sort: Desc)])
+  @@map("lead_communications")
+}
+
+model LeadReminder {
+  id               String       @id @default(cuid())
+  leadId           String
+  scheduledFor     DateTime     @db.Timestamptz(3)
+  reminderType     ReminderType
+  notes            String?      @db.Text
+  isCompleted      Boolean      @default(false)
+  completedAt      DateTime?    @db.Timestamptz(3)
+  isSnoozed        Boolean      @default(false)
+  snoozeReason     String?      @db.Text
+  snoozedUntil     DateTime?    @db.Timestamptz(3)
+  notificationSent Boolean      @default(false)
+  assignedToId     String
+  assignedTo       Admin        @relation("AssignedReminders", fields: [assignedToId], references: [id], onDelete: Restrict)
+  createdById      String
+  createdBy        Admin        @relation("CreatedReminders", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt        DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime     @updatedAt @db.Timestamptz(3)
+  lead             Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, scheduledFor])
+  @@index([assignedToId, isCompleted, scheduledFor])
+  @@index([scheduledFor, isCompleted])
+  @@map("lead_reminders")
 }
 
 model PoiCategory {
