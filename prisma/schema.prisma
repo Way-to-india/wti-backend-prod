@@ -400,6 +400,10 @@ model Permission {
   @@map("permissions")
 }
 
+// ============================================
+// CRM ENUMS
+// ============================================
+
 enum LeadStatus {
   NEW
   CONTACTED
@@ -469,6 +473,10 @@ enum ReminderType {
   QUOTE_FOLLOW_UP
   GENERAL
 }
+
+// ============================================
+// CRM CONFIGURATION MODELS
+// ============================================
 
 model LeadTag {
   id          String   @id @default(cuid())
@@ -721,6 +729,10 @@ model LeadCommunication {
   @@index([type, createdAt(sort: Desc)])
   @@map("lead_communications")
 }
+
+// ============================================
+// REMINDERS & FOLLOW-UPS
+// ============================================
 
 model LeadReminder {
   id               String       @id @default(cuid())

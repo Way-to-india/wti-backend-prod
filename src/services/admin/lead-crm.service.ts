@@ -1,0 +1,752 @@
+import prisma from '@/config/db';
+import { calculateLeadScore, determinePriority } from '@/utils/lead-scoring.util';
+import { calculateResponseTime } from '@/utils/response-time.util';
+import type { Prisma } from 'prisma/generated/prisma/client';
+
+interface CreateLeadInput {
+  fullName: string;
+  email: string;
+  phoneNumber?: string | null;
+  alternatePhone?: string | null;
+  city?: string | null;
+  source: string;
+  serviceType?: string | null;
+  destination?: string | null;
+  travelStartDate?: string | null;
+  travelEndDate?: string | null;
+  numberOfTravelers?: number | null;
+  numberOfAdults?: number | null;
+  numberOfChildren?: number | null;
+  budgetMin?: number | null;
+  budgetMax?: number | null;
+  specialRequests?: string | null;
+  priority?: 'HOT' | 'WARM' | 'COLD';
+  quality?: 'A' | 'B' | 'C' | null;
+  tagId?: string | null;
+  categoryId?: string | null;
+  assignedToId?: string | null;
+  details?: any;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+interface UpdateLeadInput {
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string | null;
+  alternatePhone?: string | null;
+  city?: string | null;
+  source?: string;
+  serviceType?: string | null;
+  destination?: string | null;
+  travelStartDate?: string | null;
+  travelEndDate?: string | null;
+  numberOfTravelers?: number | null;
+  numberOfAdults?: number | null;
+  numberOfChildren?: number | null;
+  budgetMin?: number | null;
+  budgetMax?: number | null;
+  specialRequests?: string | null;
+  priority?: 'HOT' | 'WARM' | 'COLD';
+  quality?: 'A' | 'B' | 'C' | null;
+  tagId?: string | null;
+  categoryId?: string | null;
+  estimatedValue?: number | null;
+  actualValue?: number | null;
+  lostReason?: string | null;
+}
+
+interface LeadFilters {
+  status?: string;
+  priority?: 'HOT' | 'WARM' | 'COLD';
+  quality?: 'A' | 'B' | 'C';
+  source?: string;
+  serviceType?: string;
+  assignedToId?: string;
+  tagId?: string;
+  categoryId?: string;
+  createdFrom?: string;
+  createdTo?: string;
+  travelDateFrom?: string;
+  travelDateTo?: string;
+  budgetMin?: number;
+  budgetMax?: number;
+  isOverdue?: boolean;
+  hasFollowUpToday?: boolean;
+  search?: string;
+}
+
+export class LeadCRMService {
+  /**
+   * Generate unique reference number for lead
+   */
+  private static async generateReferenceNumber(): Promise<string> {
+    const prefix = 'WTI';
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+
+    // Get count of leads created today
+    const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+    const count = await prisma.lead.count({
+      where: {
+        createdAt: { gte: startOfDay },
+      },
+    });
+
+    const sequence = (count + 1).toString().padStart(4, '0');
+    return `${prefix}${year}${month}${sequence}`;
+  }
+
+  /**
+   * Create a new lead
+   */
+  static async createLead(data: CreateLeadInput, createdById?: string) {
+    const referenceNumber = await this.generateReferenceNumber();
+
+    // Calculate lead score
+    const leadScore = calculateLeadScore({
+      budgetMin: data.budgetMin,
+      budgetMax: data.budgetMax,
+      travelStartDate: data.travelStartDate ? new Date(data.travelStartDate) : null,
+      source: data.source,
+      numberOfTravelers: data.numberOfTravelers,
+      specialRequests: data.specialRequests,
+      destination: data.destination,
+      phoneNumber: data.phoneNumber,
+      alternatePhone: data.alternatePhone,
+    });
+
+    // Auto-determine priority if not provided
+    const priority = data.priority || determinePriority(leadScore);
+
+    const lead = await prisma.lead.create({
+      data: {
+        referenceNumber,
+        fullName: data.fullName,
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+        alternatePhone: data.alternatePhone,
+        city: data.city,
+        source: data.source as any,
+        serviceType: data.serviceType as any,
+        destination: data.destination,
+        travelStartDate: data.travelStartDate ? new Date(data.travelStartDate) : null,
+        travelEndDate: data.travelEndDate ? new Date(data.travelEndDate) : null,
+        numberOfTravelers: data.numberOfTravelers,
+        numberOfAdults: data.numberOfAdults,
+        numberOfChildren: data.numberOfChildren,
+        budgetMin: data.budgetMin,
+        budgetMax: data.budgetMax,
+        specialRequests: data.specialRequests,
+        priority: priority as any,
+        quality: data.quality as any,
+        tagId: data.tagId,
+        categoryId: data.categoryId,
+        assignedToId: data.assignedToId,
+        assignedAt: data.assignedToId ? new Date() : null,
+        leadScore,
+        details: data.details,
+        ipAddress: data.ipAddress,
+        userAgent: data.userAgent,
+        lastActivityAt: new Date(),
+      },
+      include: {
+        tag: true,
+        category: true,
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Create activity log
+    if (createdById) {
+      await prisma.leadActivity.create({
+        data: {
+          leadId: lead.id,
+          activityType: 'LEAD_CREATED',
+          description: `Lead created with reference ${referenceNumber}`,
+          performedById: createdById,
+        },
+      });
+    }
+
+    // If assigned, create activity
+    if (data.assignedToId && createdById) {
+      await prisma.leadActivity.create({
+        data: {
+          leadId: lead.id,
+          activityType: 'LEAD_ASSIGNED',
+          description: `Lead assigned to ${lead.assignedTo?.name}`,
+          performedById: createdById,
+        },
+      });
+    }
+
+    return lead;
+  }
+
+  /**
+   * Get all leads with filters and pagination
+   */
+  static async getAllLeads(
+    page: number,
+    limit: number,
+    filters: LeadFilters,
+    sortBy: string = 'createdAt',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
+    const skip = (page - 1) * limit;
+    const where = this.buildWhereClause(filters);
+    const orderBy = this.buildOrderByClause(sortBy, sortOrder);
+
+    const [leads, total] = await Promise.all([
+      prisma.lead.findMany({
+        where,
+        include: {
+          tag: true,
+          category: true,
+          assignedTo: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          _count: {
+            select: {
+              notes: true,
+              quotations: true,
+              communications: true,
+              reminders: true,
+            },
+          },
+        },
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      prisma.lead.count({ where }),
+    ]);
+
+    return {
+      leads,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Get lead by ID with full details
+   */
+  static async getLeadById(id: string) {
+    const lead = await prisma.lead.findUnique({
+      where: { id },
+      include: {
+        tag: true,
+        category: true,
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        notes: {
+          include: {
+            createdBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        quotations: {
+          include: {
+            uploadedBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: { version: 'desc' },
+        },
+        communications: {
+          include: {
+            performedBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        reminders: {
+          include: {
+            assignedTo: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            createdBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: { scheduledFor: 'asc' },
+        },
+        activities: {
+          include: {
+            performedBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        statusHistory: {
+          include: {
+            changedBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!lead) {
+      throw new Error('Lead not found');
+    }
+
+    return lead;
+  }
+
+  /**
+   * Update lead
+   */
+  static async updateLead(id: string, data: UpdateLeadInput, updatedById: string) {
+    const existingLead = await prisma.lead.findUnique({ where: { id } });
+
+    if (!existingLead) {
+      throw new Error('Lead not found');
+    }
+
+    // Recalculate lead score if relevant fields changed
+    let leadScore = existingLead.leadScore;
+    if (
+      data.budgetMin !== undefined ||
+      data.budgetMax !== undefined ||
+      data.travelStartDate !== undefined ||
+      data.source !== undefined
+    ) {
+      leadScore = calculateLeadScore({
+        budgetMin: data.budgetMin ?? existingLead.budgetMin,
+        budgetMax: data.budgetMax ?? existingLead.budgetMax,
+        travelStartDate: data.travelStartDate
+          ? new Date(data.travelStartDate)
+          : existingLead.travelStartDate,
+        source: data.source ?? existingLead.source,
+        numberOfTravelers: data.numberOfTravelers ?? existingLead.numberOfTravelers,
+        specialRequests: data.specialRequests ?? existingLead.specialRequests,
+        destination: data.destination ?? existingLead.destination,
+        phoneNumber: data.phoneNumber ?? existingLead.phoneNumber,
+        alternatePhone: data.alternatePhone ?? existingLead.alternatePhone,
+        responseTimeMinutes: existingLead.responseTimeMinutes,
+      });
+    }
+
+    const lead = await prisma.lead.update({
+      where: { id },
+      data: {
+        ...data,
+        travelStartDate: data.travelStartDate ? new Date(data.travelStartDate) : undefined,
+        travelEndDate: data.travelEndDate ? new Date(data.travelEndDate) : undefined,
+        leadScore,
+        lastActivityAt: new Date(),
+      } as any,
+      include: {
+        tag: true,
+        category: true,
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Create activity log
+    await prisma.leadActivity.create({
+      data: {
+        leadId: id,
+        activityType: 'LEAD_UPDATED',
+        description: 'Lead information updated',
+        performedById: updatedById,
+      },
+    });
+
+    return lead;
+  }
+
+  /**
+   * Assign lead to admin
+   */
+  static async assignLead(
+    leadId: string,
+    assignedToId: string,
+    assignedById: string,
+    notes?: string
+  ) {
+    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+
+    if (!lead) {
+      throw new Error('Lead not found');
+    }
+
+    const admin = await prisma.admin.findUnique({ where: { id: assignedToId } });
+
+    if (!admin) {
+      throw new Error('Admin not found');
+    }
+
+    const updatedLead = await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        assignedToId,
+        assignedAt: new Date(),
+        lastActivityAt: new Date(),
+      },
+      include: {
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Create activity log
+    await prisma.leadActivity.create({
+      data: {
+        leadId,
+        activityType: 'LEAD_ASSIGNED',
+        description: `Lead assigned to ${admin.name}${notes ? `: ${notes}` : ''}`,
+        performedById: assignedById,
+      },
+    });
+
+    return updatedLead;
+  }
+
+  /**
+   * Update lead status
+   */
+  static async updateLeadStatus(
+    leadId: string,
+    status: string,
+    tagId: string | null | undefined,
+    updatedById: string,
+    notes?: string
+  ) {
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId },
+      include: { tag: true },
+    });
+
+    if (!lead) {
+      throw new Error('Lead not found');
+    }
+
+    // Update lead
+    const updatedLead = await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        status: status as any,
+        tagId: tagId,
+        lastActivityAt: new Date(),
+        contactedAt: status === 'CONTACTED' && !lead.contactedAt ? new Date() : undefined,
+        firstResponseAt: !lead.firstResponseAt ? new Date() : undefined,
+        responseTimeMinutes: !lead.responseTimeMinutes
+          ? calculateResponseTime(lead.createdAt, new Date())
+          : undefined,
+        closedAt: ['CONFIRMED', 'CLOSED_WON', 'CLOSED_LOST', 'NOT_INTERESTED'].includes(status)
+          ? new Date()
+          : undefined,
+      } as any,
+      include: {
+        tag: true,
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Create status history
+    await prisma.leadStatusHistory.create({
+      data: {
+        leadId,
+        fromStatus: lead.status,
+        toStatus: status,
+        fromTag: lead.tag?.name,
+        toTag: tagId ? (await prisma.leadTag.findUnique({ where: { id: tagId } }))?.name : null,
+        notes,
+        changedById: updatedById,
+      },
+    });
+
+    // Create activity log
+    await prisma.leadActivity.create({
+      data: {
+        leadId,
+        activityType: 'STATUS_CHANGED',
+        description: `Status changed from ${lead.status} to ${status}${notes ? `: ${notes}` : ''}`,
+        performedById: updatedById,
+      },
+    });
+
+    return updatedLead;
+  }
+
+  /**
+   * Delete lead
+   */
+  static async deleteLead(id: string, deletedById: string) {
+    const lead = await prisma.lead.findUnique({ where: { id } });
+
+    if (!lead) {
+      throw new Error('Lead not found');
+    }
+
+    await prisma.lead.delete({ where: { id } });
+
+    return { success: true, referenceNumber: lead.referenceNumber };
+  }
+
+  /**
+   * Build where clause for filtering
+   */
+  private static buildWhereClause(filters: LeadFilters): Prisma.LeadWhereInput {
+    const where: Prisma.LeadWhereInput = {};
+
+    if (filters.status) {
+      where.status = filters.status as any;
+    }
+
+    if (filters.priority) {
+      where.priority = filters.priority as any;
+    }
+
+    if (filters.quality) {
+      where.quality = filters.quality as any;
+    }
+
+    if (filters.source) {
+      where.source = filters.source as any;
+    }
+
+    if (filters.serviceType) {
+      where.serviceType = filters.serviceType as any;
+    }
+
+    if (filters.assignedToId) {
+      where.assignedToId = filters.assignedToId;
+    }
+
+    if (filters.tagId) {
+      where.tagId = filters.tagId;
+    }
+
+    if (filters.categoryId) {
+      where.categoryId = filters.categoryId;
+    }
+
+    if (filters.createdFrom || filters.createdTo) {
+      where.createdAt = {};
+      if (filters.createdFrom) {
+        where.createdAt.gte = new Date(filters.createdFrom);
+      }
+      if (filters.createdTo) {
+        where.createdAt.lte = new Date(filters.createdTo);
+      }
+    }
+
+    if (filters.travelDateFrom || filters.travelDateTo) {
+      where.travelStartDate = {};
+      if (filters.travelDateFrom) {
+        where.travelStartDate.gte = new Date(filters.travelDateFrom);
+      }
+      if (filters.travelDateTo) {
+        where.travelStartDate.lte = new Date(filters.travelDateTo);
+      }
+    }
+
+    if (filters.budgetMin !== undefined || filters.budgetMax !== undefined) {
+      where.AND = where.AND || [];
+      if (filters.budgetMin !== undefined) {
+        (where.AND as any[]).push({
+          OR: [
+            { budgetMin: { gte: filters.budgetMin } },
+            { budgetMax: { gte: filters.budgetMin } },
+          ],
+        });
+      }
+      if (filters.budgetMax !== undefined) {
+        (where.AND as any[]).push({
+          OR: [
+            { budgetMin: { lte: filters.budgetMax } },
+            { budgetMax: { lte: filters.budgetMax } },
+          ],
+        });
+      }
+    }
+
+    if (filters.isOverdue !== undefined) {
+      where.isOverdue = filters.isOverdue;
+    }
+
+    if (filters.hasFollowUpToday) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      where.nextFollowUpAt = {
+        gte: startOfDay,
+        lte: endOfDay,
+      };
+    }
+
+    if (filters.search) {
+      where.OR = [
+        { fullName: { contains: filters.search, mode: 'insensitive' } },
+        { email: { contains: filters.search, mode: 'insensitive' } },
+        { phoneNumber: { contains: filters.search } },
+        { referenceNumber: { contains: filters.search, mode: 'insensitive' } },
+        { destination: { contains: filters.search, mode: 'insensitive' } },
+      ];
+    }
+
+    return where;
+  }
+
+  /**
+   * Build order by clause
+   */
+  private static buildOrderByClause(
+    sortBy: string,
+    sortOrder: 'asc' | 'desc'
+  ): Prisma.LeadOrderByWithRelationInput {
+    const validSortFields = [
+      'createdAt',
+      'updatedAt',
+      'priority',
+      'leadScore',
+      'nextFollowUpAt',
+      'responseTimeMinutes',
+      'estimatedValue',
+    ];
+
+    if (!validSortFields.includes(sortBy)) {
+      sortBy = 'createdAt';
+    }
+
+    return { [sortBy]: sortOrder };
+  }
+
+  /**
+   * Bulk create leads
+   */
+  static async bulkCreateLeads(leads: CreateLeadInput[], createdById: string) {
+    const results = {
+      successful: [] as any[],
+      failed: [] as any[],
+    };
+
+    for (const leadData of leads) {
+      try {
+        const lead = await this.createLead(leadData, createdById);
+        results.successful.push({
+          referenceNumber: lead.referenceNumber,
+          fullName: lead.fullName,
+          email: lead.email,
+        });
+      } catch (error: any) {
+        results.failed.push({
+          data: leadData,
+          error: error.message,
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Update overdue status for all leads
+   */
+  static async updateOverdueLeads() {
+    const now = new Date();
+
+    // Mark leads as overdue if next follow-up is in the past
+    await prisma.lead.updateMany({
+      where: {
+        nextFollowUpAt: { lt: now },
+        isOverdue: false,
+        status: {
+          notIn: ['CONFIRMED', 'CLOSED_WON', 'CLOSED_LOST', 'NOT_INTERESTED'],
+        },
+      },
+      data: {
+        isOverdue: true,
+      },
+    });
+
+    // Clear overdue flag for leads that have been updated
+    await prisma.lead.updateMany({
+      where: {
+        OR: [{ nextFollowUpAt: { gte: now } }, { nextFollowUpAt: null }],
+        isOverdue: true,
+      },
+      data: {
+        isOverdue: false,
+      },
+    });
+  }
+}
