@@ -6,38 +6,38 @@ import { Router } from 'express';
 const router = Router();
 
 /**
- * @route   POST /api/reviews
+ * @route   POST /api/user/tour/review
  * @desc    Create a new review
  * @access  Private (authenticated users only)
  */
-router.post('/', authenticate, uploadReviewImages, ReviewController.createReview);
+router.post('/review', authenticate, uploadReviewImages, ReviewController.createReview);
 
 /**
- * @route   PUT /api/reviews/:id
+ * @route   PUT /api/user/tour/review/:id
  * @desc    Update an existing review
  * @access  Private (authenticated users only, owner only)
  */
-router.put('/:id', authenticate, uploadReviewImages, ReviewController.updateReview);
+router.put('/review/:id', authenticate, uploadReviewImages, ReviewController.updateReview);
 
 /**
- * @route   GET /api/reviews
+ * @route   GET /api/user/tour/review
  * @desc    List reviews with filters
  * @access  Public
  */
-router.get('/', ReviewController.listReviews);
+router.get('/review', ReviewController.listReviews);
 
 /**
- * @route   GET /api/reviews/:id
+ * @route   GET /api/user/tour/review/:id
  * @desc    Get a single review by ID
  * @access  Public
  */
-router.get('/:id', ReviewController.getReview);
+router.get('/review/:id', ReviewController.getReview);
 
 /**
- * @route   DELETE /api/reviews/:id
+ * @route   DELETE /api/user/tour/review/:id
  * @desc    Delete a review
  * @access  Private (authenticated users only, owner only)
  */
-router.delete('/:id', authenticate, ReviewController.deleteReview);
+router.delete('/review/:id', authenticate, ReviewController.deleteReview);
 
 export default router;
