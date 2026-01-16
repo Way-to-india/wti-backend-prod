@@ -47,6 +47,7 @@ export type LeadActivityCountAggregateOutputType = {
   leadId: number
   activityType: number
   description: number
+  metadata: number
   performedById: number
   createdAt: number
   _all: number
@@ -76,6 +77,7 @@ export type LeadActivityCountAggregateInputType = {
   leadId?: true
   activityType?: true
   description?: true
+  metadata?: true
   performedById?: true
   createdAt?: true
   _all?: true
@@ -158,6 +160,7 @@ export type LeadActivityGroupByOutputType = {
   leadId: string
   activityType: string
   description: string
+  metadata: runtime.JsonValue | null
   performedById: string | null
   createdAt: Date
   _count: LeadActivityCountAggregateOutputType | null
@@ -188,6 +191,7 @@ export type LeadActivityWhereInput = {
   leadId?: Prisma.StringFilter<"LeadActivity"> | string
   activityType?: Prisma.StringFilter<"LeadActivity"> | string
   description?: Prisma.StringFilter<"LeadActivity"> | string
+  metadata?: Prisma.JsonNullableFilter<"LeadActivity">
   performedById?: Prisma.StringNullableFilter<"LeadActivity"> | string | null
   createdAt?: Prisma.DateTimeFilter<"LeadActivity"> | Date | string
   performedBy?: Prisma.XOR<Prisma.AdminNullableScalarRelationFilter, Prisma.AdminWhereInput> | null
@@ -199,6 +203,7 @@ export type LeadActivityOrderByWithRelationInput = {
   leadId?: Prisma.SortOrder
   activityType?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   performedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   performedBy?: Prisma.AdminOrderByWithRelationInput
@@ -213,6 +218,7 @@ export type LeadActivityWhereUniqueInput = Prisma.AtLeast<{
   leadId?: Prisma.StringFilter<"LeadActivity"> | string
   activityType?: Prisma.StringFilter<"LeadActivity"> | string
   description?: Prisma.StringFilter<"LeadActivity"> | string
+  metadata?: Prisma.JsonNullableFilter<"LeadActivity">
   performedById?: Prisma.StringNullableFilter<"LeadActivity"> | string | null
   createdAt?: Prisma.DateTimeFilter<"LeadActivity"> | Date | string
   performedBy?: Prisma.XOR<Prisma.AdminNullableScalarRelationFilter, Prisma.AdminWhereInput> | null
@@ -224,6 +230,7 @@ export type LeadActivityOrderByWithAggregationInput = {
   leadId?: Prisma.SortOrder
   activityType?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   performedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.LeadActivityCountOrderByAggregateInput
@@ -239,6 +246,7 @@ export type LeadActivityScalarWhereWithAggregatesInput = {
   leadId?: Prisma.StringWithAggregatesFilter<"LeadActivity"> | string
   activityType?: Prisma.StringWithAggregatesFilter<"LeadActivity"> | string
   description?: Prisma.StringWithAggregatesFilter<"LeadActivity"> | string
+  metadata?: Prisma.JsonNullableWithAggregatesFilter<"LeadActivity">
   performedById?: Prisma.StringNullableWithAggregatesFilter<"LeadActivity"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"LeadActivity"> | Date | string
 }
@@ -247,8 +255,9 @@ export type LeadActivityCreateInput = {
   id?: string
   activityType: string
   description: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
-  performedBy?: Prisma.AdminCreateNestedOneWithoutLeadActivitiesInput
+  performedBy?: Prisma.AdminCreateNestedOneWithoutPerformedActivitiesInput
   lead: Prisma.LeadCreateNestedOneWithoutActivitiesInput
 }
 
@@ -257,6 +266,7 @@ export type LeadActivityUncheckedCreateInput = {
   leadId: string
   activityType: string
   description: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   performedById?: string | null
   createdAt?: Date | string
 }
@@ -265,8 +275,9 @@ export type LeadActivityUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   activityType?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  performedBy?: Prisma.AdminUpdateOneWithoutLeadActivitiesNestedInput
+  performedBy?: Prisma.AdminUpdateOneWithoutPerformedActivitiesNestedInput
   lead?: Prisma.LeadUpdateOneRequiredWithoutActivitiesNestedInput
 }
 
@@ -275,6 +286,7 @@ export type LeadActivityUncheckedUpdateInput = {
   leadId?: Prisma.StringFieldUpdateOperationsInput | string
   activityType?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   performedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -284,6 +296,7 @@ export type LeadActivityCreateManyInput = {
   leadId: string
   activityType: string
   description: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   performedById?: string | null
   createdAt?: Date | string
 }
@@ -292,6 +305,7 @@ export type LeadActivityUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   activityType?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -300,6 +314,7 @@ export type LeadActivityUncheckedUpdateManyInput = {
   leadId?: Prisma.StringFieldUpdateOperationsInput | string
   activityType?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   performedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -319,6 +334,7 @@ export type LeadActivityCountOrderByAggregateInput = {
   leadId?: Prisma.SortOrder
   activityType?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  metadata?: Prisma.SortOrder
   performedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -429,6 +445,7 @@ export type LeadActivityCreateWithoutPerformedByInput = {
   id?: string
   activityType: string
   description: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   lead: Prisma.LeadCreateNestedOneWithoutActivitiesInput
 }
@@ -438,6 +455,7 @@ export type LeadActivityUncheckedCreateWithoutPerformedByInput = {
   leadId: string
   activityType: string
   description: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
 }
 
@@ -475,6 +493,7 @@ export type LeadActivityScalarWhereInput = {
   leadId?: Prisma.StringFilter<"LeadActivity"> | string
   activityType?: Prisma.StringFilter<"LeadActivity"> | string
   description?: Prisma.StringFilter<"LeadActivity"> | string
+  metadata?: Prisma.JsonNullableFilter<"LeadActivity">
   performedById?: Prisma.StringNullableFilter<"LeadActivity"> | string | null
   createdAt?: Prisma.DateTimeFilter<"LeadActivity"> | Date | string
 }
@@ -483,14 +502,16 @@ export type LeadActivityCreateWithoutLeadInput = {
   id?: string
   activityType: string
   description: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
-  performedBy?: Prisma.AdminCreateNestedOneWithoutLeadActivitiesInput
+  performedBy?: Prisma.AdminCreateNestedOneWithoutPerformedActivitiesInput
 }
 
 export type LeadActivityUncheckedCreateWithoutLeadInput = {
   id?: string
   activityType: string
   description: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   performedById?: string | null
   createdAt?: Date | string
 }
@@ -526,6 +547,7 @@ export type LeadActivityCreateManyPerformedByInput = {
   leadId: string
   activityType: string
   description: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
 }
 
@@ -533,6 +555,7 @@ export type LeadActivityUpdateWithoutPerformedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   activityType?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lead?: Prisma.LeadUpdateOneRequiredWithoutActivitiesNestedInput
 }
@@ -542,6 +565,7 @@ export type LeadActivityUncheckedUpdateWithoutPerformedByInput = {
   leadId?: Prisma.StringFieldUpdateOperationsInput | string
   activityType?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -550,6 +574,7 @@ export type LeadActivityUncheckedUpdateManyWithoutPerformedByInput = {
   leadId?: Prisma.StringFieldUpdateOperationsInput | string
   activityType?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -557,6 +582,7 @@ export type LeadActivityCreateManyLeadInput = {
   id?: string
   activityType: string
   description: string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   performedById?: string | null
   createdAt?: Date | string
 }
@@ -565,14 +591,16 @@ export type LeadActivityUpdateWithoutLeadInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   activityType?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  performedBy?: Prisma.AdminUpdateOneWithoutLeadActivitiesNestedInput
+  performedBy?: Prisma.AdminUpdateOneWithoutPerformedActivitiesNestedInput
 }
 
 export type LeadActivityUncheckedUpdateWithoutLeadInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   activityType?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   performedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -581,6 +609,7 @@ export type LeadActivityUncheckedUpdateManyWithoutLeadInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   activityType?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   performedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -592,6 +621,7 @@ export type LeadActivitySelect<ExtArgs extends runtime.Types.Extensions.Internal
   leadId?: boolean
   activityType?: boolean
   description?: boolean
+  metadata?: boolean
   performedById?: boolean
   createdAt?: boolean
   performedBy?: boolean | Prisma.LeadActivity$performedByArgs<ExtArgs>
@@ -603,6 +633,7 @@ export type LeadActivitySelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   leadId?: boolean
   activityType?: boolean
   description?: boolean
+  metadata?: boolean
   performedById?: boolean
   createdAt?: boolean
   performedBy?: boolean | Prisma.LeadActivity$performedByArgs<ExtArgs>
@@ -614,6 +645,7 @@ export type LeadActivitySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   leadId?: boolean
   activityType?: boolean
   description?: boolean
+  metadata?: boolean
   performedById?: boolean
   createdAt?: boolean
   performedBy?: boolean | Prisma.LeadActivity$performedByArgs<ExtArgs>
@@ -625,11 +657,12 @@ export type LeadActivitySelectScalar = {
   leadId?: boolean
   activityType?: boolean
   description?: boolean
+  metadata?: boolean
   performedById?: boolean
   createdAt?: boolean
 }
 
-export type LeadActivityOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "leadId" | "activityType" | "description" | "performedById" | "createdAt", ExtArgs["result"]["leadActivity"]>
+export type LeadActivityOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "leadId" | "activityType" | "description" | "metadata" | "performedById" | "createdAt", ExtArgs["result"]["leadActivity"]>
 export type LeadActivityInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   performedBy?: boolean | Prisma.LeadActivity$performedByArgs<ExtArgs>
   lead?: boolean | Prisma.LeadDefaultArgs<ExtArgs>
@@ -654,6 +687,7 @@ export type $LeadActivityPayload<ExtArgs extends runtime.Types.Extensions.Intern
     leadId: string
     activityType: string
     description: string
+    metadata: runtime.JsonValue | null
     performedById: string | null
     createdAt: Date
   }, ExtArgs["result"]["leadActivity"]>
@@ -1085,6 +1119,7 @@ export interface LeadActivityFieldRefs {
   readonly leadId: Prisma.FieldRef<"LeadActivity", 'String'>
   readonly activityType: Prisma.FieldRef<"LeadActivity", 'String'>
   readonly description: Prisma.FieldRef<"LeadActivity", 'String'>
+  readonly metadata: Prisma.FieldRef<"LeadActivity", 'Json'>
   readonly performedById: Prisma.FieldRef<"LeadActivity", 'String'>
   readonly createdAt: Prisma.FieldRef<"LeadActivity", 'DateTime'>
 }

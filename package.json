@@ -3,6 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
+    "start": "bun run index.ts",
     "backup:db": "bun run scripts/backup-database.ts",
     "backup:restore": "bun run scripts/restore-database.ts",
     "backup:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-backup-schedule.ps1",

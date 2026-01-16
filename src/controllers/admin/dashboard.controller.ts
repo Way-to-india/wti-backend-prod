@@ -1,5 +1,5 @@
-import type { Request, Response } from 'express';
 import prisma from '@/config/db';
+import type { Request, Response } from 'express';
 
 const serializeBigInt = (obj: any): any => {
   if (obj === null || obj === undefined) return obj;
@@ -358,7 +358,7 @@ export const getDashboardAnalytics = async (req: Request, res: Response) => {
           id: true,
         },
         where: {
-          status: 'CONVERTED',
+          status: 'CLOSED_WON',
         },
       }),
     ]);
