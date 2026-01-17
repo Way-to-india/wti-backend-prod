@@ -1,18 +1,17 @@
-import type { Request, Response } from 'express';
-import { TourService } from '@/services/admin/tour.service';
 import { S3Folder } from '@/common/constants';
-import { deleteImagesFromS3, uploadImageToS3, uploadMultipleImagesToS3 } from '@/utils/s3';
+import { handleRelatedDataUpdates, prepareBasicUpdateData } from '@/helpers/tour-update.helper';
 import {
+  handleImageUploads,
   parseFilters,
   parseIncludes,
-  handleImageUploads,
-  prepareTourData,
   prepareItineraryData,
+  prepareTourData,
 } from '@/helpers/tour.helper';
-import { prepareBasicUpdateData, handleRelatedDataUpdates } from '@/helpers/tour-update.helper';
+import { TourService } from '@/services/admin/tour.service';
+import { deleteImagesFromS3, uploadImageToS3, uploadMultipleImagesToS3 } from '@/utils/s3';
+import type { Request, Response } from 'express';
 
 export class TourController {
-
   static async getAllTours(req: Request, res: Response) {
     try {
       const {
@@ -46,7 +45,6 @@ export class TourController {
       );
     }
   }
-
 
   static async getTourById(req: Request, res: Response) {
     try {
@@ -94,20 +92,17 @@ export class TourController {
     }
   }
 
-
   static async updateTour(req: Request, res: Response) {
     try {
       const { id } = req.params;
       const bodyData = req.validated?.body || req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-      console.log('🔄 Updating tour:', id);
-
       if (!bodyData || Object.keys(bodyData).length === 0) {
         return res.deliver(400, false, undefined, 'No data provided for update');
       }
 
-      const updateData = await prepareBasicUpdateData(bodyData, files);
+      const updateData = await prepareBasicUpdateData(id, bodyData, files);
 
       if (Object.keys(updateData).length > 0) {
         await TourService.updateTour(id, updateData);
@@ -130,9 +125,6 @@ export class TourController {
     }
   }
 
-  /**
-   * Delete tour and its images
-   */
   static async deleteTour(req: Request, res: Response) {
     try {
       const { id } = req.params;

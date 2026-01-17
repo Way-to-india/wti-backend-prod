@@ -58,7 +58,6 @@ export class TourQueryHelper {
   static buildWhereClause(filters: TourFilters): Prisma.TourWhereInput {
     const conditions: Prisma.TourWhereInput[] = [];
 
-    // Search across multiple fields
     if (filters.search) {
       conditions.push({
         OR: [
@@ -72,7 +71,6 @@ export class TourQueryHelper {
       });
     }
 
-    // Direct field filters
     if (filters.id) conditions.push({ id: filters.id });
     if (filters.slug) conditions.push({ slug: filters.slug });
     if (filters.title) {
@@ -91,7 +89,6 @@ export class TourQueryHelper {
       conditions.push({ idealFor: { contains: filters.idealFor, mode: 'insensitive' } });
     }
 
-    // Price filters
     if (filters.minPrice || filters.maxPrice) {
       const priceFilter: Prisma.IntFilter = {};
       if (filters.minPrice) priceFilter.gte = filters.minPrice;
@@ -103,7 +100,6 @@ export class TourQueryHelper {
       conditions.push({ discountPrice: { not: null } });
     }
 
-    // Duration filters
     if (filters.minDurationDays || filters.maxDurationDays) {
       const daysFilter: Prisma.IntFilter = {};
       if (filters.minDurationDays) daysFilter.gte = filters.minDurationDays;
@@ -118,7 +114,6 @@ export class TourQueryHelper {
       conditions.push({ durationNights: nightsFilter });
     }
 
-    // Group size filters
     if (filters.minGroupSize) {
       conditions.push({ minGroupSize: { gte: filters.minGroupSize } });
     }
@@ -126,7 +121,6 @@ export class TourQueryHelper {
       conditions.push({ maxGroupSize: { lte: filters.maxGroupSize } });
     }
 
-    // Rating filters
     if (filters.minRating || filters.maxRating) {
       const ratingFilter: Prisma.DecimalFilter = {};
       if (filters.minRating) ratingFilter.gte = filters.minRating;
@@ -134,7 +128,6 @@ export class TourQueryHelper {
       conditions.push({ rating: ratingFilter });
     }
 
-    // Count filters
     if (filters.minReviewCount) {
       conditions.push({ reviewCount: { gte: filters.minReviewCount } });
     }
@@ -145,7 +138,6 @@ export class TourQueryHelper {
       conditions.push({ bookingCount: { gte: filters.minBookingCount } });
     }
 
-    // Date filters
     if (filters.createdAfter || filters.createdBefore) {
       const dateFilter: Prisma.DateTimeFilter = {};
       if (filters.createdAfter) dateFilter.gte = filters.createdAfter;
@@ -160,7 +152,6 @@ export class TourQueryHelper {
       conditions.push({ updatedAt: dateFilter });
     }
 
-    // Start city filters
     if (filters.startCityId || filters.startCitySlug || filters.startCityName) {
       const cityFilter: Prisma.CityWhereInput = {};
       if (filters.startCityId) cityFilter.id = filters.startCityId;
@@ -171,7 +162,6 @@ export class TourQueryHelper {
       conditions.push({ startCity: cityFilter });
     }
 
-    // Tour cities filters
     if (
       filters.cityId ||
       filters.citySlug ||
@@ -196,7 +186,6 @@ export class TourQueryHelper {
       conditions.push({ cities: { some: { city: cityFilter } } });
     }
 
-    // Theme filters
     if (filters.themeId || filters.themeSlug || filters.themeName) {
       const themeFilter: Prisma.ThemeWhereInput = {};
       if (filters.themeId) themeFilter.id = filters.themeId;

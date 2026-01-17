@@ -1,6 +1,6 @@
+import prisma from '@/config/db';
 import { BadRequestError } from '@/middlewares/handlers/errorHandler';
 import zohoService from './zoho.service';
-import prisma from '@/config/db';
 
 export interface TourQueryData {
   fullName: string;
@@ -9,6 +9,7 @@ export interface TourQueryData {
   numberOfTravellers: number;
   tourPackage: string;
   departureCity?: string;
+  dateOfTravel?: string;
   specialRequest?: string;
 }
 
@@ -130,11 +131,16 @@ class QueryService {
         fullName: data.fullName,
         email: data.email,
         phoneNumber: data.phoneNumber,
+        // Populate top-level fields for admin panel display
+        destination: data.tourPackage,
+        numberOfTravelers: data.numberOfTravellers,
+        travelStartDate: data.dateOfTravel ? new Date(data.dateOfTravel) : null,
+        specialRequests: data.specialRequest,
+        // Keep additional data in details JSON
         details: {
-          numberOfTravellers: data.numberOfTravellers,
-          tourPackage: data.tourPackage,
           departureCity: data.departureCity,
-          specialRequest: data.specialRequest,
+          tourPackage: data.tourPackage,
+          dateOfTravel: data.dateOfTravel,
         },
         ipAddress: metadata.ipAddress,
         userAgent: metadata.userAgent,
@@ -199,6 +205,10 @@ class QueryService {
         fullName: data.fullName || 'Hotel Enquiry',
         email: data.email || `hotel-${Date.now()}@query.com`,
         phoneNumber: data.phoneNumber,
+        destination: data.location,
+        travelStartDate: data.checkIn ? new Date(data.checkIn) : null,
+        travelEndDate: data.checkOut ? new Date(data.checkOut) : null,
+        numberOfTravelers: data.guests,
         details: {
           location: data.location,
           checkIn: data.checkIn,
@@ -263,6 +273,11 @@ class QueryService {
         fullName: data.fullName || 'Transport Enquiry',
         email: data.email || `transport-${Date.now()}@query.com`,
         phoneNumber: data.phoneNumber,
+        // Populate top-level fields for admin panel display
+        destination: `${data.pickupLocation} to ${data.dropLocation}`,
+        travelStartDate: data.pickupDate ? new Date(data.pickupDate) : null,
+        numberOfTravelers: data.passengers,
+        // Keep additional data in details JSON
         details: {
           pickupLocation: data.pickupLocation,
           dropLocation: data.dropLocation,

@@ -1,11 +1,10 @@
 import prisma from '@/config/db';
-import { TourQueryHelper } from '@/helpers/tour-query.helper';
 import type { TourFilters, TourIncludes } from '@/helpers/tour-query.helper';
+import { TourQueryHelper } from '@/helpers/tour-query.helper';
 import type { CreateTourData, UpdateTourData } from '@/types/tour';
 import type { Prisma } from 'prisma/generated/prisma/client';
 
 export class TourService {
-  
   static async getAllTours(
     page: number,
     limit: number,
@@ -14,9 +13,64 @@ export class TourService {
     sortBy: string,
     sortOrder: string
   ) {
-    const skip = (page - 1) * limit;
     const where = TourQueryHelper.buildWhereClause(filters);
     const include = TourQueryHelper.buildIncludeClause(includes);
+
+    // If searching, we need to sort by relevance in memory
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+
+      // Fetch ALL matching records
+      const allMatchingTours = await prisma.tour.findMany({
+        where,
+        include,
+        // Default sort as tie-breaker
+        orderBy: TourQueryHelper.buildOrderByClause(sortBy, sortOrder),
+      });
+
+      // Sort by relevance
+      allMatchingTours.sort((a, b) => {
+        const titleA = a.title.toLowerCase();
+        const titleB = b.title.toLowerCase();
+
+        // Priority 1: Exact Title Match
+        if (titleA === searchTerm && titleB !== searchTerm) return -1;
+        if (titleB === searchTerm && titleA !== searchTerm) return 1;
+
+        // Priority 2: Starts with Search Term
+        const aStarts = titleA.startsWith(searchTerm);
+        const bStarts = titleB.startsWith(searchTerm);
+        if (aStarts && !bStarts) return -1;
+        if (bStarts && !aStarts) return 1;
+
+        // Priority 3: Title Contains Search Term
+        const aContains = titleA.includes(searchTerm);
+        const bContains = titleB.includes(searchTerm);
+        if (aContains && !bContains) return -1;
+        if (bContains && !aContains) return 1;
+
+        // Priority 4: Default (already sorted by query)
+        return 0;
+      });
+
+      // Manual Pagination
+      const total = allMatchingTours.length;
+      const skip = (page - 1) * limit;
+      const paginatedTours = allMatchingTours.slice(skip, skip + limit);
+
+      return {
+        tours: paginatedTours,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
+
+    // Standard optimized database query for non-search cases
+    const skip = (page - 1) * limit;
     const orderBy = TourQueryHelper.buildOrderByClause(sortBy, sortOrder);
 
     const [tours, total] = await Promise.all([
@@ -147,12 +201,15 @@ export class TourService {
 
     const { startCityId, ...restData } = data;
 
-    const updateData: Prisma.TourUpdateInput = Object.entries(restData).reduce((acc, [key, value]) => {
-      if (value !== undefined) {
-        (acc as any)[key] = value;
-      }
-      return acc;
-    }, {} as Prisma.TourUpdateInput);
+    const updateData: Prisma.TourUpdateInput = Object.entries(restData).reduce(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          (acc as any)[key] = value;
+        }
+        return acc;
+      },
+      {} as Prisma.TourUpdateInput
+    );
 
     if (startCityId !== undefined) {
       updateData.startCity = startCityId as Prisma.CityUpdateOneWithoutStartingToursNestedInput;
@@ -342,5 +399,14 @@ export class TourService {
       data: { images: [coverImageKey, ...tour.images.slice(1)] },
       select: { images: true },
     });
+  }
+
+  static async getTourImages(id: string): Promise<string[]> {
+    const tour = await prisma.tour.findUnique({
+      where: { id },
+      select: { images: true },
+    });
+
+    return tour?.images || [];
   }
 }
