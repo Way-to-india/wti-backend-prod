@@ -391,7 +391,6 @@ export class TourController {
         return res.deliver(404, false, undefined, 'Tour not found');
       }
 
-      // Async view count increment (non-blocking)
       prisma.tour
         .update({
           where: { id: tour.id },
