@@ -400,10 +400,6 @@ model Permission {
   @@map("permissions")
 }
 
-// ============================================
-// CRM ENUMS
-// ============================================
-
 enum LeadStatus {
   NEW
   CONTACTED
@@ -474,10 +470,6 @@ enum ReminderType {
   GENERAL
 }
 
-// ============================================
-// CRM CONFIGURATION MODELS
-// ============================================
-
 model LeadTag {
   id          String   @id @default(cuid())
   name        String   @unique @db.VarChar(100)
@@ -529,10 +521,6 @@ model LeadCategory {
   @@index([name])
   @@map("lead_categories")
 }
-
-// ============================================
-// MAIN LEAD MODEL
-// ============================================
 
 model Lead {
   id              String           @id @default(cuid())
@@ -620,10 +608,6 @@ model Lead {
   @@map("leads")
 }
 
-// ============================================
-// LEAD ACTIVITY & HISTORY
-// ============================================
-
 model LeadActivity {
   id            String   @id @default(cuid())
   leadId        String
@@ -657,10 +641,6 @@ model LeadStatusHistory {
   @@map("lead_status_history")
 }
 
-// ============================================
-// NOTES & DOCUMENTATION
-// ============================================
-
 model LeadNote {
   id          String   @id @default(cuid())
   leadId      String
@@ -675,10 +655,6 @@ model LeadNote {
   @@index([leadId, createdAt(sort: Desc)])
   @@map("lead_notes")
 }
-
-// ============================================
-// QUOTATIONS
-// ============================================
 
 model LeadQuotation {
   id            String    @id @default(cuid())
@@ -706,10 +682,6 @@ model LeadQuotation {
   @@map("lead_quotations")
 }
 
-// ============================================
-// COMMUNICATIONS
-// ============================================
-
 model LeadCommunication {
   id            String                 @id @default(cuid())
   leadId        String
@@ -729,10 +701,6 @@ model LeadCommunication {
   @@index([type, createdAt(sort: Desc)])
   @@map("lead_communications")
 }
-
-// ============================================
-// REMINDERS & FOLLOW-UPS
-// ============================================
 
 model LeadReminder {
   id               String       @id @default(cuid())
@@ -865,4 +833,46 @@ model HeroSlide {
   @@index([isActive, order])
   @@index([order])
   @@map("hero_slides")
+}
+
+model Blog {
+  id          String   @id @default(cuid())
+  title       String   @db.VarChar(255)
+  slug        String   @unique @db.VarChar(300)
+  excerpt     String?  @db.VarChar(500)
+  content     String?  @db.Text
+  author      String   @default("Way to India") @db.VarChar(150)
+  imageKey    String   @db.VarChar(500)
+  imageUrl    String   @db.VarChar(1000)
+  ctaText     String   @default("Read More") @db.VarChar(100)
+  ctaLink     String?  @db.VarChar(500)
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  viewCount   Int      @default(0)
+  order       Int      @default(0) @db.SmallInt
+  publishedAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([isActive, isFeatured, publishedAt(sort: Desc)])
+  @@index([isActive, order])
+  @@index([slug])
+  @@map("blogs")
+}
+
+model TourDraft {
+  id        String  @id @default(cuid())
+  adminId   String  @db.VarChar(255)
+  adminName String? @db.VarChar(255)
+
+  draftData Json
+
+  title String? @db.VarChar(255)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([adminId])
+  @@index([createdAt(sort: Desc)])
+  @@map("tour_drafts")
 }

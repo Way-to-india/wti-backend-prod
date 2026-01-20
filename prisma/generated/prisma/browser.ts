@@ -192,3 +192,13 @@ export type PoiMonument = Prisma.PoiMonumentModel
  * 
  */
 export type HeroSlide = Prisma.HeroSlideModel
+/**
+ * Model Blog
+ * 
+ */
+export type Blog = Prisma.BlogModel
+/**
+ * Model TourDraft
+ * 
+ */
+export type TourDraft = Prisma.TourDraftModel

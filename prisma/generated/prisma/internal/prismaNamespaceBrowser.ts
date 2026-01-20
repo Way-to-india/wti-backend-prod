@@ -83,7 +83,9 @@ export const ModelName = {
   PoiState: 'PoiState',
   PoiCity: 'PoiCity',
   PoiMonument: 'PoiMonument',
-  HeroSlide: 'HeroSlide'
+  HeroSlide: 'HeroSlide',
+  Blog: 'Blog',
+  TourDraft: 'TourDraft'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -696,6 +698,42 @@ export const HeroSlideScalarFieldEnum = {
 } as const
 
 export type HeroSlideScalarFieldEnum = (typeof HeroSlideScalarFieldEnum)[keyof typeof HeroSlideScalarFieldEnum]
+
+
+export const BlogScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  slug: 'slug',
+  excerpt: 'excerpt',
+  content: 'content',
+  author: 'author',
+  imageKey: 'imageKey',
+  imageUrl: 'imageUrl',
+  ctaText: 'ctaText',
+  ctaLink: 'ctaLink',
+  isActive: 'isActive',
+  isFeatured: 'isFeatured',
+  viewCount: 'viewCount',
+  order: 'order',
+  publishedAt: 'publishedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BlogScalarFieldEnum = (typeof BlogScalarFieldEnum)[keyof typeof BlogScalarFieldEnum]
+
+
+export const TourDraftScalarFieldEnum = {
+  id: 'id',
+  adminId: 'adminId',
+  adminName: 'adminName',
+  draftData: 'draftData',
+  title: 'title',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TourDraftScalarFieldEnum = (typeof TourDraftScalarFieldEnum)[keyof typeof TourDraftScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -24,7 +24,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     const decoded = JwtUtil.verifyAdminAccessToken(token);
 
     req.admin = decoded;
-    console.log("middleware");
     next();
   } catch (error) {
     console.log(error);
