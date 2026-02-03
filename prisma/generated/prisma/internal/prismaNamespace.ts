@@ -424,7 +424,9 @@ export const ModelName = {
   PoiState: 'PoiState',
   PoiCity: 'PoiCity',
   PoiMonument: 'PoiMonument',
-  HeroSlide: 'HeroSlide'
+  HeroSlide: 'HeroSlide',
+  Blog: 'Blog',
+  TourDraft: 'TourDraft'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -440,7 +442,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "tour" | "tourPriceGuide" | "theme" | "tourTheme" | "tourReview" | "reviewImage" | "tourItinerary" | "tourCity" | "city" | "faq" | "faqQuestion" | "travelGuideState" | "travelGuideCity" | "travelGuideData" | "admin" | "role" | "module" | "permission" | "leadTag" | "leadSourceMaster" | "leadCategory" | "lead" | "leadActivity" | "leadStatusHistory" | "leadNote" | "leadQuotation" | "leadCommunication" | "leadReminder" | "poiCategory" | "poiMetadata" | "poiState" | "poiCity" | "poiMonument" | "heroSlide"
+    modelProps: "user" | "tour" | "tourPriceGuide" | "theme" | "tourTheme" | "tourReview" | "reviewImage" | "tourItinerary" | "tourCity" | "city" | "faq" | "faqQuestion" | "travelGuideState" | "travelGuideCity" | "travelGuideData" | "admin" | "role" | "module" | "permission" | "leadTag" | "leadSourceMaster" | "leadCategory" | "lead" | "leadActivity" | "leadStatusHistory" | "leadNote" | "leadQuotation" | "leadCommunication" | "leadReminder" | "poiCategory" | "poiMetadata" | "poiState" | "poiCity" | "poiMonument" | "heroSlide" | "blog" | "tourDraft"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3034,6 +3036,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Blog: {
+      payload: Prisma.$BlogPayload<ExtArgs>
+      fields: Prisma.BlogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BlogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BlogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlogPayload>
+        }
+        findFirst: {
+          args: Prisma.BlogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BlogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlogPayload>
+        }
+        findMany: {
+          args: Prisma.BlogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlogPayload>[]
+        }
+        create: {
+          args: Prisma.BlogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlogPayload>
+        }
+        createMany: {
+          args: Prisma.BlogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BlogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlogPayload>[]
+        }
+        delete: {
+          args: Prisma.BlogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlogPayload>
+        }
+        update: {
+          args: Prisma.BlogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlogPayload>
+        }
+        deleteMany: {
+          args: Prisma.BlogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BlogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BlogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlogPayload>[]
+        }
+        upsert: {
+          args: Prisma.BlogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlogPayload>
+        }
+        aggregate: {
+          args: Prisma.BlogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBlog>
+        }
+        groupBy: {
+          args: Prisma.BlogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BlogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BlogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BlogCountAggregateOutputType> | number
+        }
+      }
+    }
+    TourDraft: {
+      payload: Prisma.$TourDraftPayload<ExtArgs>
+      fields: Prisma.TourDraftFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TourDraftFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TourDraftPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TourDraftFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TourDraftPayload>
+        }
+        findFirst: {
+          args: Prisma.TourDraftFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TourDraftPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TourDraftFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TourDraftPayload>
+        }
+        findMany: {
+          args: Prisma.TourDraftFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TourDraftPayload>[]
+        }
+        create: {
+          args: Prisma.TourDraftCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TourDraftPayload>
+        }
+        createMany: {
+          args: Prisma.TourDraftCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TourDraftCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TourDraftPayload>[]
+        }
+        delete: {
+          args: Prisma.TourDraftDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TourDraftPayload>
+        }
+        update: {
+          args: Prisma.TourDraftUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TourDraftPayload>
+        }
+        deleteMany: {
+          args: Prisma.TourDraftDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TourDraftUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TourDraftUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TourDraftPayload>[]
+        }
+        upsert: {
+          args: Prisma.TourDraftUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TourDraftPayload>
+        }
+        aggregate: {
+          args: Prisma.TourDraftAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTourDraft>
+        }
+        groupBy: {
+          args: Prisma.TourDraftGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TourDraftGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TourDraftCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TourDraftCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -3669,6 +3819,42 @@ export const HeroSlideScalarFieldEnum = {
 export type HeroSlideScalarFieldEnum = (typeof HeroSlideScalarFieldEnum)[keyof typeof HeroSlideScalarFieldEnum]
 
 
+export const BlogScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  slug: 'slug',
+  excerpt: 'excerpt',
+  content: 'content',
+  author: 'author',
+  imageKey: 'imageKey',
+  imageUrl: 'imageUrl',
+  ctaText: 'ctaText',
+  ctaLink: 'ctaLink',
+  isActive: 'isActive',
+  isFeatured: 'isFeatured',
+  viewCount: 'viewCount',
+  order: 'order',
+  publishedAt: 'publishedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BlogScalarFieldEnum = (typeof BlogScalarFieldEnum)[keyof typeof BlogScalarFieldEnum]
+
+
+export const TourDraftScalarFieldEnum = {
+  id: 'id',
+  adminId: 'adminId',
+  adminName: 'adminName',
+  draftData: 'draftData',
+  title: 'title',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TourDraftScalarFieldEnum = (typeof TourDraftScalarFieldEnum)[keyof typeof TourDraftScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -4047,6 +4233,8 @@ export type GlobalOmitConfig = {
   poiCity?: Prisma.PoiCityOmit
   poiMonument?: Prisma.PoiMonumentOmit
   heroSlide?: Prisma.HeroSlideOmit
+  blog?: Prisma.BlogOmit
+  tourDraft?: Prisma.TourDraftOmit
 }
 
 /* Types for Logging */

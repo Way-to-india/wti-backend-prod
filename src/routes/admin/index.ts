@@ -2,17 +2,19 @@ import AppRoutes from '@/common/appRoutes';
 import { Router } from 'express';
 import AdminRouter from './admin.routes';
 import AuthRouter from './auth.routes';
+import BlogRouter from './blog.routes';
 import DashboardRouter from './dashboard.routes';
 import HeroSlideRouter from './hero-slide.routes';
 import LeadCRMRouter from './lead-crm.routes';
 import ModuleRouter from './module.routes';
 import PermissionRouter from './permission.routes';
+import NotificationRouter from './notification.routes';
 import PoiRouter from './poi.routes';
 import RoleRouter from './role.routes';
 import TourRouter from './tour.routes';
 import TravelGuideRouter from './travel-guide.routes';
 import UserRouter from './user.routes';
-import NotificationRouter from './notification.routes';
+import TourDraftRouter from './tour-draft.routes'
 
 const router = Router();
 
@@ -26,6 +28,8 @@ router.use(AppRoutes.MODULE, ModuleRouter);
 router.use(AppRoutes.TRAVEL_GUIDE, TravelGuideRouter);
 router.use(AppRoutes.POI, PoiRouter);
 router.use(AppRoutes.HERO_SLIDES, HeroSlideRouter);
+router.use(AppRoutes.BLOGS, BlogRouter);
+router.use(AppRoutes.TOUR_DRAFTS, TourDraftRouter);
 router.use(AppRoutes.USERS, UserRouter);
 router.use(AppRoutes.NOTIFICATIONS, NotificationRouter);
 router.use(AppRoutes.CRM, LeadCRMRouter);

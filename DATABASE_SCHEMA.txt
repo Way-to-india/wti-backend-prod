@@ -1,0 +1,199 @@
+WAY TO INDIA - DATABASE SCHEMA DOCUMENTATION
+==========================================
+
+This document provides a detailed overview of the PostgreSQL database schema used in the Way to India application, managed via Prisma ORM.
+
+1. AUTHENTICATION & ACCESS CONTROL
+----------------------------------
+Manages customer users, admin staff, and role-based access control (RBAC).
+
+A. User (Customers)
+   - Represents a registered customer/user of the public website.
+   - Key Fields:
+     * id: UUID
+     * email: Unique identifier
+     * password: Bcrypt hash
+     * profileImage: URL to S3
+     * isEmailVerified/isPhoneVerified: Verification status
+   - Relationships:
+     * reviews: One-to-many with TourReview
+
+B. Admin (Staff)
+   - Represents an internal staff member with access to the dashboard.
+   - Key Fields:
+     * email: Unique login
+     * roleId: Link to their Role
+     * isActive: Login capability toggle
+   - Relationships:
+     * role: Assigned role
+     * assignedLeads: Leads assigned to this admin
+     * performedActivities: CRM activities logged by this admin
+
+C. Role
+   - Defines a set of permissions (e.g., "Super Admin", "Sales Agent").
+   - Relationships:
+     * admins: Users with this role
+     * permissions: Set of module-specific permissions
+
+D. Module
+   - Represents a functional area of the system (e.g., "Tours", "CRM", "Users").
+   - Used to granulate permissions.
+
+E. Permission
+   - The link between a Role and a Module.
+   - Flags: view, create, edit, delete (Boolean).
+   - Logic: If `view=true` for Role "Sales" on Module "CRM", then Sales admins can see CRM.
+
+--------------------------------------------------------------------------------
+
+2. TOUR MANAGEMENT SYSTEM
+-------------------------
+The core product catalog.
+
+A. Tour
+   - The main tour package entity.
+   - Key Fields:
+     * slug: Unique URL-friendly identifier
+     * title, overview, description: content
+     * durationDays/durationNights: Trip length
+     * price, discountPrice: Base pricing
+     * startCityId: Where the tour begins
+     * isActive, isFeatured: Visibility flags
+   - Key Relationships:
+     * itinerary: Daily schedule (TourItinerary)
+     * cities: Locations covered (TourCity)
+     * themes: Categories (TourTheme)
+     * reviews: User reviews (TourReview)
+     * images: Array of S3 URLs
+
+B. TourItinerary
+   - Detail for a specific day of a tour.
+   - Fields: day (number), title, description, imageUrl.
+
+C. TourPriceGuide
+   - detailed pricing breakdown or options.
+
+D. TourCity & TourTheme
+   - Junction tables for Many-to-Many relationships between Tours and Cities/Themes.
+
+E. Theme
+   - Tour categories (e.g., "Honeymoon", "Adventure").
+   - Fields: name, slug, icon.
+
+F. City
+   - Master list of cities used in tours.
+   - Fields: name, slug, stateId, countryId, coordinates.
+
+G. TourReview
+   - Customer feedback.
+   - Fields: rating (1-5), comment, isVerified.
+   - Relationships: user (author), tour (subject).
+
+--------------------------------------------------------------------------------
+
+3. CRM SYSTEM (LEAD MANAGEMENT)
+-------------------------------
+Tracks customer inquiries from acquisition to closure.
+
+A. Lead
+   - The central entity representing a potential sale.
+   - Key Fields:
+     * referenceNumber: Unique ID (e.g., "L-1234")
+     * status: LeadStatus Enum (NEW, CONTACTED, etc.)
+     * priority: LeadPriority Enum (HOT, WARM, COLD)
+     * source: Where did it come from? (Website, Phone, etc.)
+     * assignedToId: Admin handling this lead
+     * serviceRequirements: destination, travel dates, budget
+   - Relationships:
+     * activities: History of interactions
+     * notes: Internal staff notes
+     * quotations: Sent price quotes
+     * reminders: Follow-up tasks
+
+B. LeadStatusHistory
+   - Audit trail of every status change.
+   - Records: fromStatus, toStatus, changedBy (Admin), timestamp.
+
+C. LeadActivity
+   - Log of actions taken on a lead.
+   - Types: Call, Email, Meeting, Status Change.
+
+D. LeadNote
+   - Free-text notes added by admins for internal collaboration.
+
+E. LeadQuotation
+   - PDF files sent to customers.
+   - Tracks: version, fileUrl, isAccepted status.
+
+F. LeadCommunication
+   - Log of specific comms (Call duration, Email content).
+
+G. LeadReminder
+   - Tasks scheduled for the future (e.g., "Call back on Tuesday").
+   - Fields: scheduledFor, isCompleted, Snooze logic.
+
+H. Configuration Models
+   - LeadTag: Custom tags (e.g., "Luxury", "Budget").
+   - LeadCategory: Categories (e.g., "Domestic", "International").
+   - LeadSourceMaster: Configurable list of lead sources.
+
+--------------------------------------------------------------------------------
+
+4. TRAVEL GUIDE
+---------------
+Content Management System for SEO-rich destination guides.
+
+Structure:
+  [TravelGuideState] -> has many -> [TravelGuideCity] -> has many -> [TravelGuideData]
+
+A. TravelGuideData
+   - The actual content for a city.
+   - Rich Text Fields:
+     * introduction
+     * facts
+     * foodAndDining
+     * shopping
+     * historyCulture
+     * bestTimeToVisit
+     * nearbyPlaces
+
+--------------------------------------------------------------------------------
+
+5. POINTS OF INTEREST (POI)
+---------------------------
+Database of monuments and attractions.
+
+Structure:
+  [PoiState] -> [PoiCity] -> [PoiMonument]
+
+A. PoiMonument
+   - A specific tourist attraction (e.g., "Taj Mahal").
+   - Fields:
+     * monumentName
+     * description
+     * openingTime, closingTime
+     * entryFees (JSON)
+     * rating
+
+--------------------------------------------------------------------------------
+
+6. CONTENT & MISC
+-----------------
+
+A. HeroSlide
+   - Dynamic slides for the homepage carousel.
+   - Fields: imageKey, title, subtitle, ctaLink, order.
+
+B. Faq & FaqQuestion
+   - Frequently Asked Questions attached to specific Tours.
+
+--------------------------------------------------------------------------------
+
+7. ENUMS (KEY SYSTEM CONSTANTS)
+-------------------------------
+
+- LeadStatus: NEW, CONTACTED, INTERESTED, QUOTED, NEGOTIATING, CONFIRMED, CLOSED_WON, CLOSED_LOST.
+- LeadPriority: HOT, WARM, COLD.
+- LeadSource: WEBSITE_FORM, PHONE_CALL, WHATSAPP, REFERRAL, etc.
+- CommunicationType: CALL, EMAIL, WHATSAPP, MEETING.
+- ReminderType: FOLLOW_UP, CALLBACK, QUOTE_FOLLOW_UP.

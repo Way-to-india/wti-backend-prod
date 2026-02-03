@@ -1,0 +1,202 @@
+WAY TO INDIA - BACKEND DOCUMENTATION
+====================================
+
+1. PROJECT OVERVIEW
+-------------------
+The Way to India backend is a robust RESTful API server built using modern web technologies to power both the public-facing travel website and a comprehensive internal admin dashboard.
+
+Core Functionalities:
+- Tour Management: Create, update, and manage travel packages with itineraries, pricing, and images.
+- CRM System: Advanced lead management, tracking, and assignment for sales teams.
+- Content Management: Manage travel guides, blogs, points of interest (POIs), and homepage slides.
+- User System: Customer authentication, profiles, and reviews.
+- Search Engine: Optimized ranking logic for tour searches.
+
+Architecture:
+- Pattern: MVC (Model-View-Controller) with a dedicated Service layer for business logic.
+- Runtime: Bun (faster alternative to Node.js).
+- Framework: Express.js (v5).
+- Database: PostgreSQL with Prisma ORM.
+
+--------------------------------------------------------------------------------
+
+2. TECHNOLOGY STACK
+-------------------
+- Runtime:        Bun (v1.2.2+)
+- Framework:      Express.js (v5.0)
+- Database:       PostgreSQL
+- ORM:            Prisma (v6.0)
+- Caching:        Redis / IORedis
+- Storage:        AWS S3 (for images & docs)
+- Email:          Resend API
+- Validation:     Zod
+- Authentication: JWT & Bcrypt
+- Image Process:  Sharp
+- File Upload:    Multer
+
+--------------------------------------------------------------------------------
+
+3. PROJECT STRUCTURE
+--------------------
+way-india-backend-main/
+|-- prisma/
+|   |-- schema.prisma          # Main database schema definition
+|   |-- generated/             # Auto-generated Prisma Client
+|
+|-- src/
+|   |-- config/                # Environment configuration & DB connections
+|   |-- constants/             # Static constant values
+|   |-- controllers/           # HTTP Request Handlers (Entry point for APIs)
+|   |   |-- admin/             # Controllers for Admin Panel APIs
+|   |   |-- common/            # Controllers for Public APIs
+|   |   |-- user/              # Controllers for User/Customer APIs
+|   |
+|   |-- helpers/               # Helper logic (e.g., Query builders, Search logic)
+|   |-- middlewares/           # Express Middlewares (Auth, Error Handling)
+|   |-- routes/                # API Route Definitions
+|   |   |-- admin/             # Admin Routes
+|   |   |-- common/            # Common/Public Routes
+|   |   |-- user/              # User Routes
+|   |
+|   |-- services/              # Business Logic Layer (Interacts with DB)
+|   |   |-- admin/
+|   |   |-- common/
+|   |   |-- user/
+|   |
+|   |-- utils/                 # Utility functions (S3 upload, Formatters)
+|   |-- validators/            # Zod validation schemas
+|
+|-- index.ts                   # Main application entry point
+
+--------------------------------------------------------------------------------
+
+4. DATABASE SCHEMA (KEY MODELS)
+-------------------------------
+The application uses a relational PostgreSQL database managed by Prisma.
+
+Core Entities:
+1. Users & Auth:
+   - User: Customer accounts.
+   - Admin: Staff/Admin accounts.
+   - Role & Permission: RBAC system for Admin access control.
+
+2. Tours:
+   - Tour: Main tour package details.
+   - TourItinerary: Day-wise breakdown.
+   - TourPriceGuide: Pricing details.
+   - TourReview: Customer reviews.
+   - TourCity & TourTheme: Categorization relations.
+
+3. CRM (Customer Relationship Management):
+   - Lead: Customer inquiries/leads.
+   - LeadStatusHistory: Audit trail of status changes.
+   - LeadCommunication: Log of calls/emails with leads.
+   - LeadQuotation: Price quotes sent to leads.
+
+4. Travel Guide:
+   - TravelGuideState -> TravelGuideCity -> TravelGuideData (Hierarchy).
+
+--------------------------------------------------------------------------------
+
+5. API ARCHITECTURE
+-------------------
+The API is divided into three distinct namespaces:
+
+A. Admin API (/api/admin)
+   - Secured with Admin JWT + Role-based permissions.
+   - Capabilities: Full CRUD on Tours, CRM Management, User Management, Content Management.
+   - Example: GET /api/admin/crm/leads (List leads), POST /api/admin/tours (Create tour).
+
+B. Common API (/api/common)
+   - Publicly accessible.
+   - Optimized for read operations.
+   - Capabilities: Fetch Tours, Travel Guides, Destinations, Submit Enquiries.
+   - Search Functionality: Includes "Relevance Sorting" (Exact Match > Starts With > Contains).
+
+C. User API (/api/user)
+   - Secured with User JWT.
+   - Capabilities: User Profile, Submit Reviews, Manage bookings (future).
+
+--------------------------------------------------------------------------------
+
+6. KEY FEATURES & LOGIC
+-----------------------
+1. Search Relevance Logic (Important):
+   - When searching for tours (e.g. "Kerala"), the system sorts results in memory:
+     a. Exact Title Matches appear first.
+     b. Titles starting with the query appear second.
+     c. Other matches (description, keywords) appear last.
+   - Logic location: `src/services/admin/tour.service.ts` -> `getAllTours`.
+
+2. CRM & Lead Assignment:
+   - Leads are captured from public forms.
+   - Admins can be assigned leads.
+   - Status changes are logged automatically in `LeadStatusHistory`.
+
+3. Image Handling:
+   - Images are uploaded to AWS S3.
+   - URLs are stored in the database.
+   - Update Logic: When updating a tour, existing images are preserved if not explicitly overwritten.
+
+--------------------------------------------------------------------------------
+
+7. SETUP INSTRUCTIONS
+---------------------
+Prerequisites:
+- Bun (v1.2+)
+- PostgreSQL Database URL
+- S3 Bucket Credentials
+
+Step 1: Environment Setup
+   Create a .env file in the root folder with the following variables:
+   
+   PORT=5000
+   DATABASE_URL="postgresql://user:pass@localhost:5432/db_name"
+   JWT_SECRET="secret"
+   ADMIN_JWT_SECRET="admin_secret"
+   AWS_ACCESS_KEY_ID="key"
+   AWS_SECRET_ACCESS_KEY="secret"
+   AWS_S3_BUCKET_NAME="bucket"
+   AWS_REGION="region"
+   RESEND_API_KEY="re_123..."
+
+Step 2: Install Dependencies
+   Run command: `bun install`
+
+Step 3: Database Migration
+   Run command: `bunx prisma migrate dev` (Applies schema changes)
+   Run command: `bunx prisma generate` (Updates client)
+
+Step 4: Start Server
+   Run command: `bun run index.ts`
+
+--------------------------------------------------------------------------------
+
+8. DEVELOPMENT WORKFLOWS
+------------------------
+A. Adding a New Field to Database:
+   1. Modify `prisma/schema.prisma`.
+   2. Run `bunx prisma migrate dev --name <migration_name>`.
+   3. Update Zod validators in `src/validators/`.
+   4. Update Controller and Service to handle the new field.
+
+B. Creating a New API Endpoint:
+   1. Create Controller: `src/controllers/<namespace>/<feature>.controller.ts`.
+   2. Create Service: `src/services/<namespace>/<feature>.service.ts`.
+   3. Business Logic: Put DB calls in Service, Request/Response handling in Controller.
+   4. Create Route: `src/routes/<namespace>/<feature>.routes.ts`.
+   5. Register Route: Add to `src/routes/<namespace>/index.ts`.
+
+C. Error Handling:
+   - Always throw custom errors from `src/middlewares/handlers/errorHandler`.
+   - Example: `throw new NotFoundError('Tour not found')`.
+   - The global error middleware captures this and sends a standard JSON response.
+
+--------------------------------------------------------------------------------
+
+9. DEPLOYMENT
+-------------
+- The application is production-ready with Bun.
+- Use a process manager like PM2 or Docker.
+- Command: `bun run index.ts`.
+- Ensure `NODE_ENV=production` is set.
