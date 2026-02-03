@@ -3846,8 +3846,8 @@ export const TourDraftScalarFieldEnum = {
   id: 'id',
   adminId: 'adminId',
   adminName: 'adminName',
+  draftName: 'draftName',
   draftData: 'draftData',
-  title: 'title',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

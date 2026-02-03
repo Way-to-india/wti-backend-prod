@@ -273,7 +273,7 @@ export class TourController {
 
       const tour = await prisma.tour.findFirst({
         where: {
-          OR: [{ id }, { slug: id }],
+          OR: [{ id }, { slug: { equals: id, mode: 'insensitive' } }],
         },
         include: {
           startCity: {

@@ -5,9 +5,13 @@ import { validate } from '@/middlewares/validation.middleware';
 import { idParamSchema, saveDraftSchema } from '@/validators/tour-draft.validator';
 import { Router } from 'express';
 
+import upload from '@/middlewares/multer';
+
 const router = Router();
 
 router.use(authMiddleware);
+
+router.get('/search', checkPermission('Tours', 'view'), TourDraftController.searchDrafts);
 
 router.get('/', checkPermission('Tours', 'view'), TourDraftController.getAllDrafts);
 
@@ -23,6 +27,13 @@ router.post(
   checkPermission('Tours', 'create'),
   validate(saveDraftSchema, 'body'),
   TourDraftController.saveDraft
+);
+
+router.post(
+  '/:id/images',
+  checkPermission('Tours', 'create'),
+  upload.array('images'),
+  TourDraftController.uploadImages
 );
 
 router.delete(

@@ -1,5 +1,5 @@
 import { TourDraftService } from '@/services/admin/tour-draft.service';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 
 export class TourDraftController {
   /**
@@ -51,28 +51,78 @@ export class TourDraftController {
   /**
    * Save draft (create or update)
    */
+  static async searchDrafts(req: Request, res: Response) {
+    try {
+      const { q, page, limit, sortBy, sortOrder } = req.query;
+
+      const result = await TourDraftService.searchDrafts(
+        q as string,
+        parseInt(page as string) || 1,
+        parseInt(limit as string) || 20,
+        sortBy as 'createdAt' | 'updatedAt',
+        sortOrder as 'asc' | 'desc'
+      );
+
+      return res.deliver(200, true, result);
+    } catch (error) {
+      console.error('Error searching drafts:', error);
+      return res.deliver(
+        500,
+        false,
+        undefined,
+        error instanceof Error ? error.message : 'Failed to search drafts'
+      );
+    }
+  }
+
+  static async uploadImages(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const files = req.files as Express.Multer.File[];
+
+      if (!files || files.length === 0) {
+        return res.deliver(400, false, undefined, 'No files uploaded');
+      }
+
+      const imageUrls = files.map((file) => {
+        return (file as any).location || (file as any).key;
+      });
+
+      return res.deliver(200, true, { images: imageUrls }, 'Images uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading draft images:', error);
+      return res.deliver(
+        500,
+        false,
+        undefined,
+        error instanceof Error ? error.message : 'Failed to upload images'
+      );
+    }
+  }
+
+  /**
+   * Save draft (create or update)
+   */
   static async saveDraft(req: Request, res: Response) {
     try {
       const bodyData = req.validated?.body || req.body;
-      const { id } = req.query; // Optional ID for update
-      const adminId = req.admin?.id || 'unknown';
-      const adminName = req.admin?.name;
+      const { id } = req.query;
+      const adminId = req.admin?.adminId || 'unknown';
+      const adminName = req.admin?.email;
 
       let draft;
 
       if (id) {
-        // Update existing draft
         draft = await TourDraftService.updateDraft(id as string, {
           draftData: bodyData.draftData,
-          title: bodyData.title,
+          draftName: bodyData.draftName,
         });
       } else {
-        // Create new draft
         draft = await TourDraftService.createDraft({
           adminId,
           adminName,
           draftData: bodyData.draftData,
-          title: bodyData.title,
+          draftName: bodyData.draftName,
         });
       }
 

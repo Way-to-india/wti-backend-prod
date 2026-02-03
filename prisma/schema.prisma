@@ -861,18 +861,16 @@ model Blog {
 }
 
 model TourDraft {
-  id        String  @id @default(cuid())
-  adminId   String  @db.VarChar(255)
-  adminName String? @db.VarChar(255)
-
+  id        String   @id @default(cuid())
+  adminId   String   @db.VarChar(255)
+  adminName String?  @db.VarChar(255)
+  draftName String   @db.VarChar(255)
   draftData Json
-
-  title String? @db.VarChar(255)
-
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@index([adminId])
   @@index([createdAt(sort: Desc)])
+  @@index([draftName])
   @@map("tour_drafts")
 }

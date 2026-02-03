@@ -47,15 +47,15 @@ export class TourDraftService {
   static async createDraft(data: {
     adminId: string;
     adminName?: string;
-    draftData: Prisma.InputJsonValue;
-    title?: string;
+    draftName: string;
+    draftData: any;
   }) {
     return await prisma.tourDraft.create({
       data: {
         adminId: data.adminId,
         adminName: data.adminName,
+        draftName: data.draftName,
         draftData: data.draftData,
-        title: data.title,
       },
     });
   }
@@ -63,8 +63,8 @@ export class TourDraftService {
   static async updateDraft(
     id: string,
     data: {
-      draftData?: Prisma.InputJsonValue;
-      title?: string;
+      draftName?: string;
+      draftData?: any;
     }
   ) {
     return await prisma.tourDraft.update({
@@ -88,5 +88,44 @@ export class TourDraftService {
         createdAt: 'desc',
       },
     });
+  }
+
+  static async searchDrafts(
+    query: string,
+    page: number = 1,
+    limit: number = 20,
+    sortBy: 'createdAt' | 'updatedAt' = 'createdAt',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.TourDraftWhereInput = query
+      ? {
+          draftName: {
+            contains: query,
+            mode: 'insensitive' as Prisma.QueryMode,
+          },
+        }
+      : {};
+
+    const [drafts, total] = await Promise.all([
+      prisma.tourDraft.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: sortOrder },
+      }),
+      prisma.tourDraft.count({ where }),
+    ]);
+
+    return {
+      drafts,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 }
