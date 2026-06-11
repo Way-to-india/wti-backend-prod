@@ -15,6 +15,7 @@ router.get(
   cache({
     ttl: LIST_CACHE_TTL,
     keyPrefix: 'tour:list',
+    excludeQuery: ['_t'],
   }),
   TourController.getAllTours
 );
@@ -24,7 +25,8 @@ router.get(
   validate(idParamSchema, 'params'),
   cache({
     ttl: DETAIL_CACHE_TTL,
-    keyPrefix: 'tour:detail'
+    keyPrefix: 'tour:detail',
+    excludeQuery: ['_t'],
   }),
   TourController.getTourById
 );

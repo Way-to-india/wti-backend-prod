@@ -127,6 +127,32 @@ export class TourService {
   }
 
   static async createTour(data: CreateTourData) {
+    // DEBUG: Log field lengths
+    console.log('📊 DEBUG - Field lengths:', {
+      title: data.title?.length,
+      slug: data.slug?.length,
+      metatitle: data.metatitle?.length,
+      metadesc: data.metadesc?.length,
+      overview: data.overview?.length,
+      description: data.description?.length,
+      bestTime: data.bestTime?.length,
+      idealFor: data.idealFor?.length,
+      difficulty: data.difficulty?.length,
+      currency: data.currency?.length,
+      images: data.images?.length,
+      highlights: data.highlights?.length,
+      itineraryCount: data.itinerary?.length,
+    });
+    if (data.itinerary) {
+      data.itinerary.forEach((item, i) => {
+        console.log(`📊 Itinerary[${i}] lengths:`, {
+          title: item.title?.length,
+          description: item.description?.length,
+          imageUrl: item.imageUrl?.length,
+        });
+      });
+    }
+
     const tour = await prisma.tour.create({
       data: {
         title: data.title,
@@ -153,6 +179,7 @@ export class TourService {
         difficulty: data.difficulty,
         cancellationPolicy: data.cancellationPolicy,
         travelTips: data.travelTips,
+        travelTipsStructured: data.travelTipsStructured ?? undefined,
 
         startCityId: data.startCityId,
 

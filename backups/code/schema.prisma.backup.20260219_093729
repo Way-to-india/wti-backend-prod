@@ -39,7 +39,7 @@ model Tour {
   title              String           @db.VarChar(255)
   slug               String           @unique @db.VarChar(300)
   metatitle          String?          @db.VarChar(255)
-  metadesc           String?          @db.Text
+  metadesc           String?          @db.VarChar(500)
   overview           String?
   description        String?
   durationDays       Int              @default(0) @db.SmallInt
@@ -60,7 +60,6 @@ model Tour {
   isFeatured         Boolean          @default(false)
   cancellationPolicy String?
   travelTips         String?
-  travelTipsStructured Json? @map("travel_tips_structured")
   startCityId        String?
   createdAt          DateTime         @default(now()) @db.Timestamptz(3)
   updatedAt          DateTime         @updatedAt @db.Timestamptz(3)
@@ -814,23 +813,6 @@ model PoiMonument {
   @@index([monumentName])
   @@index([typeofPlace])
   @@map("poi_monuments")
-}
-
-model VerificationSession {
-  id             String    @id @default(cuid())
-  email          String    @unique @db.VarChar(255)
-  phone          String?   @db.VarChar(20)
-  emailOtp       String?   @db.VarChar(6)
-  emailOtpExpiry DateTime? @db.Timestamptz(3)
-  emailVerified  Boolean   @default(false)
-  emailAttempts  Int       @default(0) @db.SmallInt
-  phoneVerified  Boolean   @default(false)
-  phoneAttempts  Int       @default(0) @db.SmallInt
-  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
-
-  @@index([email])
-  @@map("verification_sessions")
 }
 
 model HeroSlide {

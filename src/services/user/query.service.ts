@@ -1,6 +1,6 @@
 import prisma from '@/config/db';
 import { BadRequestError } from '@/middlewares/handlers/errorHandler';
-import zohoService from './zoho.service';
+import { calculateLeadScore, determinePriority, calculateConversionProbability, suggestNextFollowUp } from '@/utils/lead-scoring.util';
 
 export interface TourQueryData {
   fullName: string;
@@ -20,9 +20,9 @@ export interface HotelQueryData {
   rooms: number;
   guests: number;
   priceRange?: string;
-  fullName?: string;
-  email?: string;
-  phoneNumber?: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
 }
 
 export interface TransportQueryData {
@@ -32,9 +32,9 @@ export interface TransportQueryData {
   pickupTime?: string;
   vehicleType?: string;
   passengers?: number;
-  fullName?: string;
-  email?: string;
-  phoneNumber?: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
 }
 
 export interface ContactUsData {
@@ -52,7 +52,6 @@ class QueryService {
 
   /**
    * Generate unique reference number with format CT-XXXXX
-   * Checks against database to ensure uniqueness
    */
   private async generateUniqueReferenceNumber(): Promise<string> {
     let attempts = 0;
@@ -98,13 +97,72 @@ class QueryService {
   }
 
   /**
+   * Score a new lead and trigger AI qualification in background
+   */
+  private async scoreAndQualifyLead(leadId: string, source: string, data: {
+    budgetMin?: number | null;
+    budgetMax?: number | null;
+    travelStartDate?: Date | null;
+    numberOfTravelers?: number | null;
+    specialRequests?: string | null;
+    destination?: string | null;
+    phoneNumber?: string | null;
+    alternatePhone?: string | null;
+  }) {
+    try {
+      const leadScore = calculateLeadScore({
+        ...data,
+        source,
+      });
+      const priority = determinePriority(leadScore);
+      const conversionProbability = calculateConversionProbability(leadScore, 0, null);
+      const nextFollowUpAt = suggestNextFollowUp('NEW', priority, new Date());
+
+      await prisma.lead.update({
+        where: { id: leadId },
+        data: {
+          leadScore,
+          priority: priority as any,
+          conversionProbability,
+          nextFollowUpAt,
+        },
+      });
+
+      // Create auto follow-up reminder (requires assignedToId and createdById)
+      const defaultAdmin = await prisma.admin.findFirst({ where: { isActive: true }, select: { id: true } });
+      if (defaultAdmin) {
+        await prisma.leadReminder.create({
+          data: {
+            leadId,
+            scheduledFor: nextFollowUpAt,
+            reminderType: 'FOLLOW_UP',
+            assignedToId: defaultAdmin.id,
+            createdById: defaultAdmin.id,
+            notes: `New ${source.replace(/_/g, ' ').toLowerCase()} inquiry - make first contact`,
+          },
+        });
+      }
+
+      // Trigger AI qualification in background (non-blocking)
+      import('@/services/ai/ai-funnel.service').then(({ AIFunnelService }) => {
+        AIFunnelService.qualifyLead(leadId).catch((err: Error) => {
+          console.error(`[ai-funnel] Background qualification failed for ${leadId}: ${err.message}`);
+        });
+      });
+
+      console.log(`[scoring] Lead ${leadId} scored: ${leadScore}, priority: ${priority}`);
+    } catch (error) {
+      console.error(`[scoring] Failed to score lead ${leadId}:`, error);
+    }
+  }
+
+  /**
    * Handle Tour Query with rate limiting
    */
   async handleTourQuery(
     data: TourQueryData,
     req?: any
   ): Promise<{ message: string; referenceNumber: string }> {
-    // Check rate limit from database
     const queryCount = await prisma.lead.count({
       where: {
         email: data.email,
@@ -122,7 +180,6 @@ class QueryService {
     const description = this.buildTourDescription(data, referenceNumber);
     const metadata = this.getRequestMetadata(req);
 
-    // Save to database first
     const lead = await prisma.lead.create({
       data: {
         referenceNumber,
@@ -131,12 +188,10 @@ class QueryService {
         fullName: data.fullName,
         email: data.email,
         phoneNumber: data.phoneNumber,
-        // Populate top-level fields for admin panel display
         destination: data.tourPackage,
         numberOfTravelers: data.numberOfTravellers,
         travelStartDate: data.dateOfTravel ? new Date(data.dateOfTravel) : null,
         specialRequests: data.specialRequest,
-        // Keep additional data in details JSON
         details: {
           departureCity: data.departureCity,
           tourPackage: data.tourPackage,
@@ -147,38 +202,14 @@ class QueryService {
       },
     });
 
-    // Sync to Zoho (non-blocking)
-    const leadData = {
-      First_Name: data.fullName.split(' ')[0],
-      Last_Name: data.fullName.split(' ').slice(1).join(' ') || data.fullName.split(' ')[0],
-      Company: 'Tour Enquiry',
-      Email: data.email,
-      Phone: data.phoneNumber,
-      Lead_Source: 'Tour Query' as const,
-      Description: description,
-      Reference_Number: referenceNumber,
-      Travel_Theme: data.tourPackage,
-      Adults: data.numberOfTravellers,
-      Special_Requests: data.specialRequest || '',
-    };
-
-    // Sync to Zoho in background
-    zohoService
-      .createLead(leadData)
-      .then(async (zohoResponse) => {
-        await prisma.lead.update({
-          where: { id: lead.id },
-          data: {
-            zohoLeadId: zohoResponse.leadId,
-            syncedToZoho: true,
-            lastSyncedAt: new Date(),
-          },
-        });
-        console.log(`✅ Lead ${referenceNumber} synced to Zoho`);
-      })
-      .catch((error) => {
-        console.error(`❌ Failed to sync lead ${referenceNumber} to Zoho:`, error);
-      });
+    // Score lead and trigger AI qualification
+    await this.scoreAndQualifyLead(lead.id, 'TOUR_QUERY', {
+      destination: data.tourPackage,
+      travelStartDate: data.dateOfTravel ? new Date(data.dateOfTravel) : null,
+      numberOfTravelers: data.numberOfTravellers,
+      specialRequests: data.specialRequest,
+      phoneNumber: data.phoneNumber,
+    });
 
     return {
       message: this.buildSuccessMessage(referenceNumber),
@@ -197,13 +228,17 @@ class QueryService {
     const description = this.buildHotelDescription(data, referenceNumber);
     const metadata = this.getRequestMetadata(req);
 
+    if (!data.fullName || !data.email || !data.phoneNumber) {
+      throw new BadRequestError('Full name, email, and phone number are required');
+    }
+
     const lead = await prisma.lead.create({
       data: {
         referenceNumber,
         source: 'HOTEL_QUERY',
         status: 'NEW',
-        fullName: data.fullName || 'Hotel Enquiry',
-        email: data.email || `hotel-${Date.now()}@query.com`,
+        fullName: data.fullName,
+        email: data.email,
         phoneNumber: data.phoneNumber,
         destination: data.location,
         travelStartDate: data.checkIn ? new Date(data.checkIn) : null,
@@ -222,31 +257,13 @@ class QueryService {
       },
     });
 
-    const leadData = {
-      First_Name: data.fullName?.split(' ')[0] || 'Hotel',
-      Last_Name: data.fullName?.split(' ').slice(1).join(' ') || 'Enquiry',
-      Company: 'Hotel Enquiry',
-      Email: data.email || `hotel-${Date.now()}@query.com`,
-      Phone: data.phoneNumber,
-      Lead_Source: 'Hotel Query' as const,
-      Description: description,
-      Reference_Number: referenceNumber,
-      Preferred_Hotel_Category: data.priceRange || '',
-    };
-
-    zohoService
-      .createLead(leadData)
-      .then(async (zohoResponse) => {
-        await prisma.lead.update({
-          where: { id: lead.id },
-          data: {
-            zohoLeadId: zohoResponse.leadId,
-            syncedToZoho: true,
-            lastSyncedAt: new Date(),
-          },
-        });
-      })
-      .catch((error) => console.error('Zoho sync failed:', error));
+    // Score lead and trigger AI qualification
+    await this.scoreAndQualifyLead(lead.id, 'HOTEL_QUERY', {
+      destination: data.location,
+      travelStartDate: data.checkIn ? new Date(data.checkIn) : null,
+      numberOfTravelers: data.guests,
+      phoneNumber: data.phoneNumber,
+    });
 
     return {
       message: this.buildSuccessMessage(referenceNumber),
@@ -265,19 +282,21 @@ class QueryService {
     const description = this.buildTransportDescription(data, referenceNumber);
     const metadata = this.getRequestMetadata(req);
 
+    if (!data.fullName || !data.email || !data.phoneNumber) {
+      throw new BadRequestError('Full name, email, and phone number are required');
+    }
+
     const lead = await prisma.lead.create({
       data: {
         referenceNumber,
         source: 'TRANSPORT_QUERY',
         status: 'NEW',
-        fullName: data.fullName || 'Transport Enquiry',
-        email: data.email || `transport-${Date.now()}@query.com`,
+        fullName: data.fullName,
+        email: data.email,
         phoneNumber: data.phoneNumber,
-        // Populate top-level fields for admin panel display
         destination: `${data.pickupLocation} to ${data.dropLocation}`,
         travelStartDate: data.pickupDate ? new Date(data.pickupDate) : null,
         numberOfTravelers: data.passengers,
-        // Keep additional data in details JSON
         details: {
           pickupLocation: data.pickupLocation,
           dropLocation: data.dropLocation,
@@ -291,30 +310,13 @@ class QueryService {
       },
     });
 
-    const leadData = {
-      First_Name: data.fullName?.split(' ')[0] || 'Transport',
-      Last_Name: data.fullName?.split(' ').slice(1).join(' ') || 'Enquiry',
-      Company: 'Transport Enquiry',
-      Email: data.email || `transport-${Date.now()}@query.com`,
-      Phone: data.phoneNumber,
-      Lead_Source: 'Transport Query' as const,
-      Description: description,
-      Reference_Number: referenceNumber,
-    };
-
-    zohoService
-      .createLead(leadData)
-      .then(async (zohoResponse) => {
-        await prisma.lead.update({
-          where: { id: lead.id },
-          data: {
-            zohoLeadId: zohoResponse.leadId,
-            syncedToZoho: true,
-            lastSyncedAt: new Date(),
-          },
-        });
-      })
-      .catch((error) => console.error('Zoho sync failed:', error));
+    // Score lead and trigger AI qualification
+    await this.scoreAndQualifyLead(lead.id, 'TRANSPORT_QUERY', {
+      destination: `${data.pickupLocation} to ${data.dropLocation}`,
+      travelStartDate: data.pickupDate ? new Date(data.pickupDate) : null,
+      numberOfTravelers: data.passengers,
+      phoneNumber: data.phoneNumber,
+    });
 
     return {
       message: this.buildSuccessMessage(referenceNumber),
@@ -350,30 +352,10 @@ class QueryService {
       },
     });
 
-    const leadData = {
-      First_Name: data.fullName.split(' ')[0],
-      Last_Name: data.fullName.split(' ').slice(1).join(' ') || data.fullName.split(' ')[0],
-      Company: 'General Enquiry',
-      Email: data.email,
-      Phone: data.phoneNumber,
-      Lead_Source: 'Contact Us' as const,
-      Description: description,
-      Reference_Number: referenceNumber,
-    };
-
-    zohoService
-      .createLead(leadData)
-      .then(async (zohoResponse) => {
-        await prisma.lead.update({
-          where: { id: lead.id },
-          data: {
-            zohoLeadId: zohoResponse.leadId,
-            syncedToZoho: true,
-            lastSyncedAt: new Date(),
-          },
-        });
-      })
-      .catch((error) => console.error('Zoho sync failed:', error));
+    // Score lead and trigger AI qualification
+    await this.scoreAndQualifyLead(lead.id, 'CONTACT_US', {
+      phoneNumber: data.phoneNumber,
+    });
 
     return {
       message: this.buildSuccessMessage(referenceNumber),
@@ -381,7 +363,6 @@ class QueryService {
     };
   }
 
-  // Description builders remain the same
   private buildTourDescription(data: TourQueryData, referenceNumber: string): string {
     return `
       Reference Number: ${referenceNumber}

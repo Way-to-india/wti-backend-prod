@@ -28,7 +28,7 @@ export type TourDraftMinAggregateOutputType = {
   id: string | null
   adminId: string | null
   adminName: string | null
-  title: string | null
+  draftName: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -37,7 +37,7 @@ export type TourDraftMaxAggregateOutputType = {
   id: string | null
   adminId: string | null
   adminName: string | null
-  title: string | null
+  draftName: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -46,8 +46,8 @@ export type TourDraftCountAggregateOutputType = {
   id: number
   adminId: number
   adminName: number
+  draftName: number
   draftData: number
-  title: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -58,7 +58,7 @@ export type TourDraftMinAggregateInputType = {
   id?: true
   adminId?: true
   adminName?: true
-  title?: true
+  draftName?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -67,7 +67,7 @@ export type TourDraftMaxAggregateInputType = {
   id?: true
   adminId?: true
   adminName?: true
-  title?: true
+  draftName?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -76,8 +76,8 @@ export type TourDraftCountAggregateInputType = {
   id?: true
   adminId?: true
   adminName?: true
+  draftName?: true
   draftData?: true
-  title?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -159,8 +159,8 @@ export type TourDraftGroupByOutputType = {
   id: string
   adminId: string
   adminName: string | null
+  draftName: string
   draftData: runtime.JsonValue
-  title: string | null
   createdAt: Date
   updatedAt: Date
   _count: TourDraftCountAggregateOutputType | null
@@ -190,8 +190,8 @@ export type TourDraftWhereInput = {
   id?: Prisma.StringFilter<"TourDraft"> | string
   adminId?: Prisma.StringFilter<"TourDraft"> | string
   adminName?: Prisma.StringNullableFilter<"TourDraft"> | string | null
+  draftName?: Prisma.StringFilter<"TourDraft"> | string
   draftData?: Prisma.JsonFilter<"TourDraft">
-  title?: Prisma.StringNullableFilter<"TourDraft"> | string | null
   createdAt?: Prisma.DateTimeFilter<"TourDraft"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TourDraft"> | Date | string
 }
@@ -200,8 +200,8 @@ export type TourDraftOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   adminId?: Prisma.SortOrder
   adminName?: Prisma.SortOrderInput | Prisma.SortOrder
+  draftName?: Prisma.SortOrder
   draftData?: Prisma.SortOrder
-  title?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -213,8 +213,8 @@ export type TourDraftWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.TourDraftWhereInput | Prisma.TourDraftWhereInput[]
   adminId?: Prisma.StringFilter<"TourDraft"> | string
   adminName?: Prisma.StringNullableFilter<"TourDraft"> | string | null
+  draftName?: Prisma.StringFilter<"TourDraft"> | string
   draftData?: Prisma.JsonFilter<"TourDraft">
-  title?: Prisma.StringNullableFilter<"TourDraft"> | string | null
   createdAt?: Prisma.DateTimeFilter<"TourDraft"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TourDraft"> | Date | string
 }, "id">
@@ -223,8 +223,8 @@ export type TourDraftOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   adminId?: Prisma.SortOrder
   adminName?: Prisma.SortOrderInput | Prisma.SortOrder
+  draftName?: Prisma.SortOrder
   draftData?: Prisma.SortOrder
-  title?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.TourDraftCountOrderByAggregateInput
@@ -239,8 +239,8 @@ export type TourDraftScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"TourDraft"> | string
   adminId?: Prisma.StringWithAggregatesFilter<"TourDraft"> | string
   adminName?: Prisma.StringNullableWithAggregatesFilter<"TourDraft"> | string | null
+  draftName?: Prisma.StringWithAggregatesFilter<"TourDraft"> | string
   draftData?: Prisma.JsonWithAggregatesFilter<"TourDraft">
-  title?: Prisma.StringNullableWithAggregatesFilter<"TourDraft"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TourDraft"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"TourDraft"> | Date | string
 }
@@ -249,8 +249,8 @@ export type TourDraftCreateInput = {
   id?: string
   adminId: string
   adminName?: string | null
+  draftName: string
   draftData: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  title?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -259,8 +259,8 @@ export type TourDraftUncheckedCreateInput = {
   id?: string
   adminId: string
   adminName?: string | null
+  draftName: string
   draftData: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  title?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -269,8 +269,8 @@ export type TourDraftUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   adminId?: Prisma.StringFieldUpdateOperationsInput | string
   adminName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  draftName?: Prisma.StringFieldUpdateOperationsInput | string
   draftData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -279,8 +279,8 @@ export type TourDraftUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   adminId?: Prisma.StringFieldUpdateOperationsInput | string
   adminName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  draftName?: Prisma.StringFieldUpdateOperationsInput | string
   draftData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -289,8 +289,8 @@ export type TourDraftCreateManyInput = {
   id?: string
   adminId: string
   adminName?: string | null
+  draftName: string
   draftData: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  title?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -299,8 +299,8 @@ export type TourDraftUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   adminId?: Prisma.StringFieldUpdateOperationsInput | string
   adminName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  draftName?: Prisma.StringFieldUpdateOperationsInput | string
   draftData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -309,8 +309,8 @@ export type TourDraftUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   adminId?: Prisma.StringFieldUpdateOperationsInput | string
   adminName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  draftName?: Prisma.StringFieldUpdateOperationsInput | string
   draftData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -319,8 +319,8 @@ export type TourDraftCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   adminId?: Prisma.SortOrder
   adminName?: Prisma.SortOrder
+  draftName?: Prisma.SortOrder
   draftData?: Prisma.SortOrder
-  title?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -329,7 +329,7 @@ export type TourDraftMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   adminId?: Prisma.SortOrder
   adminName?: Prisma.SortOrder
-  title?: Prisma.SortOrder
+  draftName?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -338,7 +338,7 @@ export type TourDraftMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   adminId?: Prisma.SortOrder
   adminName?: Prisma.SortOrder
-  title?: Prisma.SortOrder
+  draftName?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -349,8 +349,8 @@ export type TourDraftSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   id?: boolean
   adminId?: boolean
   adminName?: boolean
+  draftName?: boolean
   draftData?: boolean
-  title?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["tourDraft"]>
@@ -359,8 +359,8 @@ export type TourDraftSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   id?: boolean
   adminId?: boolean
   adminName?: boolean
+  draftName?: boolean
   draftData?: boolean
-  title?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["tourDraft"]>
@@ -369,8 +369,8 @@ export type TourDraftSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   id?: boolean
   adminId?: boolean
   adminName?: boolean
+  draftName?: boolean
   draftData?: boolean
-  title?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["tourDraft"]>
@@ -379,13 +379,13 @@ export type TourDraftSelectScalar = {
   id?: boolean
   adminId?: boolean
   adminName?: boolean
+  draftName?: boolean
   draftData?: boolean
-  title?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TourDraftOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "adminId" | "adminName" | "draftData" | "title" | "createdAt" | "updatedAt", ExtArgs["result"]["tourDraft"]>
+export type TourDraftOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "adminId" | "adminName" | "draftName" | "draftData" | "createdAt" | "updatedAt", ExtArgs["result"]["tourDraft"]>
 
 export type $TourDraftPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "TourDraft"
@@ -394,8 +394,8 @@ export type $TourDraftPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     id: string
     adminId: string
     adminName: string | null
+    draftName: string
     draftData: runtime.JsonValue
-    title: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["tourDraft"]>
@@ -824,8 +824,8 @@ export interface TourDraftFieldRefs {
   readonly id: Prisma.FieldRef<"TourDraft", 'String'>
   readonly adminId: Prisma.FieldRef<"TourDraft", 'String'>
   readonly adminName: Prisma.FieldRef<"TourDraft", 'String'>
+  readonly draftName: Prisma.FieldRef<"TourDraft", 'String'>
   readonly draftData: Prisma.FieldRef<"TourDraft", 'Json'>
-  readonly title: Prisma.FieldRef<"TourDraft", 'String'>
   readonly createdAt: Prisma.FieldRef<"TourDraft", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"TourDraft", 'DateTime'>
 }

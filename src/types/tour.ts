@@ -19,6 +19,7 @@ export interface CreateTourData {
   difficulty?: string;
   cancellationPolicy?: string;
   travelTips?: string;
+  travelTipsStructured?: unknown;
   startCityId?: string;
   highlights?: string[];
   inclusions?: string[];
@@ -55,6 +56,7 @@ export interface UpdateTourData {
   isFeatured?: boolean;
   cancellationPolicy?: string | null;
   travelTips?: string | null;
+  travelTipsStructured?: unknown;
   startCityId?: string | null;
   images?: string[];
   highlights?: string[];

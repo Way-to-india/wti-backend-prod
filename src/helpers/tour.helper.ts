@@ -135,7 +135,8 @@ export function toBoolean(value: any): boolean | undefined {
  * Returns uploaded image URLs and itinerary image mappings
  */
 export async function handleImageUploads(files: { [fieldname: string]: Express.Multer.File[] }) {
-  let uploadedImages: string[] = [];
+  let uploadedCoverImage: string | null = null;
+  let uploadedGalleryImages: string[] = [];
   let itineraryImagesMap: { [key: string]: string } = {};
 
   console.log('📦 Files received:', {
@@ -144,20 +145,18 @@ export async function handleImageUploads(files: { [fieldname: string]: Express.M
     coverImage: files?.coverImage?.length || 0,
   });
 
-  // Upload cover image first (will be at index 0)
+  // Upload cover image
   if (files?.coverImage?.length > 0) {
     console.log('📤 Uploading cover image...');
-    const coverImageKey = await uploadImageToS3(files.coverImage[0], S3Folder.TOUR_IMAGES);
-    uploadedImages.push(coverImageKey);
+    uploadedCoverImage = await uploadImageToS3(files.coverImage[0], S3Folder.TOUR_IMAGES);
     console.log('✅ Uploaded cover image');
   }
 
   // Upload regular gallery images
   if (files?.images?.length > 0) {
     console.log(`📤 Uploading ${files.images.length} gallery images...`);
-    const galleryImages = await uploadMultipleImagesToS3(files.images, S3Folder.TOUR_IMAGES);
-    uploadedImages.push(...galleryImages);
-    console.log(`✅ Uploaded ${galleryImages.length} gallery images`);
+    uploadedGalleryImages = await uploadMultipleImagesToS3(files.images, S3Folder.TOUR_IMAGES);
+    console.log(`✅ Uploaded ${uploadedGalleryImages.length} gallery images`);
   }
 
   // Upload itinerary images
@@ -173,7 +172,7 @@ export async function handleImageUploads(files: { [fieldname: string]: Express.M
     console.log(`✅ Uploaded ${itineraryImageKeys.length} itinerary images`);
   }
 
-  return { uploadedImages, itineraryImagesMap };
+  return { uploadedCoverImage, uploadedGalleryImages, itineraryImagesMap };
 }
 
 // ============================================================================
@@ -225,7 +224,29 @@ export function prepareItineraryData(
  * Prepare complete tour data for creation
  * Combines form data with uploaded images and itinerary
  */
-export function prepareTourData(bodyData: any, uploadedImages: string[], itineraryData: any) {
+export function prepareTourData(
+  bodyData: any,
+  uploadedCoverImage: string | null,
+  uploadedGalleryImages: string[],
+  itineraryData: any
+) {
+  // Handle Images Logic
+  const existingGalleryImages = bodyData.images ? parseJsonField(bodyData.images) : [];
+  // Ensure existingGalleryImages is an array
+  const galleryImages = Array.isArray(existingGalleryImages)
+    ? existingGalleryImages
+    : [existingGalleryImages];
+
+  const finalGalleryImages = [...galleryImages, ...uploadedGalleryImages];
+
+  const coverImage = uploadedCoverImage || bodyData.coverImage || null;
+
+  const finalImages = [];
+  if (coverImage) {
+    finalImages.push(coverImage);
+  }
+  finalImages.push(...finalGalleryImages);
+
   return {
     // Basic information
     title: bodyData.title,
@@ -258,6 +279,7 @@ export function prepareTourData(bodyData: any, uploadedImages: string[], itinera
     difficulty: bodyData.difficulty || null,
     cancellationPolicy: bodyData.cancellationPolicy || null,
     travelTips: bodyData.travelTips || null,
+    travelTipsStructured: parseJsonField(bodyData.travelTipsStructured) ?? null,
 
     // Relations
     startCityId: bodyData.startCityId || null,
@@ -268,7 +290,7 @@ export function prepareTourData(bodyData: any, uploadedImages: string[], itinera
     exclusions: parseJsonField(bodyData.exclusions) || [],
     themes: parseJsonField(bodyData.themes) || [],
     cities: parseJsonField(bodyData.cities) || [],
-    images: uploadedImages,
+    images: finalImages,
     itinerary: itineraryData,
   };
 }
@@ -366,6 +388,9 @@ export async function prepareUpdateData(
   }
   if ('travelTips' in bodyData) {
     updateData.travelTips = bodyData.travelTips || null;
+  }
+  if ('travelTipsStructured' in bodyData) {
+    updateData.travelTipsStructured = parseJsonField(bodyData.travelTipsStructured) ?? null;
   }
 
   // ========== Boolean Fields ==========

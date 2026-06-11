@@ -83,6 +83,7 @@ export const ModelName = {
   PoiState: 'PoiState',
   PoiCity: 'PoiCity',
   PoiMonument: 'PoiMonument',
+  VerificationSession: 'VerificationSession',
   HeroSlide: 'HeroSlide',
   Blog: 'Blog',
   TourDraft: 'TourDraft'
@@ -152,6 +153,7 @@ export const TourScalarFieldEnum = {
   isFeatured: 'isFeatured',
   cancellationPolicy: 'cancellationPolicy',
   travelTips: 'travelTips',
+  travelTipsStructured: 'travelTipsStructured',
   startCityId: 'startCityId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -681,6 +683,23 @@ export const PoiMonumentScalarFieldEnum = {
 export type PoiMonumentScalarFieldEnum = (typeof PoiMonumentScalarFieldEnum)[keyof typeof PoiMonumentScalarFieldEnum]
 
 
+export const VerificationSessionScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  phone: 'phone',
+  emailOtp: 'emailOtp',
+  emailOtpExpiry: 'emailOtpExpiry',
+  emailVerified: 'emailVerified',
+  emailAttempts: 'emailAttempts',
+  phoneVerified: 'phoneVerified',
+  phoneAttempts: 'phoneAttempts',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type VerificationSessionScalarFieldEnum = (typeof VerificationSessionScalarFieldEnum)[keyof typeof VerificationSessionScalarFieldEnum]
+
+
 export const HeroSlideScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -727,8 +746,8 @@ export const TourDraftScalarFieldEnum = {
   id: 'id',
   adminId: 'adminId',
   adminName: 'adminName',
+  draftName: 'draftName',
   draftData: 'draftData',
-  title: 'title',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

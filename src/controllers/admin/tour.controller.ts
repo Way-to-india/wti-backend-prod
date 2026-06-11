@@ -72,10 +72,16 @@ export class TourController {
       const bodyData = req.validated?.body || req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-      const { uploadedImages, itineraryImagesMap } = await handleImageUploads(files);
+      const { uploadedCoverImage, uploadedGalleryImages, itineraryImagesMap } =
+        await handleImageUploads(files);
 
       const itineraryData = prepareItineraryData(bodyData.itinerary, itineraryImagesMap);
-      const tourData = prepareTourData(bodyData, uploadedImages, itineraryData);
+      const tourData = prepareTourData(
+        bodyData,
+        uploadedCoverImage,
+        uploadedGalleryImages,
+        itineraryData
+      );
 
       const tour = await TourService.createTour(tourData);
 

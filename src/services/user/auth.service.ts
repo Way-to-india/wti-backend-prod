@@ -9,11 +9,26 @@ export class AuthService {
 
   static async register(name: string, email: string, password: string, phone?: string) {
 
-    const sanitizedEmail = ValidationUtil.sanitizeEmail(email); 
+    const sanitizedEmail = ValidationUtil.sanitizeEmail(email);
+
+    // ===== VERIFICATION CHECK: Both email and phone must be verified BEFORE registration =====
+    const verSession = await prisma.verificationSession.findUnique({
+      where: { email: sanitizedEmail },
+    });
+
+    if (!verSession || !verSession.emailVerified || !verSession.phoneVerified) {
+      throw new Error('Both email and phone must be verified before registration.');
+    }
+
+    // Use the verified phone from the verification session
+    const verifiedPhone = verSession.phone;
 
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [{ email: sanitizedEmail }, ...(phone ? [{ phone }] : [])],
+        OR: [
+          { email: sanitizedEmail },
+          ...(verifiedPhone ? [{ phone: verifiedPhone }] : []),
+        ],
       },
     });
 
@@ -31,8 +46,9 @@ export class AuthService {
         name,
         email: sanitizedEmail,
         password: hashedPassword,
-        phone: phone || null,
-        isEmailVerified: false,
+        phone: verifiedPhone || phone || null,
+        isEmailVerified: true,   // Already verified via OTP
+        isPhoneVerified: true,   // Already verified via OTP
       },
       select: {
         id: true,
@@ -43,13 +59,23 @@ export class AuthService {
       },
     });
 
-    const verificationToken = JwtUtil.generateEmailVerificationToken(user.id, user.email);
-
+    // Clean up verification session after successful registration
     try {
-      await EmailService.sendVerificationEmail(user.email, verificationToken, user.name);
-    } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
+      await prisma.verificationSession.delete({
+        where: { email: sanitizedEmail },
+      });
+    } catch {
+      // Ignore cleanup errors
     }
+
+    // Generate tokens immediately since user is already verified
+    const payload: UserTokenPayload = {
+      userId: user.id,
+      email: user.email,
+    };
+
+    const accessToken = JwtUtil.generateUserAccessToken(payload);
+    const refreshToken = JwtUtil.generateUserRefreshToken(payload);
 
     return {
       user: {
@@ -59,6 +85,8 @@ export class AuthService {
         phone: user.phone,
         createdAt: user.createdAt,
       },
+      accessToken,
+      refreshToken,
     };
   }
 

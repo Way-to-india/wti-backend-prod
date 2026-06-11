@@ -424,6 +424,7 @@ export const ModelName = {
   PoiState: 'PoiState',
   PoiCity: 'PoiCity',
   PoiMonument: 'PoiMonument',
+  VerificationSession: 'VerificationSession',
   HeroSlide: 'HeroSlide',
   Blog: 'Blog',
   TourDraft: 'TourDraft'
@@ -442,7 +443,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "tour" | "tourPriceGuide" | "theme" | "tourTheme" | "tourReview" | "reviewImage" | "tourItinerary" | "tourCity" | "city" | "faq" | "faqQuestion" | "travelGuideState" | "travelGuideCity" | "travelGuideData" | "admin" | "role" | "module" | "permission" | "leadTag" | "leadSourceMaster" | "leadCategory" | "lead" | "leadActivity" | "leadStatusHistory" | "leadNote" | "leadQuotation" | "leadCommunication" | "leadReminder" | "poiCategory" | "poiMetadata" | "poiState" | "poiCity" | "poiMonument" | "heroSlide" | "blog" | "tourDraft"
+    modelProps: "user" | "tour" | "tourPriceGuide" | "theme" | "tourTheme" | "tourReview" | "reviewImage" | "tourItinerary" | "tourCity" | "city" | "faq" | "faqQuestion" | "travelGuideState" | "travelGuideCity" | "travelGuideData" | "admin" | "role" | "module" | "permission" | "leadTag" | "leadSourceMaster" | "leadCategory" | "lead" | "leadActivity" | "leadStatusHistory" | "leadNote" | "leadQuotation" | "leadCommunication" | "leadReminder" | "poiCategory" | "poiMetadata" | "poiState" | "poiCity" | "poiMonument" | "verificationSession" | "heroSlide" | "blog" | "tourDraft"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2962,6 +2963,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    VerificationSession: {
+      payload: Prisma.$VerificationSessionPayload<ExtArgs>
+      fields: Prisma.VerificationSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.VerificationSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.VerificationSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.VerificationSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.VerificationSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationSessionPayload>
+        }
+        findMany: {
+          args: Prisma.VerificationSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationSessionPayload>[]
+        }
+        create: {
+          args: Prisma.VerificationSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationSessionPayload>
+        }
+        createMany: {
+          args: Prisma.VerificationSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.VerificationSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.VerificationSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationSessionPayload>
+        }
+        update: {
+          args: Prisma.VerificationSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.VerificationSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.VerificationSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.VerificationSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.VerificationSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VerificationSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.VerificationSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateVerificationSession>
+        }
+        groupBy: {
+          args: Prisma.VerificationSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VerificationSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.VerificationSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VerificationSessionCountAggregateOutputType> | number
+        }
+      }
+    }
     HeroSlide: {
       payload: Prisma.$HeroSlidePayload<ExtArgs>
       fields: Prisma.HeroSlideFieldRefs
@@ -3271,6 +3346,7 @@ export const TourScalarFieldEnum = {
   isFeatured: 'isFeatured',
   cancellationPolicy: 'cancellationPolicy',
   travelTips: 'travelTips',
+  travelTipsStructured: 'travelTipsStructured',
   startCityId: 'startCityId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -3800,6 +3876,23 @@ export const PoiMonumentScalarFieldEnum = {
 export type PoiMonumentScalarFieldEnum = (typeof PoiMonumentScalarFieldEnum)[keyof typeof PoiMonumentScalarFieldEnum]
 
 
+export const VerificationSessionScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  phone: 'phone',
+  emailOtp: 'emailOtp',
+  emailOtpExpiry: 'emailOtpExpiry',
+  emailVerified: 'emailVerified',
+  emailAttempts: 'emailAttempts',
+  phoneVerified: 'phoneVerified',
+  phoneAttempts: 'phoneAttempts',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type VerificationSessionScalarFieldEnum = (typeof VerificationSessionScalarFieldEnum)[keyof typeof VerificationSessionScalarFieldEnum]
+
+
 export const HeroSlideScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -3846,8 +3939,8 @@ export const TourDraftScalarFieldEnum = {
   id: 'id',
   adminId: 'adminId',
   adminName: 'adminName',
+  draftName: 'draftName',
   draftData: 'draftData',
-  title: 'title',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -3973,6 +4066,20 @@ export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMo
 
 
 /**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
  * Reference to a field of type 'LeadSource'
  */
 export type EnumLeadSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadSource'>
@@ -4039,20 +4146,6 @@ export type EnumLeadServiceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$
  * Reference to a field of type 'LeadServiceType[]'
  */
 export type ListEnumLeadServiceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadServiceType[]'>
-    
-
-
-/**
- * Reference to a field of type 'Json'
- */
-export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-/**
- * Reference to a field of type 'QueryMode'
- */
-export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -4232,6 +4325,7 @@ export type GlobalOmitConfig = {
   poiState?: Prisma.PoiStateOmit
   poiCity?: Prisma.PoiCityOmit
   poiMonument?: Prisma.PoiMonumentOmit
+  verificationSession?: Prisma.VerificationSessionOmit
   heroSlide?: Prisma.HeroSlideOmit
   blog?: Prisma.BlogOmit
   tourDraft?: Prisma.TourDraftOmit

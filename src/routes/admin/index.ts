@@ -6,6 +6,7 @@ import BlogRouter from './blog.routes';
 import DashboardRouter from './dashboard.routes';
 import HeroSlideRouter from './hero-slide.routes';
 import LeadCRMRouter from './lead-crm.routes';
+import AIFunnelRouter from './ai-funnel.routes';
 import ModuleRouter from './module.routes';
 import PermissionRouter from './permission.routes';
 import NotificationRouter from './notification.routes';
@@ -15,6 +16,7 @@ import TourRouter from './tour.routes';
 import TravelGuideRouter from './travel-guide.routes';
 import UserRouter from './user.routes';
 import TourDraftRouter from './tour-draft.routes'
+import UploadRouter from './upload.routes';
 
 const router = Router();
 
@@ -33,5 +35,8 @@ router.use(AppRoutes.TOUR_DRAFTS, TourDraftRouter);
 router.use(AppRoutes.USERS, UserRouter);
 router.use(AppRoutes.NOTIFICATIONS, NotificationRouter);
 router.use(AppRoutes.CRM, LeadCRMRouter);
+router.use('/ai-funnel', AIFunnelRouter);
+
+router.use('/upload', UploadRouter);
 
 export default router;

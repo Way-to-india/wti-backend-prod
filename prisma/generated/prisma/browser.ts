@@ -188,6 +188,11 @@ export type PoiCity = Prisma.PoiCityModel
  */
 export type PoiMonument = Prisma.PoiMonumentModel
 /**
+ * Model VerificationSession
+ * 
+ */
+export type VerificationSession = Prisma.VerificationSessionModel
+/**
  * Model HeroSlide
  * 
  */

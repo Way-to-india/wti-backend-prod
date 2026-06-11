@@ -1,75 +1,92 @@
 import { z } from 'zod';
 
+// Helper to parse JSON strings or return the value as-is
+const jsonArraySchema = z.preprocess((val) => {
+  if (typeof val === 'string') {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return val;
+    }
+  }
+  return val;
+}, z.array(z.any()).default([]));
+
+const jsonObjectArraySchema = (schema: z.ZodTypeAny) =>
+  z.preprocess((val) => {
+    if (typeof val === 'string') {
+      try {
+        return JSON.parse(val);
+      } catch {
+        return val;
+      }
+    }
+    return val;
+  }, z.array(schema).optional());
+
 export const createTourSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
-  slug: z.string().min(1, 'Slug is required').max(300), 
+  slug: z.string().min(1, 'Slug is required').max(300),
   metatitle: z.string().max(255).optional().nullable(),
   metadesc: z.string().max(500).optional().nullable(),
   overview: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
-  durationDays: z.number().int().min(0).default(0),
-  durationNights: z.number().int().min(0).default(0),
-  price: z.number().int().min(0).default(0),
-  discountPrice: z.number().int().min(0).optional().nullable(),
+  durationDays: z.coerce.number().int().min(0).default(0),
+  durationNights: z.coerce.number().int().min(0).default(0),
+  price: z.coerce.number().int().min(0).default(0),
+  discountPrice: z.coerce.number().int().min(0).optional().nullable(),
   currency: z.string().max(3).default('INR'),
-  minGroupSize: z.number().int().min(1).default(1),
-  maxGroupSize: z.number().int().min(1).default(50),
+  minGroupSize: z.coerce.number().int().min(1).default(1),
+  maxGroupSize: z.coerce.number().int().min(1).default(50),
   bestTime: z.string().max(255).optional().nullable(),
   idealFor: z.string().max(255).optional().nullable(),
   difficulty: z.string().max(50).optional().nullable(),
-  isActive: z.boolean().default(true),
-  isFeatured: z.boolean().default(false),
+  isActive: z.preprocess((val) => val === 'true' || val === true, z.boolean().default(true)),
+  isFeatured: z.preprocess((val) => val === 'true' || val === true, z.boolean().default(false)),
   cancellationPolicy: z.string().optional().nullable(),
   travelTips: z.string().optional().nullable(),
+  travelTipsStructured: z.any().optional().nullable(),
   startCityId: z.string().optional().nullable(),
-  images: z.array(z.string()).default([]),
-  highlights: z.array(z.string()).default([]),
-  inclusions: z.array(z.string()).default([]),
-  exclusions: z.array(z.string()).default([]),
-  itinerary: z
-    .array(
-      z.object({
-        day: z.number().int().min(1).optional(),
-        title: z.string().min(1, 'Itinerary title is required').max(255),
-        description: z.string().min(1, 'Itinerary description is required'),
-        imageUrl: z.string().max(1000).optional().nullable(),
-      })
-    )
-    .optional(),
-  themes: z.array(z.string()).optional(),
-  cities: z
-    .array(
-      z.object({
-        cityId: z.string().min(1, 'City ID is required'),
-        order: z.number().int().min(0).optional(),
-      })
-    )
-    .optional(),
-  faqs: z
-    .array(
-      z.object({
-        isActive: z.boolean().default(true),
-        questions: z
-          .array(
-            z.object({
-              question: z.string().min(1, 'Question is required'),
-              answer: z.string().min(1, 'Answer is required'),
-              order: z.number().int().min(0).optional(),
-            })
-          )
-          .min(1, 'At least one question is required'),
-      })
-    )
-    .optional(),
-  priceGuide: z
-    .array(
-      z.object({
-        title: z.string().min(1, 'Price guide title is required').max(255),
-        value: z.number().int().min(0).default(0),
-        order: z.number().int().min(0).optional(),
-      })
-    )
-    .optional(),
+  images: jsonArraySchema,
+  highlights: jsonArraySchema,
+  inclusions: jsonArraySchema,
+  exclusions: jsonArraySchema,
+  itinerary: jsonObjectArraySchema(
+    z.object({
+      day: z.coerce.number().int().min(1).optional(),
+      title: z.string().min(1, 'Itinerary title is required').max(255),
+      description: z.string().min(1, 'Itinerary description is required'),
+      imageUrl: z.string().max(1000).optional().nullable(),
+    })
+  ),
+  themes: jsonArraySchema,
+  cities: jsonObjectArraySchema(
+    z.object({
+      cityId: z.string().min(1, 'City ID is required'),
+      order: z.coerce.number().int().min(0).optional(),
+    })
+  ),
+  faqs: jsonObjectArraySchema(
+    z.object({
+      isActive: z.preprocess((val) => val === 'true' || val === true, z.boolean().default(true)),
+      questions: z
+        .array(
+          z.object({
+            question: z.string().min(1, 'Question is required'),
+            answer: z.string().min(1, 'Answer is required'),
+            order: z.coerce.number().int().min(0).optional(),
+          })
+        )
+        .min(1, 'At least one question is required'),
+    })
+  ),
+  priceGuide: jsonObjectArraySchema(
+    z.object({
+      title: z.string().min(1, 'Price guide title is required').max(255),
+      value: z.coerce.number().int().min(0).default(0),
+      order: z.coerce.number().int().min(0).optional(),
+    })
+  ),
 });
 
 export const updateTourSchema = z
@@ -80,34 +97,35 @@ export const updateTourSchema = z
     metadesc: z.string().max(500).optional().nullable(),
     overview: z.string().optional().nullable(),
     description: z.string().optional().nullable(),
-    durationDays: z.number().int().min(0).optional(),
-    durationNights: z.number().int().min(0).optional(),
-    price: z.number().int().min(0).optional(),
-    discountPrice: z.number().int().min(0).optional().nullable(),
+    durationDays: z.coerce.number().int().min(0).optional(),
+    durationNights: z.coerce.number().int().min(0).optional(),
+    price: z.coerce.number().int().min(0).optional(),
+    discountPrice: z.coerce.number().int().min(0).optional().nullable(),
     currency: z.string().max(3).optional(),
-    minGroupSize: z.number().int().min(1).optional(),
-    maxGroupSize: z.number().int().min(1).optional(),
+    minGroupSize: z.coerce.number().int().min(1).optional(),
+    maxGroupSize: z.coerce.number().int().min(1).optional(),
     bestTime: z.string().max(255).optional().nullable(),
     idealFor: z.string().max(255).optional().nullable(),
     difficulty: z.string().max(50).optional().nullable(),
-    rating: z.number().min(0).max(5).optional(),
-    reviewCount: z.number().int().min(0).optional(),
-    viewCount: z.number().int().min(0).optional(),
-    bookingCount: z.number().int().min(0).optional(),
-    isActive: z.boolean().optional(),
-    isFeatured: z.boolean().optional(),
+    rating: z.coerce.number().min(0).max(5).optional(),
+    reviewCount: z.coerce.number().int().min(0).optional(),
+    viewCount: z.coerce.number().int().min(0).optional(),
+    bookingCount: z.coerce.number().int().min(0).optional(),
+    isActive: z.preprocess((val) => val === 'true' || val === true, z.boolean()).optional(),
+    isFeatured: z.preprocess((val) => val === 'true' || val === true, z.boolean()).optional(),
     cancellationPolicy: z.string().optional().nullable(),
     travelTips: z.string().optional().nullable(),
+    travelTipsStructured: z.any().optional().nullable(),
     startCityId: z.string().optional().nullable(),
-    images: z.array(z.string()).optional(),
-    highlights: z.array(z.string()).optional(),
-    inclusions: z.array(z.string()).optional(),
-    exclusions: z.array(z.string()).optional(),
+    images: jsonArraySchema.optional(),
+    highlights: jsonArraySchema.optional(),
+    inclusions: jsonArraySchema.optional(),
+    exclusions: jsonArraySchema.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: 'At least one field must be provided for update',
   });
-  
+
 export const getTourQuerySchema = z.object({
   page: z.string().regex(/^\d+$/).optional().default('1'),
   limit: z.string().regex(/^\d+$/).optional().default('10'),
@@ -127,14 +145,8 @@ export const getTourQuerySchema = z.object({
   maxDurationNights: z.string().regex(/^\d+$/).optional(),
   minGroupSize: z.string().regex(/^\d+$/).optional(),
   maxGroupSize: z.string().regex(/^\d+$/).optional(),
-  minRating: z
-    .string()
-    .regex(/^\d+\.?\d*$/)
-    .optional(),
-  maxRating: z
-    .string()
-    .regex(/^\d+\.?\d*$/)
-    .optional(),
+  minRating: z.string().regex(/^\d+\.?\d*$/).optional(),
+  maxRating: z.string().regex(/^\d+\.?\d*$/).optional(),
   minReviewCount: z.string().regex(/^\d+$/).optional(),
   minViewCount: z.string().regex(/^\d+$/).optional(),
   minBookingCount: z.string().regex(/^\d+$/).optional(),

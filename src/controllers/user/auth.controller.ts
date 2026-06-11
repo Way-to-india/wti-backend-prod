@@ -33,7 +33,7 @@ export class AuthController {
         201,
         true,
         result,
-        'Registration successful. Please check your email to verify your account.'
+        'Registration successful. Your account is verified and ready to use.'
       );
     } catch (error) {
       console.error('Registration error:', error);

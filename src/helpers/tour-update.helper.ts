@@ -78,6 +78,10 @@ export async function prepareBasicUpdateData(
     }
   });
 
+  if ('travelTipsStructured' in bodyData) {
+    updateData.travelTipsStructured = parseJsonField(bodyData.travelTipsStructured) ?? null;
+  }
+
   const numericFields = [
     'durationDays',
     'durationNights',
