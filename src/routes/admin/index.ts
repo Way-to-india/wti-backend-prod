@@ -15,6 +15,7 @@ import TourRouter from './tour.routes';
 import TravelGuideRouter from './travel-guide.routes';
 import UserRouter from './user.routes';
 import TourDraftRouter from './tour-draft.routes'
+import CityAdminRouter from './city.routes';
 
 const router = Router();
 
@@ -33,5 +34,6 @@ router.use(AppRoutes.TOUR_DRAFTS, TourDraftRouter);
 router.use(AppRoutes.USERS, UserRouter);
 router.use(AppRoutes.NOTIFICATIONS, NotificationRouter);
 router.use(AppRoutes.CRM, LeadCRMRouter);
+router.use(AppRoutes.CITY, CityAdminRouter);
 
 export default router;
