@@ -11,6 +11,7 @@ router.use(authMiddleware);
 
 // ---- Verified Route Map authoring (city autosuggest + load/save stops) ----
 router.get('/route/city-search', checkPermission('Tours', 'view'), RouteStopsController.searchCities);
+router.post('/route/city', checkPermission('Tours', 'edit'), RouteStopsController.addCity);
 router.get('/:id/route-stops', checkPermission('Tours', 'view'), RouteStopsController.getRouteStops);
 router.post('/:id/route-stops', checkPermission('Tours', 'edit'), RouteStopsController.saveRouteStops);
 

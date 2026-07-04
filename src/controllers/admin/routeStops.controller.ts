@@ -56,6 +56,29 @@ export class RouteStopsController {
     }
   }
 
+  /** POST /tours/route/city — register a custom place into world_cities immediately
+   *  (called by the admin route editor's "+" so the city is searchable right away,
+   *  even before the route itself is saved). Idempotent by lower(name). */
+  static async addCity(req: Request, res: Response) {
+    try {
+      const name = String(req.body?.name || '').trim();
+      const lat = Number(req.body?.lat);
+      const lng = Number(req.body?.lng);
+      if (!name || isNaN(lat) || isNaN(lng)) return res.deliver(400, false, undefined, 'name, lat, lng required');
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return res.deliver(400, false, undefined, 'Invalid coordinates');
+      const isIndia = lat >= 6 && lat <= 37.5 && lng >= 68 && lng <= 97.5;
+      await prisma.$executeRaw`
+        INSERT INTO world_cities (name, "asciiName", latitude, longitude, "countryCode", "countryName", population, "searchRank", source)
+        SELECT ${name}, ${name}, ${lat}, ${lng},
+               ${isIndia ? 'IN' : null}, ${isIndia ? 'India' : null}, 0, 0, 'ADMIN'
+        WHERE NOT EXISTS (SELECT 1 FROM world_cities WHERE lower(name) = lower(${name}))`;
+      return res.deliver(200, true, { name, lat, lng, registered: true });
+    } catch (e) {
+      console.error('addCity failed:', e);
+      return res.deliver(500, false, undefined, 'Failed to register city');
+    }
+  }
+
   /** GET /tours/:id/route-stops — load a tour's verified route stops for editing. */
   static async getRouteStops(req: Request, res: Response) {
     try {
