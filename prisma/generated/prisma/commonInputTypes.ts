@@ -342,6 +342,20 @@ export type EnumLeadServiceTypeNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumLeadServiceTypeNullableFilter<$PrismaModel> | $Enums.LeadServiceType | null
 }
 
+export type EnumTourTypeNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.TourType | Prisma.EnumTourTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TourType[] | Prisma.ListEnumTourTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TourType[] | Prisma.ListEnumTourTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTourTypeNullableFilter<$PrismaModel> | $Enums.TourType | null
+}
+
+export type EnumTravellerOriginNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.TravellerOrigin | Prisma.EnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TravellerOrigin[] | Prisma.ListEnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TravellerOrigin[] | Prisma.ListEnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTravellerOriginNullableFilter<$PrismaModel> | $Enums.TravellerOrigin | null
+}
+
 export type EnumLeadSourceWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.LeadSource | Prisma.EnumLeadSourceFieldRefInput<$PrismaModel>
   in?: $Enums.LeadSource[] | Prisma.ListEnumLeadSourceFieldRefInput<$PrismaModel>
@@ -390,6 +404,26 @@ export type EnumLeadServiceTypeNullableWithAggregatesFilter<$PrismaModel = never
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedEnumLeadServiceTypeNullableFilter<$PrismaModel>
   _max?: Prisma.NestedEnumLeadServiceTypeNullableFilter<$PrismaModel>
+}
+
+export type EnumTourTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TourType | Prisma.EnumTourTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TourType[] | Prisma.ListEnumTourTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TourType[] | Prisma.ListEnumTourTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTourTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.TourType | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTourTypeNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTourTypeNullableFilter<$PrismaModel>
+}
+
+export type EnumTravellerOriginNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TravellerOrigin | Prisma.EnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TravellerOrigin[] | Prisma.ListEnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TravellerOrigin[] | Prisma.ListEnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTravellerOriginNullableWithAggregatesFilter<$PrismaModel> | $Enums.TravellerOrigin | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTravellerOriginNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTravellerOriginNullableFilter<$PrismaModel>
 }
 
 export type EnumCommunicationTypeFilter<$PrismaModel = never> = {
@@ -835,6 +869,20 @@ export type NestedEnumLeadServiceTypeNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumLeadServiceTypeNullableFilter<$PrismaModel> | $Enums.LeadServiceType | null
 }
 
+export type NestedEnumTourTypeNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.TourType | Prisma.EnumTourTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TourType[] | Prisma.ListEnumTourTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TourType[] | Prisma.ListEnumTourTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTourTypeNullableFilter<$PrismaModel> | $Enums.TourType | null
+}
+
+export type NestedEnumTravellerOriginNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.TravellerOrigin | Prisma.EnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TravellerOrigin[] | Prisma.ListEnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TravellerOrigin[] | Prisma.ListEnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTravellerOriginNullableFilter<$PrismaModel> | $Enums.TravellerOrigin | null
+}
+
 export type NestedEnumLeadSourceWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.LeadSource | Prisma.EnumLeadSourceFieldRefInput<$PrismaModel>
   in?: $Enums.LeadSource[] | Prisma.ListEnumLeadSourceFieldRefInput<$PrismaModel>
@@ -883,6 +931,26 @@ export type NestedEnumLeadServiceTypeNullableWithAggregatesFilter<$PrismaModel =
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedEnumLeadServiceTypeNullableFilter<$PrismaModel>
   _max?: Prisma.NestedEnumLeadServiceTypeNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumTourTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TourType | Prisma.EnumTourTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TourType[] | Prisma.ListEnumTourTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TourType[] | Prisma.ListEnumTourTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTourTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.TourType | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTourTypeNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTourTypeNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumTravellerOriginNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TravellerOrigin | Prisma.EnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TravellerOrigin[] | Prisma.ListEnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TravellerOrigin[] | Prisma.ListEnumTravellerOriginFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTravellerOriginNullableWithAggregatesFilter<$PrismaModel> | $Enums.TravellerOrigin | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTravellerOriginNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTravellerOriginNullableFilter<$PrismaModel>
 }
 
 export type NestedEnumCommunicationTypeFilter<$PrismaModel = never> = {

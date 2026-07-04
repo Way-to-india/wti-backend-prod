@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { TourController } from '@/controllers/admin/tour.controller';
+import { RouteStopsController } from '@/controllers/admin/routeStops.controller';
 import { uploadTourImages } from '@/middlewares/multer';
 import { checkPermission } from '@/middlewares/permission.middleware';
 import { authMiddleware } from '@/middlewares/admin/auth.middleware';
@@ -7,6 +8,11 @@ import { authMiddleware } from '@/middlewares/admin/auth.middleware';
 const router = Router();
 
 router.use(authMiddleware);
+
+// ---- Verified Route Map authoring (city autosuggest + load/save stops) ----
+router.get('/route/city-search', checkPermission('Tours', 'view'), RouteStopsController.searchCities);
+router.get('/:id/route-stops', checkPermission('Tours', 'view'), RouteStopsController.getRouteStops);
+router.post('/:id/route-stops', checkPermission('Tours', 'edit'), RouteStopsController.saveRouteStops);
 
 router.post(
   '/create',

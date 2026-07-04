@@ -17,7 +17,6 @@ import TravelGuideRouter from './travel-guide.routes';
 import UserRouter from './user.routes';
 import TourDraftRouter from './tour-draft.routes'
 import UploadRouter from './upload.routes';
-import CityAdminRouter from './city.routes';
 
 const router = Router();
 
@@ -38,7 +37,6 @@ router.use(AppRoutes.NOTIFICATIONS, NotificationRouter);
 router.use(AppRoutes.CRM, LeadCRMRouter);
 router.use('/ai-funnel', AIFunnelRouter);
 
-router.use(AppRoutes.CITY, CityAdminRouter);
 router.use('/upload', UploadRouter);
 
 export default router;

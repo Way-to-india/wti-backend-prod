@@ -334,6 +334,7 @@ export class TravelGuideService {
     placesToSeeBottom?: string;
     hotelDetails?: string;
     cityImage?: string;
+    travelTipsStructured?: any;
   }) {
     const guideData = await prisma.travelGuideData.create({
       data: {
@@ -372,6 +373,7 @@ export class TravelGuideService {
       placesToSeeBottom?: string;
       hotelDetails?: string;
       cityImage?: string;
+      travelTipsStructured?: any;
     }
   ) {
     const guideData = await prisma.travelGuideData.update({

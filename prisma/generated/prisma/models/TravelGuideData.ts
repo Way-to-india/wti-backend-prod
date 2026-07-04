@@ -110,6 +110,7 @@ export type TravelGuideDataCountAggregateOutputType = {
   placesToSeeBottom: number
   hotelDetails: number
   cityImage: number
+  travelTipsStructured: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -200,6 +201,7 @@ export type TravelGuideDataCountAggregateInputType = {
   placesToSeeBottom?: true
   hotelDetails?: true
   cityImage?: true
+  travelTipsStructured?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -313,6 +315,7 @@ export type TravelGuideDataGroupByOutputType = {
   placesToSeeBottom: string | null
   hotelDetails: string | null
   cityImage: string | null
+  travelTipsStructured: runtime.JsonValue | null
   createdAt: Date
   updatedAt: Date
   _count: TravelGuideDataCountAggregateOutputType | null
@@ -362,6 +365,7 @@ export type TravelGuideDataWhereInput = {
   placesToSeeBottom?: Prisma.StringNullableFilter<"TravelGuideData"> | string | null
   hotelDetails?: Prisma.StringNullableFilter<"TravelGuideData"> | string | null
   cityImage?: Prisma.StringNullableFilter<"TravelGuideData"> | string | null
+  travelTipsStructured?: Prisma.JsonNullableFilter<"TravelGuideData">
   createdAt?: Prisma.DateTimeFilter<"TravelGuideData"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TravelGuideData"> | Date | string
   city?: Prisma.XOR<Prisma.TravelGuideCityScalarRelationFilter, Prisma.TravelGuideCityWhereInput>
@@ -390,6 +394,7 @@ export type TravelGuideDataOrderByWithRelationInput = {
   placesToSeeBottom?: Prisma.SortOrderInput | Prisma.SortOrder
   hotelDetails?: Prisma.SortOrderInput | Prisma.SortOrder
   cityImage?: Prisma.SortOrderInput | Prisma.SortOrder
+  travelTipsStructured?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   city?: Prisma.TravelGuideCityOrderByWithRelationInput
@@ -422,6 +427,7 @@ export type TravelGuideDataWhereUniqueInput = Prisma.AtLeast<{
   placesToSeeBottom?: Prisma.StringNullableFilter<"TravelGuideData"> | string | null
   hotelDetails?: Prisma.StringNullableFilter<"TravelGuideData"> | string | null
   cityImage?: Prisma.StringNullableFilter<"TravelGuideData"> | string | null
+  travelTipsStructured?: Prisma.JsonNullableFilter<"TravelGuideData">
   createdAt?: Prisma.DateTimeFilter<"TravelGuideData"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TravelGuideData"> | Date | string
   city?: Prisma.XOR<Prisma.TravelGuideCityScalarRelationFilter, Prisma.TravelGuideCityWhereInput>
@@ -450,6 +456,7 @@ export type TravelGuideDataOrderByWithAggregationInput = {
   placesToSeeBottom?: Prisma.SortOrderInput | Prisma.SortOrder
   hotelDetails?: Prisma.SortOrderInput | Prisma.SortOrder
   cityImage?: Prisma.SortOrderInput | Prisma.SortOrder
+  travelTipsStructured?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.TravelGuideDataCountOrderByAggregateInput
@@ -484,6 +491,7 @@ export type TravelGuideDataScalarWhereWithAggregatesInput = {
   placesToSeeBottom?: Prisma.StringNullableWithAggregatesFilter<"TravelGuideData"> | string | null
   hotelDetails?: Prisma.StringNullableWithAggregatesFilter<"TravelGuideData"> | string | null
   cityImage?: Prisma.StringNullableWithAggregatesFilter<"TravelGuideData"> | string | null
+  travelTipsStructured?: Prisma.JsonNullableWithAggregatesFilter<"TravelGuideData">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TravelGuideData"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"TravelGuideData"> | Date | string
 }
@@ -508,6 +516,7 @@ export type TravelGuideDataCreateInput = {
   placesToSeeBottom?: string | null
   hotelDetails?: string | null
   cityImage?: string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   city: Prisma.TravelGuideCityCreateNestedOneWithoutDataInput
@@ -536,6 +545,7 @@ export type TravelGuideDataUncheckedCreateInput = {
   placesToSeeBottom?: string | null
   hotelDetails?: string | null
   cityImage?: string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -560,6 +570,7 @@ export type TravelGuideDataUpdateInput = {
   placesToSeeBottom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hotelDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cityImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   city?: Prisma.TravelGuideCityUpdateOneRequiredWithoutDataNestedInput
@@ -588,6 +599,7 @@ export type TravelGuideDataUncheckedUpdateInput = {
   placesToSeeBottom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hotelDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cityImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -614,6 +626,7 @@ export type TravelGuideDataCreateManyInput = {
   placesToSeeBottom?: string | null
   hotelDetails?: string | null
   cityImage?: string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -638,6 +651,7 @@ export type TravelGuideDataUpdateManyMutationInput = {
   placesToSeeBottom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hotelDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cityImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -664,6 +678,7 @@ export type TravelGuideDataUncheckedUpdateManyInput = {
   placesToSeeBottom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hotelDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cityImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -705,6 +720,7 @@ export type TravelGuideDataCountOrderByAggregateInput = {
   placesToSeeBottom?: Prisma.SortOrder
   hotelDetails?: Prisma.SortOrder
   cityImage?: Prisma.SortOrder
+  travelTipsStructured?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -875,6 +891,7 @@ export type TravelGuideDataCreateWithoutStateInput = {
   placesToSeeBottom?: string | null
   hotelDetails?: string | null
   cityImage?: string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   city: Prisma.TravelGuideCityCreateNestedOneWithoutDataInput
@@ -901,6 +918,7 @@ export type TravelGuideDataUncheckedCreateWithoutStateInput = {
   placesToSeeBottom?: string | null
   hotelDetails?: string | null
   cityImage?: string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -956,6 +974,7 @@ export type TravelGuideDataScalarWhereInput = {
   placesToSeeBottom?: Prisma.StringNullableFilter<"TravelGuideData"> | string | null
   hotelDetails?: Prisma.StringNullableFilter<"TravelGuideData"> | string | null
   cityImage?: Prisma.StringNullableFilter<"TravelGuideData"> | string | null
+  travelTipsStructured?: Prisma.JsonNullableFilter<"TravelGuideData">
   createdAt?: Prisma.DateTimeFilter<"TravelGuideData"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TravelGuideData"> | Date | string
 }
@@ -980,6 +999,7 @@ export type TravelGuideDataCreateWithoutCityInput = {
   placesToSeeBottom?: string | null
   hotelDetails?: string | null
   cityImage?: string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   state: Prisma.TravelGuideStateCreateNestedOneWithoutDataInput
@@ -1006,6 +1026,7 @@ export type TravelGuideDataUncheckedCreateWithoutCityInput = {
   placesToSeeBottom?: string | null
   hotelDetails?: string | null
   cityImage?: string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1057,6 +1078,7 @@ export type TravelGuideDataCreateManyStateInput = {
   placesToSeeBottom?: string | null
   hotelDetails?: string | null
   cityImage?: string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1081,6 +1103,7 @@ export type TravelGuideDataUpdateWithoutStateInput = {
   placesToSeeBottom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hotelDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cityImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   city?: Prisma.TravelGuideCityUpdateOneRequiredWithoutDataNestedInput
@@ -1107,6 +1130,7 @@ export type TravelGuideDataUncheckedUpdateWithoutStateInput = {
   placesToSeeBottom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hotelDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cityImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1132,6 +1156,7 @@ export type TravelGuideDataUncheckedUpdateManyWithoutStateInput = {
   placesToSeeBottom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hotelDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cityImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1157,6 +1182,7 @@ export type TravelGuideDataCreateManyCityInput = {
   placesToSeeBottom?: string | null
   hotelDetails?: string | null
   cityImage?: string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1181,6 +1207,7 @@ export type TravelGuideDataUpdateWithoutCityInput = {
   placesToSeeBottom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hotelDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cityImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   state?: Prisma.TravelGuideStateUpdateOneRequiredWithoutDataNestedInput
@@ -1207,6 +1234,7 @@ export type TravelGuideDataUncheckedUpdateWithoutCityInput = {
   placesToSeeBottom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hotelDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cityImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1232,6 +1260,7 @@ export type TravelGuideDataUncheckedUpdateManyWithoutCityInput = {
   placesToSeeBottom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hotelDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cityImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1260,6 +1289,7 @@ export type TravelGuideDataSelect<ExtArgs extends runtime.Types.Extensions.Inter
   placesToSeeBottom?: boolean
   hotelDetails?: boolean
   cityImage?: boolean
+  travelTipsStructured?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   city?: boolean | Prisma.TravelGuideCityDefaultArgs<ExtArgs>
@@ -1288,6 +1318,7 @@ export type TravelGuideDataSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   placesToSeeBottom?: boolean
   hotelDetails?: boolean
   cityImage?: boolean
+  travelTipsStructured?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   city?: boolean | Prisma.TravelGuideCityDefaultArgs<ExtArgs>
@@ -1316,6 +1347,7 @@ export type TravelGuideDataSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   placesToSeeBottom?: boolean
   hotelDetails?: boolean
   cityImage?: boolean
+  travelTipsStructured?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   city?: boolean | Prisma.TravelGuideCityDefaultArgs<ExtArgs>
@@ -1344,11 +1376,12 @@ export type TravelGuideDataSelectScalar = {
   placesToSeeBottom?: boolean
   hotelDetails?: boolean
   cityImage?: boolean
+  travelTipsStructured?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TravelGuideDataOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "cityId" | "citySlug" | "stateId" | "stateSlug" | "originalCityId" | "menuId" | "isActive" | "introduction" | "facts" | "foodAndDining" | "shopping" | "nearbyPlaces" | "gettingAround" | "historyCulture" | "otherDetails" | "bestTimeToVisit" | "placesToSeeTop" | "placesToSeeBottom" | "hotelDetails" | "cityImage" | "createdAt" | "updatedAt", ExtArgs["result"]["travelGuideData"]>
+export type TravelGuideDataOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "cityId" | "citySlug" | "stateId" | "stateSlug" | "originalCityId" | "menuId" | "isActive" | "introduction" | "facts" | "foodAndDining" | "shopping" | "nearbyPlaces" | "gettingAround" | "historyCulture" | "otherDetails" | "bestTimeToVisit" | "placesToSeeTop" | "placesToSeeBottom" | "hotelDetails" | "cityImage" | "travelTipsStructured" | "createdAt" | "updatedAt", ExtArgs["result"]["travelGuideData"]>
 export type TravelGuideDataInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   city?: boolean | Prisma.TravelGuideCityDefaultArgs<ExtArgs>
   state?: boolean | Prisma.TravelGuideStateDefaultArgs<ExtArgs>
@@ -1390,6 +1423,7 @@ export type $TravelGuideDataPayload<ExtArgs extends runtime.Types.Extensions.Int
     placesToSeeBottom: string | null
     hotelDetails: string | null
     cityImage: string | null
+    travelTipsStructured: runtime.JsonValue | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["travelGuideData"]>
@@ -1838,6 +1872,7 @@ export interface TravelGuideDataFieldRefs {
   readonly placesToSeeBottom: Prisma.FieldRef<"TravelGuideData", 'String'>
   readonly hotelDetails: Prisma.FieldRef<"TravelGuideData", 'String'>
   readonly cityImage: Prisma.FieldRef<"TravelGuideData", 'String'>
+  readonly travelTipsStructured: Prisma.FieldRef<"TravelGuideData", 'Json'>
   readonly createdAt: Prisma.FieldRef<"TravelGuideData", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"TravelGuideData", 'DateTime'>
 }

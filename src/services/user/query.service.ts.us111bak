@@ -1,5 +1,4 @@
 import prisma from '@/config/db';
-import { generateLeadReference } from '@/utils/lead-reference.util';
 import { BadRequestError } from '@/middlewares/handlers/errorHandler';
 import { calculateLeadScore, determinePriority, calculateConversionProbability, suggestNextFollowUp } from '@/utils/lead-scoring.util';
 
@@ -55,7 +54,6 @@ class QueryService {
    * Generate unique reference number with format CT-XXXXX
    */
   private async generateUniqueReferenceNumber(): Promise<string> {
-    return generateLeadReference();
     let attempts = 0;
 
     while (attempts < this.MAX_REFERENCE_GENERATION_ATTEMPTS) {
@@ -187,7 +185,6 @@ class QueryService {
         referenceNumber,
         source: 'TOUR_QUERY',
         status: 'NEW',
-        tourType: 'DOMESTIC',
         fullName: data.fullName,
         email: data.email,
         phoneNumber: data.phoneNumber,
@@ -240,7 +237,6 @@ class QueryService {
         referenceNumber,
         source: 'HOTEL_QUERY',
         status: 'NEW',
-        tourType: 'DOMESTIC',
         fullName: data.fullName,
         email: data.email,
         phoneNumber: data.phoneNumber,
@@ -295,7 +291,6 @@ class QueryService {
         referenceNumber,
         source: 'TRANSPORT_QUERY',
         status: 'NEW',
-        tourType: 'DOMESTIC',
         fullName: data.fullName,
         email: data.email,
         phoneNumber: data.phoneNumber,
@@ -345,7 +340,6 @@ class QueryService {
         referenceNumber,
         source: 'CONTACT_US',
         status: 'NEW',
-        tourType: 'DOMESTIC',
         fullName: data.fullName,
         email: data.email,
         phoneNumber: data.phoneNumber,

@@ -1,5 +1,6 @@
 import prisma from '@/config/db';
 import cacheService from '@/services/common/cache.service';
+import { buildTourRoute, norm } from '@/utils/tourRoute';
 import type { Request, Response } from 'express';
 import type { Prisma } from 'prisma/generated/prisma/client';
 
@@ -559,8 +560,56 @@ export class TourController {
         similarTours = similarTours.map(({ cities, ...tour }) => tour);
       }
 
+      // VERIFIED ROUTE ONLY. The map/route is served exclusively from
+      // human-verified `tour_route_stops` (name + exact lat/lng + per-leg mode,
+      // confirmed by an executive in admin). Road-leg distances come from
+      // osm_leg_distance (real OSRM routing on the exact coords); time is the
+      // free-flow OSRM duration ×1.35 traffic buffer, labelled `estimated`.
+      // Emits nothing unless the tour has >=2 verified stops -> no map on
+      // unverified tours (founder ruling: "100% accurate maps, or none").
+      let route: any = null;
+      try {
+        const rs = await prisma.$queryRaw<
+          { order: number; name: string; latitude: number; longitude: number; modeIn: string | null }[]
+        >`SELECT "order", name, latitude, longitude, "modeIn"
+          FROM tour_route_stops WHERE "tourId" = ${tour.id} AND verified = true ORDER BY "order"`;
+        if (rs.length >= 2) {
+          const legRows = await prisma.$queryRaw<
+            { fromName: string; toName: string; km: number; durationMin: number }[]
+          >`SELECT "fromName", "toName", km, "durationMin" FROM osm_leg_distance`;
+          const key = (a: string, b: string) => a.toLowerCase().trim() + '|' + b.toLowerCase().trim();
+          const dmap = new Map(legRows.map((r) => [key(r.fromName, r.toName), r]));
+          const stops = rs.map((s) => ({
+            order: s.order, name: s.name, day: s.order, lat: Number(s.latitude), lng: Number(s.longitude),
+          }));
+          const legs: any[] = [];
+          for (let i = 1; i < rs.length; i++) {
+            const from = rs[i - 1], to = rs[i];
+            const mode = (to.modeIn || 'road') as string;
+            let km: number | null = null, timeText: string | null = null, estimated = false;
+            if (mode === 'road') {
+              const hit = dmap.get(key(from.name, to.name)) || dmap.get(key(to.name, from.name));
+              if (hit) {
+                km = Math.round(Number(hit.km));
+                const mins = Math.round(Number(hit.durationMin) * 1.35);
+                const h = Math.floor(mins / 60), m = mins % 60;
+                timeText = `~${h ? h + 'h ' : ''}${m ? m + 'm' : h ? '' : '0m'}`.trim();
+                estimated = true;
+              }
+            }
+            legs.push({ day: to.order, from: from.name, to: to.name, mode, km, timeText, estimated });
+          }
+          const roadTotalKm = Math.round(legs.filter((l) => l.mode === 'road' && l.km).reduce((a, l) => a + (l.km || 0), 0));
+          const modes = Array.from(new Set(legs.map((l) => l.mode)));
+          route = { stops, legs, roadTotalKm, modes };
+        }
+      } catch (e) {
+        console.error('verified route load failed:', e);
+      }
+      const tourWithRoute = { ...tour, route };
+
       return res.deliver(200, true, {
-        tour,
+        tour: tourWithRoute,
         similarTours: similarTours || [],
       });
     } catch (error) {

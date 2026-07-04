@@ -101,3 +101,20 @@ export const ReminderType = {
 } as const
 
 export type ReminderType = (typeof ReminderType)[keyof typeof ReminderType]
+
+
+export const TourType = {
+  DOMESTIC: 'DOMESTIC',
+  OUTBOUND: 'OUTBOUND'
+} as const
+
+export type TourType = (typeof TourType)[keyof typeof TourType]
+
+
+export const TravellerOrigin = {
+  INDIAN: 'INDIAN',
+  NRI_OCI: 'NRI_OCI',
+  FOREIGN: 'FOREIGN'
+} as const
+
+export type TravellerOrigin = (typeof TravellerOrigin)[keyof typeof TravellerOrigin]

@@ -3347,6 +3347,10 @@ export const TourScalarFieldEnum = {
   cancellationPolicy: 'cancellationPolicy',
   travelTips: 'travelTips',
   travelTipsStructured: 'travelTipsStructured',
+  pricingMode: 'pricingMode',
+  fixedPricePerPerson: 'fixedPricePerPerson',
+  fixedIncludes: 'fixedIncludes',
+  showPricing: 'showPricing',
   startCityId: 'startCityId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -3538,6 +3542,7 @@ export const TravelGuideDataScalarFieldEnum = {
   placesToSeeBottom: 'placesToSeeBottom',
   hotelDetails: 'hotelDetails',
   cityImage: 'cityImage',
+  travelTipsStructured: 'travelTipsStructured',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -3659,6 +3664,8 @@ export const LeadScalarFieldEnum = {
   priority: 'priority',
   quality: 'quality',
   serviceType: 'serviceType',
+  tourType: 'tourType',
+  travellerOrigin: 'travellerOrigin',
   fullName: 'fullName',
   email: 'email',
   phoneNumber: 'phoneNumber',
@@ -4146,6 +4153,34 @@ export type EnumLeadServiceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$
  * Reference to a field of type 'LeadServiceType[]'
  */
 export type ListEnumLeadServiceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadServiceType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'TourType'
+ */
+export type EnumTourTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TourType'>
+    
+
+
+/**
+ * Reference to a field of type 'TourType[]'
+ */
+export type ListEnumTourTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TourType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'TravellerOrigin'
+ */
+export type EnumTravellerOriginFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TravellerOrigin'>
+    
+
+
+/**
+ * Reference to a field of type 'TravellerOrigin[]'
+ */
+export type ListEnumTravellerOriginFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TravellerOrigin[]'>
     
 
 

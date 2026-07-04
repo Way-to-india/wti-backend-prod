@@ -3,6 +3,8 @@ import z from 'zod';
 export const LeadPriorityEnum = z.enum(['HOT', 'WARM', 'COLD']);
 export const LeadQualityEnum = z.enum(['A', 'B', 'C']);
 export const LeadServiceTypeEnum = z.enum(['TOUR', 'HOTEL', 'TRANSPORT', 'MIXED']);
+export const TourTypeEnum = z.enum(['DOMESTIC', 'OUTBOUND']);
+export const TravellerOriginEnum = z.enum(['INDIAN', 'NRI_OCI', 'FOREIGN']);
 export const CommunicationTypeEnum = z.enum([
   'CALL',
   'EMAIL',
@@ -60,6 +62,8 @@ export const createLeadSchema = z.object({
   // Service Requirements
   source: z.string().min(1, 'Source is required'),
   serviceType: LeadServiceTypeEnum.optional().nullable(),
+  tourType: TourTypeEnum.optional().nullable(),
+  travellerOrigin: TravellerOriginEnum.optional().nullable(),
   destination: z.string().max(255).trim().optional().nullable(),
   travelStartDate: z.string().datetime().optional().nullable(),
   travelEndDate: z.string().datetime().optional().nullable(),
@@ -94,6 +98,8 @@ export const updateLeadSchema = z.object({
 
   source: z.string().optional(),
   serviceType: LeadServiceTypeEnum.optional().nullable(),
+  tourType: TourTypeEnum.optional().nullable(),
+  travellerOrigin: TravellerOriginEnum.optional().nullable(),
   destination: z.string().max(255).trim().optional().nullable(),
   travelStartDate: z.string().datetime().optional().nullable(),
   travelEndDate: z.string().datetime().optional().nullable(),
@@ -137,6 +143,8 @@ export const filterLeadsSchema = z.object({
   quality: LeadQualityEnum.optional(),
   source: z.string().optional(),
   serviceType: LeadServiceTypeEnum.optional(),
+  tourType: TourTypeEnum.optional().nullable(),
+  travellerOrigin: TravellerOriginEnum.optional().nullable(),
   assignedToId: z.string().optional(),
   tagId: z.string().optional(),
   categoryId: z.string().optional(),
@@ -337,6 +345,8 @@ export const exportLeadsSchema = z.object({
   quality: LeadQualityEnum.optional(),
   source: z.string().optional(),
   serviceType: LeadServiceTypeEnum.optional(),
+  tourType: TourTypeEnum.optional().nullable(),
+  travellerOrigin: TravellerOriginEnum.optional().nullable(),
   assignedToId: z.string().optional(),
   tagId: z.string().optional(),
   categoryId: z.string().optional(),

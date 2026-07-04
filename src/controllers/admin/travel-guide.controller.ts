@@ -338,6 +338,7 @@ export class TravelGuideController {
         placesToSeeBottom,
         hotelDetails,
         cityImage,
+        travelTipsStructured,
       } = req.body;
 
       if (!cityId || !stateId) {
@@ -365,6 +366,7 @@ export class TravelGuideController {
         placesToSeeBottom,
         hotelDetails,
         cityImage,
+        travelTipsStructured,
       });
 
       return res.deliver(201, true, guideData, 'Guide data created successfully');
@@ -407,6 +409,7 @@ export class TravelGuideController {
         placesToSeeBottom,
         hotelDetails,
         cityImage,
+        travelTipsStructured,
       } = req.body;
 
       const guideData = await TravelGuideService.updateGuideData(id, {
@@ -430,6 +433,7 @@ export class TravelGuideController {
         placesToSeeBottom,
         hotelDetails,
         cityImage,
+        travelTipsStructured,
       });
 
       return res.deliver(200, true, guideData, 'Guide data updated successfully');

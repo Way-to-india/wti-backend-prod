@@ -65,6 +65,7 @@ export class TravelGuideService {
             placesToSeeBottom: true,
             hotelDetails: true,
             cityImage: true,
+            travelTipsStructured: true,
           },
         },
       },

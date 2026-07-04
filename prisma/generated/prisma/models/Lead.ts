@@ -62,6 +62,8 @@ export type LeadMinAggregateOutputType = {
   priority: $Enums.LeadPriority | null
   quality: $Enums.LeadQuality | null
   serviceType: $Enums.LeadServiceType | null
+  tourType: $Enums.TourType | null
+  travellerOrigin: $Enums.TravellerOrigin | null
   fullName: string | null
   email: string | null
   phoneNumber: string | null
@@ -107,6 +109,8 @@ export type LeadMaxAggregateOutputType = {
   priority: $Enums.LeadPriority | null
   quality: $Enums.LeadQuality | null
   serviceType: $Enums.LeadServiceType | null
+  tourType: $Enums.TourType | null
+  travellerOrigin: $Enums.TravellerOrigin | null
   fullName: string | null
   email: string | null
   phoneNumber: string | null
@@ -152,6 +156,8 @@ export type LeadCountAggregateOutputType = {
   priority: number
   quality: number
   serviceType: number
+  tourType: number
+  travellerOrigin: number
   fullName: number
   email: number
   phoneNumber: number
@@ -228,6 +234,8 @@ export type LeadMinAggregateInputType = {
   priority?: true
   quality?: true
   serviceType?: true
+  tourType?: true
+  travellerOrigin?: true
   fullName?: true
   email?: true
   phoneNumber?: true
@@ -273,6 +281,8 @@ export type LeadMaxAggregateInputType = {
   priority?: true
   quality?: true
   serviceType?: true
+  tourType?: true
+  travellerOrigin?: true
   fullName?: true
   email?: true
   phoneNumber?: true
@@ -318,6 +328,8 @@ export type LeadCountAggregateInputType = {
   priority?: true
   quality?: true
   serviceType?: true
+  tourType?: true
+  travellerOrigin?: true
   fullName?: true
   email?: true
   phoneNumber?: true
@@ -451,6 +463,8 @@ export type LeadGroupByOutputType = {
   priority: $Enums.LeadPriority
   quality: $Enums.LeadQuality | null
   serviceType: $Enums.LeadServiceType | null
+  tourType: $Enums.TourType | null
+  travellerOrigin: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber: string | null
@@ -520,6 +534,8 @@ export type LeadWhereInput = {
   priority?: Prisma.EnumLeadPriorityFilter<"Lead"> | $Enums.LeadPriority
   quality?: Prisma.EnumLeadQualityNullableFilter<"Lead"> | $Enums.LeadQuality | null
   serviceType?: Prisma.EnumLeadServiceTypeNullableFilter<"Lead"> | $Enums.LeadServiceType | null
+  tourType?: Prisma.EnumTourTypeNullableFilter<"Lead"> | $Enums.TourType | null
+  travellerOrigin?: Prisma.EnumTravellerOriginNullableFilter<"Lead"> | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFilter<"Lead"> | string
   email?: Prisma.StringFilter<"Lead"> | string
   phoneNumber?: Prisma.StringNullableFilter<"Lead"> | string | null
@@ -575,6 +591,8 @@ export type LeadOrderByWithRelationInput = {
   priority?: Prisma.SortOrder
   quality?: Prisma.SortOrderInput | Prisma.SortOrder
   serviceType?: Prisma.SortOrderInput | Prisma.SortOrder
+  tourType?: Prisma.SortOrderInput | Prisma.SortOrder
+  travellerOrigin?: Prisma.SortOrderInput | Prisma.SortOrder
   fullName?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -633,6 +651,8 @@ export type LeadWhereUniqueInput = Prisma.AtLeast<{
   priority?: Prisma.EnumLeadPriorityFilter<"Lead"> | $Enums.LeadPriority
   quality?: Prisma.EnumLeadQualityNullableFilter<"Lead"> | $Enums.LeadQuality | null
   serviceType?: Prisma.EnumLeadServiceTypeNullableFilter<"Lead"> | $Enums.LeadServiceType | null
+  tourType?: Prisma.EnumTourTypeNullableFilter<"Lead"> | $Enums.TourType | null
+  travellerOrigin?: Prisma.EnumTravellerOriginNullableFilter<"Lead"> | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFilter<"Lead"> | string
   email?: Prisma.StringFilter<"Lead"> | string
   phoneNumber?: Prisma.StringNullableFilter<"Lead"> | string | null
@@ -688,6 +708,8 @@ export type LeadOrderByWithAggregationInput = {
   priority?: Prisma.SortOrder
   quality?: Prisma.SortOrderInput | Prisma.SortOrder
   serviceType?: Prisma.SortOrderInput | Prisma.SortOrder
+  tourType?: Prisma.SortOrderInput | Prisma.SortOrder
+  travellerOrigin?: Prisma.SortOrderInput | Prisma.SortOrder
   fullName?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -742,6 +764,8 @@ export type LeadScalarWhereWithAggregatesInput = {
   priority?: Prisma.EnumLeadPriorityWithAggregatesFilter<"Lead"> | $Enums.LeadPriority
   quality?: Prisma.EnumLeadQualityNullableWithAggregatesFilter<"Lead"> | $Enums.LeadQuality | null
   serviceType?: Prisma.EnumLeadServiceTypeNullableWithAggregatesFilter<"Lead"> | $Enums.LeadServiceType | null
+  tourType?: Prisma.EnumTourTypeNullableWithAggregatesFilter<"Lead"> | $Enums.TourType | null
+  travellerOrigin?: Prisma.EnumTravellerOriginNullableWithAggregatesFilter<"Lead"> | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringWithAggregatesFilter<"Lead"> | string
   email?: Prisma.StringWithAggregatesFilter<"Lead"> | string
   phoneNumber?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
@@ -788,6 +812,8 @@ export type LeadCreateInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -840,6 +866,8 @@ export type LeadUncheckedCreateInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -892,6 +920,8 @@ export type LeadUpdateInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -944,6 +974,8 @@ export type LeadUncheckedUpdateInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -996,6 +1028,8 @@ export type LeadCreateManyInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -1042,6 +1076,8 @@ export type LeadUpdateManyMutationInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1085,6 +1121,8 @@ export type LeadUncheckedUpdateManyInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1141,6 +1179,8 @@ export type LeadCountOrderByAggregateInput = {
   priority?: Prisma.SortOrder
   quality?: Prisma.SortOrder
   serviceType?: Prisma.SortOrder
+  tourType?: Prisma.SortOrder
+  travellerOrigin?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
@@ -1201,6 +1241,8 @@ export type LeadMaxOrderByAggregateInput = {
   priority?: Prisma.SortOrder
   quality?: Prisma.SortOrder
   serviceType?: Prisma.SortOrder
+  tourType?: Prisma.SortOrder
+  travellerOrigin?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
@@ -1246,6 +1288,8 @@ export type LeadMinOrderByAggregateInput = {
   priority?: Prisma.SortOrder
   quality?: Prisma.SortOrder
   serviceType?: Prisma.SortOrder
+  tourType?: Prisma.SortOrder
+  travellerOrigin?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
@@ -1448,6 +1492,14 @@ export type NullableEnumLeadServiceTypeFieldUpdateOperationsInput = {
   set?: $Enums.LeadServiceType | null
 }
 
+export type NullableEnumTourTypeFieldUpdateOperationsInput = {
+  set?: $Enums.TourType | null
+}
+
+export type NullableEnumTravellerOriginFieldUpdateOperationsInput = {
+  set?: $Enums.TravellerOrigin | null
+}
+
 export type LeadCreateNestedOneWithoutActivitiesInput = {
   create?: Prisma.XOR<Prisma.LeadCreateWithoutActivitiesInput, Prisma.LeadUncheckedCreateWithoutActivitiesInput>
   connectOrCreate?: Prisma.LeadCreateOrConnectWithoutActivitiesInput
@@ -1540,6 +1592,8 @@ export type LeadCreateWithoutAssignedToInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -1591,6 +1645,8 @@ export type LeadUncheckedCreateWithoutAssignedToInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -1671,6 +1727,8 @@ export type LeadScalarWhereInput = {
   priority?: Prisma.EnumLeadPriorityFilter<"Lead"> | $Enums.LeadPriority
   quality?: Prisma.EnumLeadQualityNullableFilter<"Lead"> | $Enums.LeadQuality | null
   serviceType?: Prisma.EnumLeadServiceTypeNullableFilter<"Lead"> | $Enums.LeadServiceType | null
+  tourType?: Prisma.EnumTourTypeNullableFilter<"Lead"> | $Enums.TourType | null
+  travellerOrigin?: Prisma.EnumTravellerOriginNullableFilter<"Lead"> | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFilter<"Lead"> | string
   email?: Prisma.StringFilter<"Lead"> | string
   phoneNumber?: Prisma.StringNullableFilter<"Lead"> | string | null
@@ -1717,6 +1775,8 @@ export type LeadCreateWithoutTagInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -1768,6 +1828,8 @@ export type LeadUncheckedCreateWithoutTagInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -1845,6 +1907,8 @@ export type LeadCreateWithoutCategoryInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -1896,6 +1960,8 @@ export type LeadUncheckedCreateWithoutCategoryInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -1973,6 +2039,8 @@ export type LeadCreateWithoutActivitiesInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -2024,6 +2092,8 @@ export type LeadUncheckedCreateWithoutActivitiesInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -2091,6 +2161,8 @@ export type LeadUpdateWithoutActivitiesInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2142,6 +2214,8 @@ export type LeadUncheckedUpdateWithoutActivitiesInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2193,6 +2267,8 @@ export type LeadCreateWithoutStatusHistoryInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -2244,6 +2320,8 @@ export type LeadUncheckedCreateWithoutStatusHistoryInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -2311,6 +2389,8 @@ export type LeadUpdateWithoutStatusHistoryInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2362,6 +2442,8 @@ export type LeadUncheckedUpdateWithoutStatusHistoryInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2413,6 +2495,8 @@ export type LeadCreateWithoutNotesInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -2464,6 +2548,8 @@ export type LeadUncheckedCreateWithoutNotesInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -2531,6 +2617,8 @@ export type LeadUpdateWithoutNotesInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2582,6 +2670,8 @@ export type LeadUncheckedUpdateWithoutNotesInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2633,6 +2723,8 @@ export type LeadCreateWithoutQuotationsInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -2684,6 +2776,8 @@ export type LeadUncheckedCreateWithoutQuotationsInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -2751,6 +2845,8 @@ export type LeadUpdateWithoutQuotationsInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2802,6 +2898,8 @@ export type LeadUncheckedUpdateWithoutQuotationsInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2853,6 +2951,8 @@ export type LeadCreateWithoutCommunicationsInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -2904,6 +3004,8 @@ export type LeadUncheckedCreateWithoutCommunicationsInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -2971,6 +3073,8 @@ export type LeadUpdateWithoutCommunicationsInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3022,6 +3126,8 @@ export type LeadUncheckedUpdateWithoutCommunicationsInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3073,6 +3179,8 @@ export type LeadCreateWithoutRemindersInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -3124,6 +3232,8 @@ export type LeadUncheckedCreateWithoutRemindersInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -3191,6 +3301,8 @@ export type LeadUpdateWithoutRemindersInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3242,6 +3354,8 @@ export type LeadUncheckedUpdateWithoutRemindersInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3293,6 +3407,8 @@ export type LeadCreateManyAssignedToInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -3338,6 +3454,8 @@ export type LeadUpdateWithoutAssignedToInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3389,6 +3507,8 @@ export type LeadUncheckedUpdateWithoutAssignedToInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3440,6 +3560,8 @@ export type LeadUncheckedUpdateManyWithoutAssignedToInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3485,6 +3607,8 @@ export type LeadCreateManyTagInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -3530,6 +3654,8 @@ export type LeadUpdateWithoutTagInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3581,6 +3707,8 @@ export type LeadUncheckedUpdateWithoutTagInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3632,6 +3760,8 @@ export type LeadUncheckedUpdateManyWithoutTagInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3677,6 +3807,8 @@ export type LeadCreateManyCategoryInput = {
   priority?: $Enums.LeadPriority
   quality?: $Enums.LeadQuality | null
   serviceType?: $Enums.LeadServiceType | null
+  tourType?: $Enums.TourType | null
+  travellerOrigin?: $Enums.TravellerOrigin | null
   fullName: string
   email: string
   phoneNumber?: string | null
@@ -3722,6 +3854,8 @@ export type LeadUpdateWithoutCategoryInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3773,6 +3907,8 @@ export type LeadUncheckedUpdateWithoutCategoryInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3824,6 +3960,8 @@ export type LeadUncheckedUpdateManyWithoutCategoryInput = {
   priority?: Prisma.EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
   quality?: Prisma.NullableEnumLeadQualityFieldUpdateOperationsInput | $Enums.LeadQuality | null
   serviceType?: Prisma.NullableEnumLeadServiceTypeFieldUpdateOperationsInput | $Enums.LeadServiceType | null
+  tourType?: Prisma.NullableEnumTourTypeFieldUpdateOperationsInput | $Enums.TourType | null
+  travellerOrigin?: Prisma.NullableEnumTravellerOriginFieldUpdateOperationsInput | $Enums.TravellerOrigin | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3945,6 +4083,8 @@ export type LeadSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   priority?: boolean
   quality?: boolean
   serviceType?: boolean
+  tourType?: boolean
+  travellerOrigin?: boolean
   fullName?: boolean
   email?: boolean
   phoneNumber?: boolean
@@ -4001,6 +4141,8 @@ export type LeadSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   priority?: boolean
   quality?: boolean
   serviceType?: boolean
+  tourType?: boolean
+  travellerOrigin?: boolean
   fullName?: boolean
   email?: boolean
   phoneNumber?: boolean
@@ -4050,6 +4192,8 @@ export type LeadSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   priority?: boolean
   quality?: boolean
   serviceType?: boolean
+  tourType?: boolean
+  travellerOrigin?: boolean
   fullName?: boolean
   email?: boolean
   phoneNumber?: boolean
@@ -4099,6 +4243,8 @@ export type LeadSelectScalar = {
   priority?: boolean
   quality?: boolean
   serviceType?: boolean
+  tourType?: boolean
+  travellerOrigin?: boolean
   fullName?: boolean
   email?: boolean
   phoneNumber?: boolean
@@ -4137,7 +4283,7 @@ export type LeadSelectScalar = {
   contactedAt?: boolean
 }
 
-export type LeadOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "referenceNumber" | "source" | "status" | "priority" | "quality" | "serviceType" | "fullName" | "email" | "phoneNumber" | "alternatePhone" | "city" | "destination" | "travelStartDate" | "travelEndDate" | "numberOfTravelers" | "numberOfAdults" | "numberOfChildren" | "budgetMin" | "budgetMax" | "specialRequests" | "tagId" | "categoryId" | "assignedToId" | "assignedAt" | "firstResponseAt" | "responseTimeMinutes" | "lastActivityAt" | "nextFollowUpAt" | "followUpCount" | "isOverdue" | "leadScore" | "conversionProbability" | "estimatedValue" | "actualValue" | "lostReason" | "closedAt" | "details" | "ipAddress" | "userAgent" | "createdAt" | "updatedAt" | "contactedAt", ExtArgs["result"]["lead"]>
+export type LeadOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "referenceNumber" | "source" | "status" | "priority" | "quality" | "serviceType" | "tourType" | "travellerOrigin" | "fullName" | "email" | "phoneNumber" | "alternatePhone" | "city" | "destination" | "travelStartDate" | "travelEndDate" | "numberOfTravelers" | "numberOfAdults" | "numberOfChildren" | "budgetMin" | "budgetMax" | "specialRequests" | "tagId" | "categoryId" | "assignedToId" | "assignedAt" | "firstResponseAt" | "responseTimeMinutes" | "lastActivityAt" | "nextFollowUpAt" | "followUpCount" | "isOverdue" | "leadScore" | "conversionProbability" | "estimatedValue" | "actualValue" | "lostReason" | "closedAt" | "details" | "ipAddress" | "userAgent" | "createdAt" | "updatedAt" | "contactedAt", ExtArgs["result"]["lead"]>
 export type LeadInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tag?: boolean | Prisma.Lead$tagArgs<ExtArgs>
   category?: boolean | Prisma.Lead$categoryArgs<ExtArgs>
@@ -4182,6 +4328,8 @@ export type $LeadPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     priority: $Enums.LeadPriority
     quality: $Enums.LeadQuality | null
     serviceType: $Enums.LeadServiceType | null
+    tourType: $Enums.TourType | null
+    travellerOrigin: $Enums.TravellerOrigin | null
     fullName: string
     email: string
     phoneNumber: string | null
@@ -4657,6 +4805,8 @@ export interface LeadFieldRefs {
   readonly priority: Prisma.FieldRef<"Lead", 'LeadPriority'>
   readonly quality: Prisma.FieldRef<"Lead", 'LeadQuality'>
   readonly serviceType: Prisma.FieldRef<"Lead", 'LeadServiceType'>
+  readonly tourType: Prisma.FieldRef<"Lead", 'TourType'>
+  readonly travellerOrigin: Prisma.FieldRef<"Lead", 'TravellerOrigin'>
   readonly fullName: Prisma.FieldRef<"Lead", 'String'>
   readonly email: Prisma.FieldRef<"Lead", 'String'>
   readonly phoneNumber: Prisma.FieldRef<"Lead", 'String'>

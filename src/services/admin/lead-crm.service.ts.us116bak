@@ -132,8 +132,6 @@ export class LeadCRMService {
         city: data.city,
         source: data.source as any,
         serviceType: data.serviceType as any,
-        tourType: (data as any).tourType ?? null,
-        travellerOrigin: (data as any).travellerOrigin ?? null,
         destination: data.destination,
         travelStartDate: data.travelStartDate ? new Date(data.travelStartDate) : null,
         travelEndDate: data.travelEndDate ? new Date(data.travelEndDate) : null,

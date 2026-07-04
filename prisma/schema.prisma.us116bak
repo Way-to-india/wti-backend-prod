@@ -61,10 +61,6 @@ model Tour {
   cancellationPolicy String?
   travelTips         String?
   travelTipsStructured Json? @map("travel_tips_structured")
-  pricingMode         String   @default("dynamic") @db.VarChar(10)
-  fixedPricePerPerson Int?
-  fixedIncludes       String[]
-  showPricing         Boolean  @default(true)
   startCityId        String?
   createdAt          DateTime         @default(now()) @db.Timestamptz(3)
   updatedAt          DateTime         @updatedAt @db.Timestamptz(3)
@@ -537,8 +533,6 @@ model Lead {
   priority        LeadPriority     @default(WARM)
   quality         LeadQuality?
   serviceType     LeadServiceType?
-  tourType        TourType?
-  travellerOrigin TravellerOrigin?
 
   // Customer Information
   fullName       String  @db.VarChar(255)
@@ -899,15 +893,4 @@ model TourDraft {
   @@index([createdAt(sort: Desc)])
   @@index([draftName])
   @@map("tour_drafts")
-}
-
-enum TourType {
-  DOMESTIC
-  OUTBOUND
-}
-
-enum TravellerOrigin {
-  INDIAN
-  NRI_OCI
-  FOREIGN
 }

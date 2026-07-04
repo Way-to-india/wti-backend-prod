@@ -37,6 +37,7 @@ export type TourAvgAggregateOutputType = {
   reviewCount: number | null
   viewCount: number | null
   bookingCount: number | null
+  fixedPricePerPerson: number | null
 }
 
 export type TourSumAggregateOutputType = {
@@ -50,6 +51,7 @@ export type TourSumAggregateOutputType = {
   reviewCount: number | null
   viewCount: number | null
   bookingCount: number | null
+  fixedPricePerPerson: number | null
 }
 
 export type TourMinAggregateOutputType = {
@@ -78,6 +80,9 @@ export type TourMinAggregateOutputType = {
   isFeatured: boolean | null
   cancellationPolicy: string | null
   travelTips: string | null
+  pricingMode: string | null
+  fixedPricePerPerson: number | null
+  showPricing: boolean | null
   startCityId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -109,6 +114,9 @@ export type TourMaxAggregateOutputType = {
   isFeatured: boolean | null
   cancellationPolicy: string | null
   travelTips: string | null
+  pricingMode: string | null
+  fixedPricePerPerson: number | null
+  showPricing: boolean | null
   startCityId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -141,6 +149,10 @@ export type TourCountAggregateOutputType = {
   cancellationPolicy: number
   travelTips: number
   travelTipsStructured: number
+  pricingMode: number
+  fixedPricePerPerson: number
+  fixedIncludes: number
+  showPricing: number
   startCityId: number
   createdAt: number
   updatedAt: number
@@ -163,6 +175,7 @@ export type TourAvgAggregateInputType = {
   reviewCount?: true
   viewCount?: true
   bookingCount?: true
+  fixedPricePerPerson?: true
 }
 
 export type TourSumAggregateInputType = {
@@ -176,6 +189,7 @@ export type TourSumAggregateInputType = {
   reviewCount?: true
   viewCount?: true
   bookingCount?: true
+  fixedPricePerPerson?: true
 }
 
 export type TourMinAggregateInputType = {
@@ -204,6 +218,9 @@ export type TourMinAggregateInputType = {
   isFeatured?: true
   cancellationPolicy?: true
   travelTips?: true
+  pricingMode?: true
+  fixedPricePerPerson?: true
+  showPricing?: true
   startCityId?: true
   createdAt?: true
   updatedAt?: true
@@ -235,6 +252,9 @@ export type TourMaxAggregateInputType = {
   isFeatured?: true
   cancellationPolicy?: true
   travelTips?: true
+  pricingMode?: true
+  fixedPricePerPerson?: true
+  showPricing?: true
   startCityId?: true
   createdAt?: true
   updatedAt?: true
@@ -267,6 +287,10 @@ export type TourCountAggregateInputType = {
   cancellationPolicy?: true
   travelTips?: true
   travelTipsStructured?: true
+  pricingMode?: true
+  fixedPricePerPerson?: true
+  fixedIncludes?: true
+  showPricing?: true
   startCityId?: true
   createdAt?: true
   updatedAt?: true
@@ -390,6 +414,10 @@ export type TourGroupByOutputType = {
   cancellationPolicy: string | null
   travelTips: string | null
   travelTipsStructured: runtime.JsonValue | null
+  pricingMode: string
+  fixedPricePerPerson: number | null
+  fixedIncludes: string[]
+  showPricing: boolean
   startCityId: string | null
   createdAt: Date
   updatedAt: Date
@@ -449,6 +477,10 @@ export type TourWhereInput = {
   cancellationPolicy?: Prisma.StringNullableFilter<"Tour"> | string | null
   travelTips?: Prisma.StringNullableFilter<"Tour"> | string | null
   travelTipsStructured?: Prisma.JsonNullableFilter<"Tour">
+  pricingMode?: Prisma.StringFilter<"Tour"> | string
+  fixedPricePerPerson?: Prisma.IntNullableFilter<"Tour"> | number | null
+  fixedIncludes?: Prisma.StringNullableListFilter<"Tour">
+  showPricing?: Prisma.BoolFilter<"Tour"> | boolean
   startCityId?: Prisma.StringNullableFilter<"Tour"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Tour"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Tour"> | Date | string
@@ -492,6 +524,10 @@ export type TourOrderByWithRelationInput = {
   cancellationPolicy?: Prisma.SortOrderInput | Prisma.SortOrder
   travelTips?: Prisma.SortOrderInput | Prisma.SortOrder
   travelTipsStructured?: Prisma.SortOrderInput | Prisma.SortOrder
+  pricingMode?: Prisma.SortOrder
+  fixedPricePerPerson?: Prisma.SortOrderInput | Prisma.SortOrder
+  fixedIncludes?: Prisma.SortOrder
+  showPricing?: Prisma.SortOrder
   startCityId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -538,6 +574,10 @@ export type TourWhereUniqueInput = Prisma.AtLeast<{
   cancellationPolicy?: Prisma.StringNullableFilter<"Tour"> | string | null
   travelTips?: Prisma.StringNullableFilter<"Tour"> | string | null
   travelTipsStructured?: Prisma.JsonNullableFilter<"Tour">
+  pricingMode?: Prisma.StringFilter<"Tour"> | string
+  fixedPricePerPerson?: Prisma.IntNullableFilter<"Tour"> | number | null
+  fixedIncludes?: Prisma.StringNullableListFilter<"Tour">
+  showPricing?: Prisma.BoolFilter<"Tour"> | boolean
   startCityId?: Prisma.StringNullableFilter<"Tour"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Tour"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Tour"> | Date | string
@@ -581,6 +621,10 @@ export type TourOrderByWithAggregationInput = {
   cancellationPolicy?: Prisma.SortOrderInput | Prisma.SortOrder
   travelTips?: Prisma.SortOrderInput | Prisma.SortOrder
   travelTipsStructured?: Prisma.SortOrderInput | Prisma.SortOrder
+  pricingMode?: Prisma.SortOrder
+  fixedPricePerPerson?: Prisma.SortOrderInput | Prisma.SortOrder
+  fixedIncludes?: Prisma.SortOrder
+  showPricing?: Prisma.SortOrder
   startCityId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -625,6 +669,10 @@ export type TourScalarWhereWithAggregatesInput = {
   cancellationPolicy?: Prisma.StringNullableWithAggregatesFilter<"Tour"> | string | null
   travelTips?: Prisma.StringNullableWithAggregatesFilter<"Tour"> | string | null
   travelTipsStructured?: Prisma.JsonNullableWithAggregatesFilter<"Tour">
+  pricingMode?: Prisma.StringWithAggregatesFilter<"Tour"> | string
+  fixedPricePerPerson?: Prisma.IntNullableWithAggregatesFilter<"Tour"> | number | null
+  fixedIncludes?: Prisma.StringNullableListFilter<"Tour">
+  showPricing?: Prisma.BoolWithAggregatesFilter<"Tour"> | boolean
   startCityId?: Prisma.StringNullableWithAggregatesFilter<"Tour"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Tour"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Tour"> | Date | string
@@ -661,6 +709,10 @@ export type TourCreateInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   images?: Prisma.TourCreateimagesInput | string[]
@@ -703,6 +755,10 @@ export type TourUncheckedCreateInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   startCityId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -745,6 +801,10 @@ export type TourUpdateInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.TourUpdateimagesInput | string[]
@@ -787,6 +847,10 @@ export type TourUncheckedUpdateInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startCityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -829,6 +893,10 @@ export type TourCreateManyInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   startCityId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -865,6 +933,10 @@ export type TourUpdateManyMutationInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.TourUpdateimagesInput | string[]
@@ -900,6 +972,10 @@ export type TourUncheckedUpdateManyInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startCityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -944,6 +1020,10 @@ export type TourCountOrderByAggregateInput = {
   cancellationPolicy?: Prisma.SortOrder
   travelTips?: Prisma.SortOrder
   travelTipsStructured?: Prisma.SortOrder
+  pricingMode?: Prisma.SortOrder
+  fixedPricePerPerson?: Prisma.SortOrder
+  fixedIncludes?: Prisma.SortOrder
+  showPricing?: Prisma.SortOrder
   startCityId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -964,6 +1044,7 @@ export type TourAvgOrderByAggregateInput = {
   reviewCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   bookingCount?: Prisma.SortOrder
+  fixedPricePerPerson?: Prisma.SortOrder
 }
 
 export type TourMaxOrderByAggregateInput = {
@@ -992,6 +1073,9 @@ export type TourMaxOrderByAggregateInput = {
   isFeatured?: Prisma.SortOrder
   cancellationPolicy?: Prisma.SortOrder
   travelTips?: Prisma.SortOrder
+  pricingMode?: Prisma.SortOrder
+  fixedPricePerPerson?: Prisma.SortOrder
+  showPricing?: Prisma.SortOrder
   startCityId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -1023,6 +1107,9 @@ export type TourMinOrderByAggregateInput = {
   isFeatured?: Prisma.SortOrder
   cancellationPolicy?: Prisma.SortOrder
   travelTips?: Prisma.SortOrder
+  pricingMode?: Prisma.SortOrder
+  fixedPricePerPerson?: Prisma.SortOrder
+  showPricing?: Prisma.SortOrder
   startCityId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -1039,6 +1126,7 @@ export type TourSumOrderByAggregateInput = {
   reviewCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   bookingCount?: Prisma.SortOrder
+  fixedPricePerPerson?: Prisma.SortOrder
 }
 
 export type TourScalarRelationFilter = {
@@ -1054,6 +1142,10 @@ export type TourListRelationFilter = {
 
 export type TourOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type TourCreatefixedIncludesInput = {
+  set: string[]
 }
 
 export type TourCreateimagesInput = {
@@ -1086,6 +1178,11 @@ export type DecimalFieldUpdateOperationsInput = {
   decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
   multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
   divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
+}
+
+export type TourUpdatefixedIncludesInput = {
+  set?: string[]
+  push?: string | string[]
 }
 
 export type TourUpdateimagesInput = {
@@ -1261,6 +1358,10 @@ export type TourCreateWithoutPriceGuideInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   images?: Prisma.TourCreateimagesInput | string[]
@@ -1302,6 +1403,10 @@ export type TourUncheckedCreateWithoutPriceGuideInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   startCityId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1359,6 +1464,10 @@ export type TourUpdateWithoutPriceGuideInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.TourUpdateimagesInput | string[]
@@ -1400,6 +1509,10 @@ export type TourUncheckedUpdateWithoutPriceGuideInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startCityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1441,6 +1554,10 @@ export type TourCreateWithoutThemesInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   images?: Prisma.TourCreateimagesInput | string[]
@@ -1482,6 +1599,10 @@ export type TourUncheckedCreateWithoutThemesInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   startCityId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1539,6 +1660,10 @@ export type TourUpdateWithoutThemesInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.TourUpdateimagesInput | string[]
@@ -1580,6 +1705,10 @@ export type TourUncheckedUpdateWithoutThemesInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startCityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1621,6 +1750,10 @@ export type TourCreateWithoutReviewsInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   images?: Prisma.TourCreateimagesInput | string[]
@@ -1662,6 +1795,10 @@ export type TourUncheckedCreateWithoutReviewsInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   startCityId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1719,6 +1856,10 @@ export type TourUpdateWithoutReviewsInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.TourUpdateimagesInput | string[]
@@ -1760,6 +1901,10 @@ export type TourUncheckedUpdateWithoutReviewsInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startCityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1801,6 +1946,10 @@ export type TourCreateWithoutItineraryInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   images?: Prisma.TourCreateimagesInput | string[]
@@ -1842,6 +1991,10 @@ export type TourUncheckedCreateWithoutItineraryInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   startCityId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1899,6 +2052,10 @@ export type TourUpdateWithoutItineraryInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.TourUpdateimagesInput | string[]
@@ -1940,6 +2097,10 @@ export type TourUncheckedUpdateWithoutItineraryInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startCityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1981,6 +2142,10 @@ export type TourCreateWithoutCitiesInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   images?: Prisma.TourCreateimagesInput | string[]
@@ -2022,6 +2187,10 @@ export type TourUncheckedCreateWithoutCitiesInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   startCityId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2079,6 +2248,10 @@ export type TourUpdateWithoutCitiesInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.TourUpdateimagesInput | string[]
@@ -2120,6 +2293,10 @@ export type TourUncheckedUpdateWithoutCitiesInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startCityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2161,6 +2338,10 @@ export type TourCreateWithoutStartCityInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   images?: Prisma.TourCreateimagesInput | string[]
@@ -2202,6 +2383,10 @@ export type TourUncheckedCreateWithoutStartCityInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   images?: Prisma.TourCreateimagesInput | string[]
@@ -2272,6 +2457,10 @@ export type TourScalarWhereInput = {
   cancellationPolicy?: Prisma.StringNullableFilter<"Tour"> | string | null
   travelTips?: Prisma.StringNullableFilter<"Tour"> | string | null
   travelTipsStructured?: Prisma.JsonNullableFilter<"Tour">
+  pricingMode?: Prisma.StringFilter<"Tour"> | string
+  fixedPricePerPerson?: Prisma.IntNullableFilter<"Tour"> | number | null
+  fixedIncludes?: Prisma.StringNullableListFilter<"Tour">
+  showPricing?: Prisma.BoolFilter<"Tour"> | boolean
   startCityId?: Prisma.StringNullableFilter<"Tour"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Tour"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Tour"> | Date | string
@@ -2308,6 +2497,10 @@ export type TourCreateWithoutFaqsInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   images?: Prisma.TourCreateimagesInput | string[]
@@ -2349,6 +2542,10 @@ export type TourUncheckedCreateWithoutFaqsInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   startCityId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2406,6 +2603,10 @@ export type TourUpdateWithoutFaqsInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.TourUpdateimagesInput | string[]
@@ -2447,6 +2648,10 @@ export type TourUncheckedUpdateWithoutFaqsInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startCityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2488,6 +2693,10 @@ export type TourCreateManyStartCityInput = {
   cancellationPolicy?: string | null
   travelTips?: string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: string
+  fixedPricePerPerson?: number | null
+  fixedIncludes?: Prisma.TourCreatefixedIncludesInput | string[]
+  showPricing?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   images?: Prisma.TourCreateimagesInput | string[]
@@ -2523,6 +2732,10 @@ export type TourUpdateWithoutStartCityInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.TourUpdateimagesInput | string[]
@@ -2564,6 +2777,10 @@ export type TourUncheckedUpdateWithoutStartCityInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.TourUpdateimagesInput | string[]
@@ -2605,6 +2822,10 @@ export type TourUncheckedUpdateManyWithoutStartCityInput = {
   cancellationPolicy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTips?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   travelTipsStructured?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  pricingMode?: Prisma.StringFieldUpdateOperationsInput | string
+  fixedPricePerPerson?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  fixedIncludes?: Prisma.TourUpdatefixedIncludesInput | string[]
+  showPricing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.TourUpdateimagesInput | string[]
@@ -2716,6 +2937,10 @@ export type TourSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   cancellationPolicy?: boolean
   travelTips?: boolean
   travelTipsStructured?: boolean
+  pricingMode?: boolean
+  fixedPricePerPerson?: boolean
+  fixedIncludes?: boolean
+  showPricing?: boolean
   startCityId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2760,6 +2985,10 @@ export type TourSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   cancellationPolicy?: boolean
   travelTips?: boolean
   travelTipsStructured?: boolean
+  pricingMode?: boolean
+  fixedPricePerPerson?: boolean
+  fixedIncludes?: boolean
+  showPricing?: boolean
   startCityId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2797,6 +3026,10 @@ export type TourSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   cancellationPolicy?: boolean
   travelTips?: boolean
   travelTipsStructured?: boolean
+  pricingMode?: boolean
+  fixedPricePerPerson?: boolean
+  fixedIncludes?: boolean
+  showPricing?: boolean
   startCityId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2834,6 +3067,10 @@ export type TourSelectScalar = {
   cancellationPolicy?: boolean
   travelTips?: boolean
   travelTipsStructured?: boolean
+  pricingMode?: boolean
+  fixedPricePerPerson?: boolean
+  fixedIncludes?: boolean
+  showPricing?: boolean
   startCityId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2843,7 +3080,7 @@ export type TourSelectScalar = {
   exclusions?: boolean
 }
 
-export type TourOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "metatitle" | "metadesc" | "overview" | "description" | "durationDays" | "durationNights" | "price" | "discountPrice" | "currency" | "minGroupSize" | "maxGroupSize" | "bestTime" | "idealFor" | "difficulty" | "rating" | "reviewCount" | "viewCount" | "bookingCount" | "isActive" | "isFeatured" | "cancellationPolicy" | "travelTips" | "travelTipsStructured" | "startCityId" | "createdAt" | "updatedAt" | "images" | "highlights" | "inclusions" | "exclusions", ExtArgs["result"]["tour"]>
+export type TourOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "metatitle" | "metadesc" | "overview" | "description" | "durationDays" | "durationNights" | "price" | "discountPrice" | "currency" | "minGroupSize" | "maxGroupSize" | "bestTime" | "idealFor" | "difficulty" | "rating" | "reviewCount" | "viewCount" | "bookingCount" | "isActive" | "isFeatured" | "cancellationPolicy" | "travelTips" | "travelTipsStructured" | "pricingMode" | "fixedPricePerPerson" | "fixedIncludes" | "showPricing" | "startCityId" | "createdAt" | "updatedAt" | "images" | "highlights" | "inclusions" | "exclusions", ExtArgs["result"]["tour"]>
 export type TourInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   faqs?: boolean | Prisma.Tour$faqsArgs<ExtArgs>
   reviews?: boolean | Prisma.Tour$reviewsArgs<ExtArgs>
@@ -2899,6 +3136,10 @@ export type $TourPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     cancellationPolicy: string | null
     travelTips: string | null
     travelTipsStructured: runtime.JsonValue | null
+    pricingMode: string
+    fixedPricePerPerson: number | null
+    fixedIncludes: string[]
+    showPricing: boolean
     startCityId: string | null
     createdAt: Date
     updatedAt: Date
@@ -3362,6 +3603,10 @@ export interface TourFieldRefs {
   readonly cancellationPolicy: Prisma.FieldRef<"Tour", 'String'>
   readonly travelTips: Prisma.FieldRef<"Tour", 'String'>
   readonly travelTipsStructured: Prisma.FieldRef<"Tour", 'Json'>
+  readonly pricingMode: Prisma.FieldRef<"Tour", 'String'>
+  readonly fixedPricePerPerson: Prisma.FieldRef<"Tour", 'Int'>
+  readonly fixedIncludes: Prisma.FieldRef<"Tour", 'String[]'>
+  readonly showPricing: Prisma.FieldRef<"Tour", 'Boolean'>
   readonly startCityId: Prisma.FieldRef<"Tour", 'String'>
   readonly createdAt: Prisma.FieldRef<"Tour", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Tour", 'DateTime'>

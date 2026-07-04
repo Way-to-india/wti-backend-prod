@@ -1,4 +1,7 @@
+import { S3Folder } from '@/common/constants';
 import { TourDraftService } from '@/services/admin/tour-draft.service';
+import { prependCloudFrontURL } from '@/services/common/s3.service';
+import { uploadMultipleImagesToS3 } from '@/utils/s3';
 import type { Request, Response } from 'express';
 
 export class TourDraftController {
@@ -84,9 +87,11 @@ export class TourDraftController {
         return res.deliver(400, false, undefined, 'No files uploaded');
       }
 
-      const imageUrls = files.map((file) => {
-        return (file as any).location || (file as any).key;
-      });
+      // multer uses memoryStorage, so files have no `location`/`key`.
+      // Persist the buffers to S3, then return display-ready CloudFront URLs
+      // (the frontend renders these directly, like the rest of the app).
+      const imageKeys = await uploadMultipleImagesToS3(files, S3Folder.TOUR_IMAGES);
+      const imageUrls = imageKeys.map((key) => prependCloudFrontURL(key));
 
       return res.deliver(200, true, { images: imageUrls }, 'Images uploaded successfully');
     } catch (error) {
