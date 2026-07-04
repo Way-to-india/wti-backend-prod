@@ -19,6 +19,7 @@ export class TourController {
         limit = '10',
         sortBy = 'createdAt',
         sortOrder = 'desc',
+        routeMap,
         ...queryFilters
       } = req.query;
 
@@ -31,7 +32,8 @@ export class TourController {
         filters,
         includes,
         sortBy as string,
-        sortOrder as string
+        sortOrder as string,
+        routeMap as string | undefined
       );
 
       return res.deliver(200, true, result);

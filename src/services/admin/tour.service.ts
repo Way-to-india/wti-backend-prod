@@ -11,10 +11,20 @@ export class TourService {
     filters: TourFilters,
     includes: TourIncludes,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    routeMap?: string
   ) {
     const where = TourQueryHelper.buildWhereClause(filters);
     const include = TourQueryHelper.buildIncludeClause(includes);
+
+    // Route-map status: which tours have a verified route (>= 2 stops)?
+    // Powers the map badge + mapped/unmapped filter on the admin listing.
+    const mappedRows = await prisma.$queryRaw<{ tourId: string }[]>`
+      SELECT "tourId" FROM tour_route_stops WHERE verified GROUP BY "tourId" HAVING COUNT(*) >= 2`;
+    const mappedIds = new Set(mappedRows.map((r) => r.tourId));
+    if (routeMap === 'mapped') (where as any).id = { in: [...mappedIds] };
+    if (routeMap === 'unmapped') (where as any).id = { notIn: [...mappedIds] };
+    const withMapFlag = <T extends { id: string }>(t: T) => ({ ...t, hasRouteMap: mappedIds.has(t.id) });
 
     // If searching, we need to sort by relevance in memory
     if (filters.search) {
@@ -59,7 +69,7 @@ export class TourService {
       const paginatedTours = allMatchingTours.slice(skip, skip + limit);
 
       return {
-        tours: paginatedTours,
+        tours: paginatedTours.map(withMapFlag),
         pagination: {
           page,
           limit,
@@ -79,7 +89,7 @@ export class TourService {
     ]);
 
     return {
-      tours,
+      tours: tours.map(withMapFlag),
       pagination: {
         page,
         limit,
