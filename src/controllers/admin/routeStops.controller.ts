@@ -107,6 +107,21 @@ export class RouteStopsController {
         ),
       ]);
 
+      // learn custom places: any stop not already in world_cities becomes
+      // searchable in the autosuggest from now on (source='ADMIN')
+      for (const s of clean) {
+        try {
+          const isIndia = s.lat >= 6 && s.lat <= 37.5 && s.lng >= 68 && s.lng <= 97.5;
+          await prisma.$executeRaw`
+            INSERT INTO world_cities (name, "asciiName", latitude, longitude, "countryCode", "countryName", population, "searchRank", source)
+            SELECT ${s.name}, ${s.name}, ${s.lat}, ${s.lng},
+                   ${isIndia ? 'IN' : null}, ${isIndia ? 'India' : null}, 0, 0, 'ADMIN'
+            WHERE NOT EXISTS (SELECT 1 FROM world_cities WHERE lower(name) = lower(${s.name}))`;
+        } catch (err) {
+          console.error('world_cities learn-insert failed for', s.name, err);
+        }
+      }
+
       // OSRM-route each ROAD leg between the exact verified coords → osm_leg_distance
       let routed = 0;
       for (let i = 1; i < clean.length; i++) {
