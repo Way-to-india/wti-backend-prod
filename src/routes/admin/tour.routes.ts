@@ -10,6 +10,8 @@ const router = Router();
 router.use(authMiddleware);
 
 // ---- Verified Route Map authoring (city autosuggest + load/save stops) ----
+router.get('/route/modes', checkPermission('Tours', 'view'), RouteStopsController.getModes);
+router.post('/route/modes', checkPermission('Tours', 'edit'), RouteStopsController.addMode);
 router.get('/route/city-search', checkPermission('Tours', 'view'), RouteStopsController.searchCities);
 router.post('/route/city', checkPermission('Tours', 'edit'), RouteStopsController.addCity);
 router.get('/:id/route-stops', checkPermission('Tours', 'view'), RouteStopsController.getRouteStops);

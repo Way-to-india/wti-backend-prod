@@ -6,12 +6,23 @@ import type { Request, Response } from 'express';
  * Verified Route Map — admin authoring API.
  * The executive picks each stop from world_cities (coords included) or adds a
  * custom city with lat/lng, so every stop has VERIFIED coordinates by save time.
- * On save we (a) persist tour_route_stops (verified), (b) OSRM-route each ROAD
- * leg between the exact coords → real km/min into osm_leg_distance. No geocoding,
- * no ambiguity — this is the 100%-accurate path.
+ *
+ * Travel modes are DB-driven (travel_modes table, admin-extensible). Each mode
+ * carries a distanceStrategy that decides how the leg's km/time are computed:
+ *   osrm-driving — real road routing (OSRM)                    e.g. road
+ *   osrm-foot    — real walking-path routing (OSRM foot)       e.g. trek, pony
+ *   aerial       — great-circle (haversine) distance           e.g. flight, heli, ropeway, ferry, boat
+ *   none         — no auto distance (admin types it if wanted) e.g. train
+ * The admin can always overwrite km/time manually per leg (legKmSource='manual').
  */
-type Mode = 'road' | 'flight' | 'train' | 'helicopter' | 'ferry';
-interface StopIn { order: number; name: string; lat: number; lng: number; modeIn?: Mode | null; nights?: number | null }
+interface StopIn {
+  order: number; name: string; lat: number; lng: number;
+  modeIn?: string | null; nights?: number | null;
+  legKm?: number | null; legMin?: number | null; legKmSource?: string | null;
+}
+
+const ICONS = ['car', 'plane', 'train', 'helicopter', 'ship', 'footprints', 'pony', 'cablecar', 'boat', 'bike', 'route'];
+const STRATEGIES = ['osrm-driving', 'osrm-foot', 'aerial', 'none'];
 
 async function resolveTour(idOrSlug: string): Promise<{ id: string; slug: string } | null> {
   const rows = await prisma.$queryRaw<{ id: string; slug: string }[]>`
@@ -19,9 +30,9 @@ async function resolveTour(idOrSlug: string): Promise<{ id: string; slug: string
   return rows[0] || null;
 }
 
-async function osrm(a: [number, number], b: [number, number]): Promise<{ km: number; min: number } | null> {
+async function osrmRoute(profileUrl: string, a: [number, number], b: [number, number]): Promise<{ km: number; min: number } | null> {
   try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${a[1]},${a[0]};${b[1]},${b[0]}?overview=false`;
+    const url = `${profileUrl}/${a[1]},${a[0]};${b[1]},${b[0]}?overview=false`;
     const r = await fetch(url);
     const j: any = await r.json();
     const rt = j?.routes?.[0];
@@ -30,8 +41,66 @@ async function osrm(a: [number, number], b: [number, number]): Promise<{ km: num
     return null;
   }
 }
+const osrmDriving = (a: [number, number], b: [number, number]) =>
+  osrmRoute('https://router.project-osrm.org/route/v1/driving', a, b);
+const osrmFoot = (a: [number, number], b: [number, number]) =>
+  osrmRoute('https://routing.openstreetmap.de/routed-foot/route/v1/foot', a, b);
+
+/** Great-circle distance in km (for aerial modes: flight / helicopter / ropeway / water). */
+function haversineKm(a: [number, number], b: [number, number]): number {
+  const R = 6371, toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b[0] - a[0]), dLng = toRad(b[1] - a[1]);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s)));
+}
+
+async function loadStrategies(): Promise<Map<string, string>> {
+  try {
+    const rows = await prisma.$queryRaw<{ key: string; distanceStrategy: string }[]>`
+      SELECT key, "distanceStrategy" FROM travel_modes WHERE active = true`;
+    return new Map(rows.map((r) => [r.key, r.distanceStrategy]));
+  } catch {
+    // table missing (pre-migration) — legacy behaviour: only road is routed
+    return new Map([['road', 'osrm-driving']]);
+  }
+}
 
 export class RouteStopsController {
+  /** GET /tours/route/modes — active travel modes for the editor dropdown. */
+  static async getModes(_req: Request, res: Response) {
+    try {
+      const rows = await prisma.$queryRaw<
+        { key: string; label: string; icon: string; distanceStrategy: string; sortOrder: number }[]
+      >`SELECT key, label, icon, "distanceStrategy", "sortOrder"
+        FROM travel_modes WHERE active = true ORDER BY "sortOrder", key`;
+      return res.deliver(200, true, rows);
+    } catch (e) {
+      console.error('getModes failed:', e);
+      return res.deliver(500, false, undefined, 'Failed to load travel modes');
+    }
+  }
+
+  /** POST /tours/route/modes — admin adds a new travel mode (idempotent by key). */
+  static async addMode(req: Request, res: Response) {
+    try {
+      const label = String(req.body?.label || '').trim();
+      const icon = ICONS.includes(String(req.body?.icon)) ? String(req.body.icon) : 'route';
+      const strategy = STRATEGIES.includes(String(req.body?.distanceStrategy)) ? String(req.body.distanceStrategy) : 'none';
+      if (label.length < 2 || label.length > 40) return res.deliver(400, false, undefined, 'Label must be 2–40 characters');
+      const key = label.toLowerCase().replace(/^by\s+/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24);
+      if (!key) return res.deliver(400, false, undefined, 'Could not derive a key from label');
+      await prisma.$executeRaw`
+        INSERT INTO travel_modes (key, label, icon, "distanceStrategy", "sortOrder", source)
+        VALUES (${key}, ${label}, ${icon}, ${strategy}, 50, 'ADMIN')
+        ON CONFLICT (key) DO UPDATE SET label = EXCLUDED.label, icon = EXCLUDED.icon,
+          "distanceStrategy" = EXCLUDED."distanceStrategy", active = true`;
+      return res.deliver(200, true, { key, label, icon, distanceStrategy: strategy });
+    } catch (e) {
+      console.error('addMode failed:', e);
+      return res.deliver(500, false, undefined, 'Failed to add travel mode');
+    }
+  }
+
   /** GET /tours/route/city-search?q=  — world_cities autosuggest, India-preferred. */
   static async searchCities(req: Request, res: Response) {
     try {
@@ -85,8 +154,8 @@ export class RouteStopsController {
       const tour = await resolveTour(req.params.id);
       if (!tour) return res.deliver(404, false, undefined, 'Tour not found');
       const stops = await prisma.$queryRaw<
-        { order: number; name: string; latitude: number; longitude: number; modeIn: string | null; nights: number | null; verified: boolean }[]
-      >`SELECT "order", name, latitude, longitude, "modeIn", nights, verified
+        { order: number; name: string; latitude: number; longitude: number; modeIn: string | null; nights: number | null; verified: boolean; legKm: number | null; legMin: number | null; legKmSource: string | null }[]
+      >`SELECT "order", name, latitude, longitude, "modeIn", nights, verified, "legKm", "legMin", "legKmSource"
         FROM tour_route_stops WHERE "tourId" = ${tour.id} ORDER BY "order"`;
       return res.deliver(200, true, {
         tourId: tour.id,
@@ -95,6 +164,9 @@ export class RouteStopsController {
         stops: stops.map((s) => ({
           order: s.order, name: s.name, lat: Number(s.latitude), lng: Number(s.longitude),
           modeIn: s.modeIn, nights: s.nights,
+          legKm: s.legKm != null ? Number(s.legKm) : null,
+          legMin: s.legMin != null ? Number(s.legMin) : null,
+          legKmSource: s.legKmSource,
         })),
       });
     } catch (e) {
@@ -103,7 +175,8 @@ export class RouteStopsController {
     }
   }
 
-  /** POST /tours/:id/route-stops — save verified stops + OSRM-route the road legs. */
+  /** POST /tours/:id/route-stops — save verified stops + route every leg by its
+   *  mode's distance strategy (manual overrides win). */
   static async saveRouteStops(req: Request, res: Response) {
     try {
       const tour = await resolveTour(req.params.id);
@@ -116,17 +189,44 @@ export class RouteStopsController {
           name: String(s.name).trim(),
           lat: Number(s.lat),
           lng: Number(s.lng),
-          modeIn: (i === 0 ? null : (s.modeIn || 'road')) as Mode | null,
+          modeIn: i === 0 ? null : String(s.modeIn || 'road'),
           nights: s.nights != null ? Number(s.nights) : null,
+          legKm: s.legKm != null && !isNaN(Number(s.legKm)) ? Number(s.legKm) : null,
+          legMin: s.legMin != null && !isNaN(Number(s.legMin)) ? Math.round(Number(s.legMin)) : null,
+          legKmSource: s.legKmSource === 'manual' ? 'manual' : null,
         }));
+
+      // Per-mode distance strategy (DB-driven). Manual entries are respected as-is.
+      const strategies = await loadStrategies();
+      let routed = 0;
+      for (let i = 1; i < clean.length; i++) {
+        const prev = clean[i - 1];
+        const cur = clean[i];
+        if (cur.legKmSource === 'manual' && (cur.legKm != null || cur.legMin != null)) { routed++; continue; }
+        const strat = strategies.get(cur.modeIn || 'road') || 'none';
+        const a: [number, number] = [prev.lat, prev.lng];
+        const b: [number, number] = [cur.lat, cur.lng];
+        let d: { km: number; min: number | null } | null = null;
+        if (strat === 'osrm-driving') d = await osrmDriving(a, b);
+        else if (strat === 'osrm-foot') d = await osrmFoot(a, b);
+        else if (strat === 'aerial') d = { km: haversineKm(a, b), min: null };
+        if (d) {
+          cur.legKm = d.km;
+          cur.legMin = d.min;
+          cur.legKmSource = 'auto';
+          routed++;
+        } else {
+          cur.legKm = null; cur.legMin = null; cur.legKmSource = null;
+        }
+      }
 
       // persist stops (replace) in a transaction
       await prisma.$transaction([
         prisma.$executeRaw`DELETE FROM tour_route_stops WHERE "tourId" = ${tour.id}`,
         ...clean.map(
           (s) => prisma.$executeRaw`
-            INSERT INTO tour_route_stops ("tourId","order",name,latitude,longitude,"modeIn",nights,verified,source,"updatedAt")
-            VALUES (${tour.id},${s.order},${s.name},${s.lat},${s.lng},${s.modeIn},${s.nights},true,'ADMIN',now())`
+            INSERT INTO tour_route_stops ("tourId","order",name,latitude,longitude,"modeIn",nights,"legKm","legMin","legKmSource",verified,source,"updatedAt")
+            VALUES (${tour.id},${s.order},${s.name},${s.lat},${s.lng},${s.modeIn},${s.nights},${s.legKm},${s.legMin},${s.legKmSource},true,'ADMIN',now())`
         ),
       ]);
 
@@ -145,20 +245,16 @@ export class RouteStopsController {
         }
       }
 
-      // OSRM-route each ROAD leg between the exact verified coords → osm_leg_distance
-      let routed = 0;
+      // back-compat: keep osm_leg_distance fresh for road legs (older readers)
       for (let i = 1; i < clean.length; i++) {
-        const prev = clean[i - 1];
-        const cur = clean[i];
-        if ((cur.modeIn || 'road') !== 'road') continue;
-        const d = await osrm([prev.lat, prev.lng], [cur.lat, cur.lng]);
-        if (d) {
+        const prev = clean[i - 1], cur = clean[i];
+        if ((cur.modeIn || 'road') !== 'road' || cur.legKm == null) continue;
+        try {
           await prisma.$executeRaw`
             INSERT INTO osm_leg_distance ("fromName","toName",km,"durationMin")
-            VALUES (${prev.name},${cur.name},${d.km},${d.min})
+            VALUES (${prev.name},${cur.name},${cur.legKm},${cur.legMin ?? 0})
             ON CONFLICT ("fromName","toName") DO UPDATE SET km = EXCLUDED.km, "durationMin" = EXCLUDED."durationMin"`;
-          routed++;
-        }
+        } catch {}
       }
 
       // publish: bust the public tour cache so the map goes live
@@ -168,7 +264,7 @@ export class RouteStopsController {
       if (rv) {
         await fetch('https://www.waytoindia.com/api/revalidate?secret=' + encodeURIComponent(rv) + '&path=/' + tour.slug, { method: 'POST' }).catch(() => {});
       }
-      return res.deliver(200, true, { saved: clean.length, roadLegsRouted: routed, verified: clean.length >= 2 });
+      return res.deliver(200, true, { saved: clean.length, legsRouted: routed, verified: clean.length >= 2 });
     } catch (e) {
       console.error('saveRouteStops failed:', e);
       return res.deliver(500, false, undefined, 'Failed to save route');

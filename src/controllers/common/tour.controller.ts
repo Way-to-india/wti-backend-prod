@@ -570,8 +570,8 @@ export class TourController {
       let route: any = null;
       try {
         const rs = await prisma.$queryRaw<
-          { order: number; name: string; latitude: number; longitude: number; modeIn: string | null }[]
-        >`SELECT "order", name, latitude, longitude, "modeIn"
+          { order: number; name: string; latitude: number; longitude: number; modeIn: string | null; legKm: number | null; legMin: number | null; legKmSource: string | null }[]
+        >`SELECT "order", name, latitude, longitude, "modeIn", "legKm", "legMin", "legKmSource"
           FROM tour_route_stops WHERE "tourId" = ${tour.id} AND verified = true ORDER BY "order"`;
         if (rs.length >= 2) {
           const legRows = await prisma.$queryRaw<
@@ -579,6 +579,18 @@ export class TourController {
           >`SELECT "fromName", "toName", km, "durationMin" FROM osm_leg_distance`;
           const key = (a: string, b: string) => a.toLowerCase().trim() + '|' + b.toLowerCase().trim();
           const dmap = new Map(legRows.map((r) => [key(r.fromName, r.toName), r]));
+          // mode metadata (label/icon/strategy) — DB-driven so admin-added modes render
+          let modeMetaRows: { key: string; label: string; icon: string; distanceStrategy: string }[] = [];
+          try {
+            modeMetaRows = await prisma.$queryRaw<
+              { key: string; label: string; icon: string; distanceStrategy: string }[]
+            >`SELECT key, label, icon, "distanceStrategy" FROM travel_modes WHERE active = true`;
+          } catch {}
+          const metaMap = new Map(modeMetaRows.map((m) => [m.key, m]));
+          const fmt = (mins: number) => {
+            const h = Math.floor(mins / 60), m = mins % 60;
+            return `~${h ? h + 'h ' : ''}${m ? m + 'm' : h ? '' : '0m'}`.trim();
+          };
           const stops = rs.map((s) => ({
             order: s.order, name: s.name, day: s.order, lat: Number(s.latitude), lng: Number(s.longitude),
           }));
@@ -586,22 +598,38 @@ export class TourController {
           for (let i = 1; i < rs.length; i++) {
             const from = rs[i - 1], to = rs[i];
             const mode = (to.modeIn || 'road') as string;
+            const strat = metaMap.get(mode)?.distanceStrategy || (mode === 'road' ? 'osrm-driving' : 'none');
             let km: number | null = null, timeText: string | null = null, estimated = false;
-            if (mode === 'road') {
+            if (to.legKm != null || to.legMin != null) {
+              // per-leg stored values (auto-routed by mode strategy, or manual override)
+              km = to.legKm != null ? Math.round(Number(to.legKm)) : null;
+              if (to.legMin != null) {
+                const raw = Number(to.legMin);
+                timeText = fmt(Math.round(mode === 'road' && to.legKmSource !== 'manual' ? raw * 1.35 : raw));
+              }
+              estimated = to.legKmSource !== 'manual';
+            } else if (mode === 'road') {
+              // legacy fallback: name-pair OSRM cache
               const hit = dmap.get(key(from.name, to.name)) || dmap.get(key(to.name, from.name));
               if (hit) {
                 km = Math.round(Number(hit.km));
-                const mins = Math.round(Number(hit.durationMin) * 1.35);
-                const h = Math.floor(mins / 60), m = mins % 60;
-                timeText = `~${h ? h + 'h ' : ''}${m ? m + 'm' : h ? '' : '0m'}`.trim();
+                timeText = fmt(Math.round(Number(hit.durationMin) * 1.35));
                 estimated = true;
               }
             }
-            legs.push({ day: to.order, from: from.name, to: to.name, mode, km, timeText, estimated });
+            legs.push({
+              day: to.order, from: from.name, to: to.name, mode, km, timeText, estimated,
+              aerial: strat === 'aerial' && to.legKmSource !== 'manual' && km != null,
+            });
           }
           const roadTotalKm = Math.round(legs.filter((l) => l.mode === 'road' && l.km).reduce((a, l) => a + (l.km || 0), 0));
+          const trekModes = new Set(modeMetaRows.filter((m) => m.distanceStrategy === 'osrm-foot').map((m) => m.key));
+          const trekTotalKm = Math.round(legs.filter((l) => trekModes.has(l.mode) && l.km).reduce((a, l) => a + (l.km || 0), 0));
           const modes = Array.from(new Set(legs.map((l) => l.mode)));
-          route = { stops, legs, roadTotalKm, modes };
+          const modesMeta = Object.fromEntries(
+            modes.map((m) => [m, { label: metaMap.get(m)?.label || `By ${m}`, icon: metaMap.get(m)?.icon || 'route' }])
+          );
+          route = { stops, legs, roadTotalKm, trekTotalKm, modes, modesMeta };
         }
       } catch (e) {
         console.error('verified route load failed:', e);
