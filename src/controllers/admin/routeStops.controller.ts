@@ -53,6 +53,49 @@ const osrmDriving = (a: [number, number], b: [number, number]) =>
 const osrmFoot = (a: [number, number], b: [number, number]) =>
   osrmRoute('https://routing.openstreetmap.de/routed-foot/route/v1/foot', a, b);
 
+/** Encode [lat,lng] pairs as a Google/OSRM polyline (precision 5). */
+function encodePolyline(coords: [number, number][]): string {
+  let out = '', plat = 0, plng = 0;
+  const enc = (v: number) => {
+    let x = v < 0 ? ~(v << 1) : v << 1, s = '';
+    while (x >= 0x20) { s += String.fromCharCode((0x20 | (x & 0x1f)) + 63); x >>= 5; }
+    return s + String.fromCharCode(x + 63);
+  };
+  for (const [lat, lng] of coords) {
+    const ilat = Math.round(lat * 1e5), ilng = Math.round(lng * 1e5);
+    out += enc(ilat - plat) + enc(ilng - plng);
+    plat = ilat; plng = ilng;
+  }
+  return out;
+}
+
+/** BRouter mountain-hiking route — unlike OSRM's foot profile it routes over
+ *  high passes (Dolma La etc.), so kora/parikrama legs come out correct. */
+async function brouterHike(a: [number, number], b: [number, number]): Promise<{ km: number; min: number | null; geometry: string | null } | null> {
+  try {
+    const u = `https://brouter.de/brouter?lonlats=${a[1]},${a[0]}|${b[1]},${b[0]}&profile=hiking-mountain&alternativeidx=0&format=geojson`;
+    const r = await fetch(u);
+    const j: any = await r.json();
+    const f = j?.features?.[0];
+    if (!f?.properties?.['track-length']) return null;
+    const km = Math.round(Number(f.properties['track-length']) / 1000);
+    const sec = Number(f.properties['total-time'] || 0);
+    const coords = (f.geometry?.coordinates || []).map((c: number[]) => [c[1], c[0]] as [number, number]);
+    return { km, min: sec ? Math.round(sec / 60) : null, geometry: coords.length ? encodePolyline(coords) : null };
+  } catch {
+    return null;
+  }
+}
+
+/** Trek/pony legs: BRouter (mountain-capable) preferred; OSRM foot as fallback.
+ *  When both answer, the shorter one wins — the long one is a detour around
+ *  terrain the other profile can cross. */
+async function footRoute(a: [number, number], b: [number, number]) {
+  const [br, os] = await Promise.all([brouterHike(a, b), osrmFoot(a, b)]);
+  if (br && (!os || br.km <= os.km)) return br;
+  return os;
+}
+
 /** Great-circle distance in km (for aerial modes: flight / helicopter / ropeway / water). */
 function haversineKm(a: [number, number], b: [number, number]): number {
   const R = 6371, toRad = (d: number) => (d * Math.PI) / 180;
@@ -223,13 +266,13 @@ export class RouteStopsController {
         if (cur.legKmSource === 'manual' && (cur.legKm != null || cur.legMin != null)) {
           // manual km/time stands, but still fetch geometry so the map draws the real path
           if (strat === 'osrm-driving') cur.legGeometry = (await osrmDriving(a, b))?.geometry ?? null;
-          else if (strat === 'osrm-foot') cur.legGeometry = (await osrmFoot(a, b))?.geometry ?? null;
+          else if (strat === 'osrm-foot') cur.legGeometry = (await footRoute(a, b))?.geometry ?? null;
           routed++;
           continue;
         }
         let d: { km: number; min: number | null; geometry?: string | null } | null = null;
         if (strat === 'osrm-driving') d = await osrmDriving(a, b);
-        else if (strat === 'osrm-foot') d = await osrmFoot(a, b);
+        else if (strat === 'osrm-foot') d = await footRoute(a, b);
         else if (strat === 'aerial') d = { km: haversineKm(a, b), min: null, geometry: null };
         if (d) {
           cur.legKm = d.km;
