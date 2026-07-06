@@ -19,6 +19,9 @@ interface StopIn {
   order: number; name: string; lat: number; lng: number;
   modeIn?: string | null; nights?: number | null;
   legKm?: number | null; legMin?: number | null; legKmSource?: string | null;
+  /** 'stop' (default) = part of the journey chain; 'landmark' = map-only pin
+   *  (Mount Kailash, Mansarovar Lake…) excluded from legs and distances. */
+  kind?: string | null;
 }
 
 const ICONS = ['car', 'plane', 'train', 'helicopter', 'ship', 'footprints', 'pony', 'cablecar', 'boat', 'bike', 'route'];
@@ -30,13 +33,17 @@ async function resolveTour(idOrSlug: string): Promise<{ id: string; slug: string
   return rows[0] || null;
 }
 
-async function osrmRoute(profileUrl: string, a: [number, number], b: [number, number]): Promise<{ km: number; min: number } | null> {
+async function osrmRoute(profileUrl: string, a: [number, number], b: [number, number]): Promise<{ km: number; min: number; geometry: string | null } | null> {
   try {
-    const url = `${profileUrl}/${a[1]},${a[0]};${b[1]},${b[0]}?overview=false`;
+    // overview=full → encoded polyline of the REAL path (winding trail / highway),
+    // stored per leg so maps draw the true route instead of a straight line.
+    const url = `${profileUrl}/${a[1]},${a[0]};${b[1]},${b[0]}?overview=full&geometries=polyline`;
     const r = await fetch(url);
     const j: any = await r.json();
     const rt = j?.routes?.[0];
-    return rt ? { km: Math.round(rt.distance / 1000), min: Math.round(rt.duration / 60) } : null;
+    return rt
+      ? { km: Math.round(rt.distance / 1000), min: Math.round(rt.duration / 60), geometry: typeof rt.geometry === 'string' ? rt.geometry : null }
+      : null;
   } catch {
     return null;
   }
@@ -154,8 +161,8 @@ export class RouteStopsController {
       const tour = await resolveTour(req.params.id);
       if (!tour) return res.deliver(404, false, undefined, 'Tour not found');
       const stops = await prisma.$queryRaw<
-        { order: number; name: string; latitude: number; longitude: number; modeIn: string | null; nights: number | null; verified: boolean; legKm: number | null; legMin: number | null; legKmSource: string | null }[]
-      >`SELECT "order", name, latitude, longitude, "modeIn", nights, verified, "legKm", "legMin", "legKmSource"
+        { order: number; name: string; latitude: number; longitude: number; modeIn: string | null; nights: number | null; verified: boolean; legKm: number | null; legMin: number | null; legKmSource: string | null; legGeometry: string | null; kind: string | null }[]
+      >`SELECT "order", name, latitude, longitude, "modeIn", nights, verified, "legKm", "legMin", "legKmSource", "legGeometry", kind
         FROM tour_route_stops WHERE "tourId" = ${tour.id} ORDER BY "order"`;
       return res.deliver(200, true, {
         tourId: tour.id,
@@ -167,6 +174,8 @@ export class RouteStopsController {
           legKm: s.legKm != null ? Number(s.legKm) : null,
           legMin: s.legMin != null ? Number(s.legMin) : null,
           legKmSource: s.legKmSource,
+          legGeometry: s.legGeometry,
+          kind: s.kind || 'stop',
         })),
       });
     } catch (e) {
@@ -189,34 +198,47 @@ export class RouteStopsController {
           name: String(s.name).trim(),
           lat: Number(s.lat),
           lng: Number(s.lng),
-          modeIn: i === 0 ? null : String(s.modeIn || 'road'),
-          nights: s.nights != null ? Number(s.nights) : null,
+          kind: s.kind === 'landmark' ? 'landmark' : 'stop',
+          modeIn: s.kind === 'landmark' ? null : String(s.modeIn || 'road'),
+          nights: s.kind === 'landmark' ? null : s.nights != null ? Number(s.nights) : null,
           legKm: s.legKm != null && !isNaN(Number(s.legKm)) ? Number(s.legKm) : null,
           legMin: s.legMin != null && !isNaN(Number(s.legMin)) ? Math.round(Number(s.legMin)) : null,
           legKmSource: s.legKmSource === 'manual' ? 'manual' : null,
+          legGeometry: null as string | null,
         }));
+      // the journey chain = travel stops only; landmarks are map-only pins
+      const travel = clean.filter((s) => s.kind === 'stop');
+      if (travel.length) { travel[0].modeIn = null; travel[0].legKm = null; travel[0].legMin = null; travel[0].legKmSource = null; }
 
       // Per-mode distance strategy (DB-driven). Manual entries are respected as-is.
+      // OSRM legs also capture the real path geometry (encoded polyline).
       const strategies = await loadStrategies();
       let routed = 0;
-      for (let i = 1; i < clean.length; i++) {
-        const prev = clean[i - 1];
-        const cur = clean[i];
-        if (cur.legKmSource === 'manual' && (cur.legKm != null || cur.legMin != null)) { routed++; continue; }
+      for (let i = 1; i < travel.length; i++) {
+        const prev = travel[i - 1];
+        const cur = travel[i];
         const strat = strategies.get(cur.modeIn || 'road') || 'none';
         const a: [number, number] = [prev.lat, prev.lng];
         const b: [number, number] = [cur.lat, cur.lng];
-        let d: { km: number; min: number | null } | null = null;
+        if (cur.legKmSource === 'manual' && (cur.legKm != null || cur.legMin != null)) {
+          // manual km/time stands, but still fetch geometry so the map draws the real path
+          if (strat === 'osrm-driving') cur.legGeometry = (await osrmDriving(a, b))?.geometry ?? null;
+          else if (strat === 'osrm-foot') cur.legGeometry = (await osrmFoot(a, b))?.geometry ?? null;
+          routed++;
+          continue;
+        }
+        let d: { km: number; min: number | null; geometry?: string | null } | null = null;
         if (strat === 'osrm-driving') d = await osrmDriving(a, b);
         else if (strat === 'osrm-foot') d = await osrmFoot(a, b);
-        else if (strat === 'aerial') d = { km: haversineKm(a, b), min: null };
+        else if (strat === 'aerial') d = { km: haversineKm(a, b), min: null, geometry: null };
         if (d) {
           cur.legKm = d.km;
           cur.legMin = d.min;
           cur.legKmSource = 'auto';
+          cur.legGeometry = d.geometry ?? null;
           routed++;
         } else {
-          cur.legKm = null; cur.legMin = null; cur.legKmSource = null;
+          cur.legKm = null; cur.legMin = null; cur.legKmSource = null; cur.legGeometry = null;
         }
       }
 
@@ -225,8 +247,8 @@ export class RouteStopsController {
         prisma.$executeRaw`DELETE FROM tour_route_stops WHERE "tourId" = ${tour.id}`,
         ...clean.map(
           (s) => prisma.$executeRaw`
-            INSERT INTO tour_route_stops ("tourId","order",name,latitude,longitude,"modeIn",nights,"legKm","legMin","legKmSource",verified,source,"updatedAt")
-            VALUES (${tour.id},${s.order},${s.name},${s.lat},${s.lng},${s.modeIn},${s.nights},${s.legKm},${s.legMin},${s.legKmSource},true,'ADMIN',now())`
+            INSERT INTO tour_route_stops ("tourId","order",name,latitude,longitude,"modeIn",nights,"legKm","legMin","legKmSource","legGeometry",kind,verified,source,"updatedAt")
+            VALUES (${tour.id},${s.order},${s.name},${s.lat},${s.lng},${s.modeIn},${s.nights},${s.legKm},${s.legMin},${s.legKmSource},${s.legGeometry},${s.kind},true,'ADMIN',now())`
         ),
       ]);
 
@@ -246,8 +268,8 @@ export class RouteStopsController {
       }
 
       // back-compat: keep osm_leg_distance fresh for road legs (older readers)
-      for (let i = 1; i < clean.length; i++) {
-        const prev = clean[i - 1], cur = clean[i];
+      for (let i = 1; i < travel.length; i++) {
+        const prev = travel[i - 1], cur = travel[i];
         if ((cur.modeIn || 'road') !== 'road' || cur.legKm == null) continue;
         try {
           await prisma.$executeRaw`

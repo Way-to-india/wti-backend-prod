@@ -569,10 +569,16 @@ export class TourController {
       // unverified tours (founder ruling: "100% accurate maps, or none").
       let route: any = null;
       try {
-        const rs = await prisma.$queryRaw<
-          { order: number; name: string; latitude: number; longitude: number; modeIn: string | null; legKm: number | null; legMin: number | null; legKmSource: string | null }[]
-        >`SELECT "order", name, latitude, longitude, "modeIn", "legKm", "legMin", "legKmSource"
+        const all = await prisma.$queryRaw<
+          { order: number; name: string; latitude: number; longitude: number; modeIn: string | null; legKm: number | null; legMin: number | null; legKmSource: string | null; legGeometry: string | null; kind: string | null }[]
+        >`SELECT "order", name, latitude, longitude, "modeIn", "legKm", "legMin", "legKmSource", "legGeometry", kind
           FROM tour_route_stops WHERE "tourId" = ${tour.id} AND verified = true ORDER BY "order"`;
+        // landmarks (Mount Kailash, Mansarovar Lake…) are map-only pins — kept
+        // out of the journey chain, stop numbering and distance totals
+        const landmarks = all
+          .filter((s) => s.kind === 'landmark')
+          .map((s) => ({ name: s.name, lat: Number(s.latitude), lng: Number(s.longitude) }));
+        const rs = all.filter((s) => s.kind !== 'landmark');
         if (rs.length >= 2) {
           const legRows = await prisma.$queryRaw<
             { fromName: string; toName: string; km: number; durationMin: number }[]
@@ -591,8 +597,8 @@ export class TourController {
             const h = Math.floor(mins / 60), m = mins % 60;
             return `~${h ? h + 'h ' : ''}${m ? m + 'm' : h ? '' : '0m'}`.trim();
           };
-          const stops = rs.map((s) => ({
-            order: s.order, name: s.name, day: s.order, lat: Number(s.latitude), lng: Number(s.longitude),
+          const stops = rs.map((s, idx) => ({
+            order: idx + 1, name: s.name, day: idx + 1, lat: Number(s.latitude), lng: Number(s.longitude),
           }));
           const legs: any[] = [];
           for (let i = 1; i < rs.length; i++) {
@@ -618,8 +624,11 @@ export class TourController {
               }
             }
             legs.push({
-              day: to.order, from: from.name, to: to.name, mode, km, timeText, estimated,
+              day: i, from: from.name, to: to.name, mode, km, timeText, estimated,
               aerial: strat === 'aerial' && to.legKmSource !== 'manual' && km != null,
+              // encoded polyline of the REAL path (trail/highway) — maps decode
+              // and draw this instead of a straight line when present
+              geometry: to.legGeometry || null,
             });
           }
           const roadTotalKm = Math.round(legs.filter((l) => l.mode === 'road' && l.km).reduce((a, l) => a + (l.km || 0), 0));
@@ -629,7 +638,7 @@ export class TourController {
           const modesMeta = Object.fromEntries(
             modes.map((m) => [m, { label: metaMap.get(m)?.label || `By ${m}`, icon: metaMap.get(m)?.icon || 'route' }])
           );
-          route = { stops, legs, roadTotalKm, trekTotalKm, modes, modesMeta };
+          route = { stops, legs, roadTotalKm, trekTotalKm, modes, modesMeta, landmarks };
         }
       } catch (e) {
         console.error('verified route load failed:', e);
