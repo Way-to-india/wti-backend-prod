@@ -24,6 +24,7 @@ import { ddcv, ddcvScalar, weightsForObjective, type LegCtx } from './ddcv';
 import { toleranceForProfile, type Tolerance } from './physiology';
 import { hybridAccessHours } from './fallback';
 import type { AnchorCandidate } from './anchors';
+import { runFatigueLedger, dayLoadsFromDays } from './fatigue';
 
 const legKey = (a: string, b: string) => `${a}||${b}`;
 const BIG = 1e7;
@@ -159,6 +160,10 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
 
   const metrics = scorePlan(exp.legs, exp.days, pax, input.profile ?? 'standard');
   const warnings = [...exp.warnings];
+  // §3.3/§7 rhythm gates: accumulate the fatigue ledger over the scheduled days and
+  // surface any two-consecutive-heavy / heavy→heavy-drive / 3-day-streak violation.
+  const ledger = runFatigueLedger(dayLoadsFromDays(exp.days, chosen, tol, month), tol);
+  for (const v of ledger.violations) warnings.push(`Rhythm (${v.kind}): ${v.detail}`);
   if (exp.infeasible) warnings.unshift('Plan contains a hard-constraint violation (gate/daylight/permit) — a day was flagged infeasible and must be rerouted.');
   void nodeMap;
 
@@ -172,6 +177,7 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
     verifyBeforeBooking: verifyList(chosenList),
     map: mapRoute(names, chosen, nodesByName),
     label,
+    rhythm: { ok: ledger.ok, peakF: ledger.F.length ? Math.max(...ledger.F) : 0, violations: ledger.violations },
   };
 }
 

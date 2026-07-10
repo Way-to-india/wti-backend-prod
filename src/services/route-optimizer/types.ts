@@ -257,6 +257,8 @@ export interface Plan {
   corridorLabel?: string;
   /** the date-flexible alternate (daily services only). */
   dateFlexible?: boolean;
+  /** §3.3/§7 fatigue-ledger + rhythm-gate summary for this plan. */
+  rhythm?: { ok: boolean; peakF: number; violations: { day: number; kind: string; detail: string }[] };
   /** side-by-side comparison metrics. */
   comparison?: PlanComparison;
   /** AI enrichment layer output (fares, hotels, guides, city content, trip cost). */
