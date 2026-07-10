@@ -161,6 +161,14 @@ export interface HaltSuggestion {
 
 // ---- output ------------------------------------------------------------------
 
+/** §10 decision record — the "Why this way?" note. Facts only; the
+ *  Sprint-5 narration AI polishes the voice, never the facts. */
+export interface DecisionRecord { winner: string; runnerUp: string | null; marginText: string; why: string }
+
+/** §10 one compared service on a leg (ranked, chosen flagged). `dur` = honest
+ *  door-to-door minutes; `fare` = indicative ₹ per person. */
+export interface LegOptionRow { id: string | number; dur: number | null; fare: number | null; freq: string; chosen: boolean; note?: string }
+
 export interface PlanLeg {
   from: string;
   to: string;
@@ -191,6 +199,11 @@ export interface PlanLeg {
   /** every mode/service that was compared for this leg — lets the desk pick the
    *  budget train over the fast flight, etc. */
   modeOptions?: LegModeOption[];
+  /** §10 decision record: winner / runner-up / margin / why. Additive +
+   *  absent-safe (UI renders nothing when absent). */
+  decisionRecord?: DecisionRecord;
+  /** §10 every service compared for this leg, ranked best→worst, chosen flagged. */
+  legOptions?: LegOptionRow[];
 }
 
 export interface LegModeOption {

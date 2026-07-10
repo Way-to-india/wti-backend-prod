@@ -21,6 +21,7 @@ import { scorePlan, toTotals } from './score';
 import { verifyList } from './guardrails';
 import { fmtDuration } from './geo';
 import { ddcv, ddcvScalar, weightsForObjective, type LegCtx } from './ddcv';
+import { buildLegExplain } from './explain';
 import { toleranceForProfile, type Tolerance } from './physiology';
 import { hybridAccessHours } from './fallback';
 import type { AnchorCandidate } from './anchors';
@@ -93,6 +94,17 @@ function bestOption(opts: LegOption[] | undefined, obj: Objective, pax: number, 
   return pick[0];
 }
 
+/** Rank a leg's candidate options best→worst under the objective, mirroring
+ *  bestOption's usable-filter EXACTLY so ranked[0] === the chosen option. This is
+ *  what lets the §10 decision record name a truthful winner + runner-up. */
+function rankLegOptions(opts: LegOption[] | undefined, obj: Objective, pax: number, opts2?: { overnightTrains?: boolean; preferDaily?: boolean; dailyOnly?: boolean }, tol: Tolerance = DEFAULT_TOL, month?: number): LegOption[] {
+  if (!opts || !opts.length) return [];
+  let usable = opts.filter((o) => opts2?.overnightTrains === false ? !(o.mode === 'RAIL') : true);
+  if (opts2?.dailyOnly) { const daily = usable.filter((o) => (o.operatingDays ?? 127) === 127); if (daily.length) usable = daily; }
+  const pool = usable.length ? usable : opts;
+  return pool.slice().sort((a, b) => optionCost(a, obj, pax, opts2?.preferDaily, tol, month) - optionCost(b, obj, pax, opts2?.preferDaily, tol, month));
+}
+
 function buildMatrix(names: string[], deps: OptimizeDeps, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number): number[][] {
   const n = names.length;
   const m: number[][] = Array.from({ length: n }, () => new Array(n).fill(BIG));
@@ -132,9 +144,18 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
   const preferDaily = input.startWeekday == null;
   const chosen = new Map<string, LegOption>();
   const chosenList: LegOption[] = [];
+  // §10: rank each leg's options once (same objective ordering the sequencer uses),
+  // keep ranked[0] as the chosen option, and retain the ranking for decision records.
+  const explainByLeg = new Map<string, ReturnType<typeof buildLegExplain>>();
+  const w = weightsForObjective(input.objective);
   for (let i = 1; i < names.length; i++) {
-    const opt = bestOption(deps.pool.get(legKey(names[i - 1], names[i])), input.objective, pax, { overnightTrains: input.overnightTrains, preferDaily, dailyOnly: deps.dailyOnly }, tol, month);
-    if (opt) { chosen.set(legKey(names[i - 1], names[i]), opt); chosenList.push(opt); }
+    const key = legKey(names[i - 1], names[i]);
+    const ranked = rankLegOptions(deps.pool.get(key), input.objective, pax, { overnightTrains: input.overnightTrains, preferDaily, dailyOnly: deps.dailyOnly }, tol, month);
+    if (ranked.length) {
+      const opt = ranked[0];
+      chosen.set(key, opt); chosenList.push(opt);
+      explainByLeg.set(key, buildLegExplain(ranked, (legOpt) => legCtx(legOpt, tol, pax, month), w));
+    }
   }
 
   const nodesByName = new Map(deps.nodes.map((n) => [n.name, n] as const));
@@ -166,6 +187,16 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
     }
   }
   const exp = expandDays({ sequence: names, nights, nodes: nodesByName, chosen, profile: input.profile ?? 'standard', maxRoadKmDay: input.maxRoadKmDay, startWeekday: startWd, haltNames: deps.haltNames, anchorsByLeg: deps.anchorsByLeg, month: input.month });
+
+  // §10 attach decision records + legOptions to the legs the plan actually took
+  // (additive, absent-safe; matched by from||to on the main sequencing path).
+  for (const leg of exp.legs) {
+    const ex = explainByLeg.get(legKey(leg.from, leg.to));
+    if (ex) {
+      if (ex.decisionRecord) leg.decisionRecord = ex.decisionRecord;
+      leg.legOptions = ex.legOptions;
+    }
+  }
 
   const metrics = scorePlan(exp.legs, exp.days, pax, input.profile ?? 'standard');
   const warnings = [...exp.warnings];
