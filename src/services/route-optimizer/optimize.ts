@@ -27,6 +27,7 @@ import { hybridAccessHours } from './fallback';
 import type { AnchorCandidate } from './anchors';
 import { runFatigueLedger, dayLoadsFromDays, projectComfort, rhythmHeadline } from './fatigue';
 import { buildArchetypes } from './archetypes';
+import { negotiate, needsNegotiation } from './negotiate';
 
 const legKey = (a: string, b: string) => `${a}||${b}`;
 const BIG = 1e7;
@@ -279,7 +280,13 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
   // §8 additive: Swift/Balanced/Gentle archetype cards (each a full solve under a
   // fixed objective). plans[] stays present + unchanged — loadFromOptimizer is safe.
   const cards = buildArchetypes(input, deps);
-  return { plans, cards };
+  // §9 negotiation: only when the chosen plan is infeasible (engine signals) or over
+  // the traveller's day budget — a senior expert negotiates instead of erroring. The
+  // extra re-solves run ONLY on an infeasible request, so feasible solves are untouched.
+  const negotiation = needsNegotiation(best, input.dayBudget)
+    ? negotiate(input, deps, { dayBudget: input.dayBudget })
+    : undefined;
+  return { plans, cards, ...(negotiation && negotiation.length ? { negotiation } : {}) };
 }
 
 /**

@@ -145,6 +145,9 @@ export interface OptimizeInput {
   pins?: { legFrom: string; legTo: string; mode?: Mode; optionId?: number | string }[];
   /** halts the executive accepted from the suggestions — only these are inserted. */
   acceptedHalts?: { legFrom: string; legTo: string; name: string; lat: number; lng: number }[];
+  /** §9 the traveller's day budget (e.g. 8). When set and the honest plan runs
+   *  longer, the request is infeasible and optimize() attaches a negotiation. */
+  dayBudget?: number;
 }
 
 /** A suggested (opt-in) en-route overnight town on an over-long road leg. */
@@ -314,11 +317,37 @@ export interface ArchetypeCard {
   fatigue: ('easy' | 'full')[];
 }
 
+/** §9 the classic relaxation kinds a senior expert offers on an infeasible request. */
+export type RelaxationKind =
+  | 'add_day' | 'drop_node' | 'upgrade_mode' | 'shift_start_date' | 'allow_1_heavy_day' | 'swap_node';
+
+/** §9 one priced relaxation — plain, facts-only English naming what it costs (days /
+ *  ₹ per person / comfort). The Sprint-5 narration AI polishes the voice, never the
+ *  facts. `deltaCostPp` is ₹ per person vs the baseline; `deltaFatigue` is the peak-
+ *  fatigue delta. The optional `feasibilityGained`/`experienceLost`/`score` diagnostics
+ *  expose the ranking key (feasibility gained ÷ experience lost). */
+export interface Relaxation {
+  kind: RelaxationKind;
+  label: string;
+  deltaDays: number;
+  deltaCostPp: number;
+  deltaFatigue: number;
+  plainText: string;
+  feasibilityGained?: number;
+  experienceLost?: number;
+  score?: number;
+  /** relies on a thin/unverified candidate — reconfirm before booking. */
+  verifyFlag?: boolean;
+}
+
 export interface OptimizeResult {
   plans: Plan[];
   /** §8 Swift/Balanced/Gentle archetype cards. Additive + optional — plans[] stays
    *  present + unchanged so loadFromOptimizer (reads plans[0]) is safe. */
   cards?: ArchetypeCard[];
+  /** §9 top-3 priced relaxations when the request is infeasible / over the day
+   *  budget. Additive + optional — absent on a feasible solve. */
+  negotiation?: Relaxation[];
 }
 
 // ---- enrichment (AI layer) output ------------------------------------------
