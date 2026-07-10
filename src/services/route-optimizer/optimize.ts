@@ -25,7 +25,7 @@ import { buildLegExplain } from './explain';
 import { toleranceForProfile, type Tolerance } from './physiology';
 import { hybridAccessHours } from './fallback';
 import type { AnchorCandidate } from './anchors';
-import { runFatigueLedger, dayLoadsFromDays } from './fatigue';
+import { runFatigueLedger, dayLoadsFromDays, projectComfort, rhythmHeadline } from './fatigue';
 
 const legKey = (a: string, b: string) => `${a}||${b}`;
 const BIG = 1e7;
@@ -203,7 +203,10 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
   if (phase && (!phase.aligned || phase.shiftDays !== 0)) warnings.push(`Phase shift: ${phase.reason}`);
   // §3.3/§7 rhythm gates: accumulate the fatigue ledger over the scheduled days and
   // surface any two-consecutive-heavy / heavy→heavy-drive / 3-day-streak violation.
-  const ledger = runFatigueLedger(dayLoadsFromDays(exp.days, chosen, tol, month), tol);
+  const dayLoads = dayLoadsFromDays(exp.days, chosen, tol, month);
+  const ledger = runFatigueLedger(dayLoads, tol);
+  // §7 inc-2: project per-day comfort (fatigue/effort/comfortNote/marker) onto the days.
+  projectComfort(dayLoads, exp.days, tol).forEach((c, i) => { const d = exp.days[i]; if (!d) return; d.fatigue = c.fatigue; d.effort = c.effort; d.comfortNote = c.comfortNote; if (c.marker) d.marker = c.marker; });
   for (const v of ledger.violations) warnings.push(`Rhythm (${v.kind}): ${v.detail}`);
   if (exp.infeasible) warnings.unshift('Plan contains a hard-constraint violation (gate/daylight/permit) — a day was flagged infeasible and must be rerouted.');
   void nodeMap;
@@ -218,7 +221,7 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
     verifyBeforeBooking: verifyList(chosenList),
     map: mapRoute(names, chosen, nodesByName),
     label,
-    rhythm: { ok: ledger.ok, peakF: ledger.F.length ? Math.max(...ledger.F) : 0, violations: ledger.violations },
+    rhythm: { ok: ledger.ok, peakF: ledger.F.length ? Math.max(...ledger.F) : 0, headline: rhythmHeadline(ledger, tol), violations: ledger.violations },
     phaseShift: phase ? { aligned: phase.aligned, shiftDays: phase.shiftDays, startWeekday: phase.startWeekday != null ? ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'][phase.startWeekday] : null, reason: phase.reason } : undefined,
   };
 }

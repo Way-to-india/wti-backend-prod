@@ -231,6 +231,15 @@ export interface DayItem {
   halt?: boolean;
   /** hard-constraint violations that made this day infeasible (day was rejected/rerouted). */
   violations?: string[];
+  /** §7 per-day comfort projection (Sprint 3 inc-2): 'full' = a heavy travel day,
+   *  'easy' = rest/light/overnight. */
+  fatigue?: 'easy' | 'full';
+  /** effort 0–100 = this day's load vs the party's daily cap. */
+  effort?: number;
+  /** one plain-voice line on how the day feels. */
+  comfortNote?: string;
+  /** short highlight tag, e.g. "Rest day" / "Longest drive · 4½ h" / "Overnight train". */
+  marker?: string;
 }
 
 export interface Totals {
@@ -275,7 +284,7 @@ export interface Plan {
   /** the date-flexible alternate (daily services only). */
   dateFlexible?: boolean;
   /** §3.3/§7 fatigue-ledger + rhythm-gate summary for this plan. */
-  rhythm?: { ok: boolean; peakF: number; violations: { day: number; kind: string; detail: string }[] };
+  rhythm?: { ok: boolean; peakF: number; headline?: string; violations: { day: number; kind: string; detail: string }[] };
   /** §6.1 whole-trip phase shift applied to align weekday-limited trains. */
   phaseShift?: { aligned: boolean; shiftDays: number; startWeekday: string | null; reason: string };
   /** side-by-side comparison metrics. */

@@ -38,6 +38,7 @@ export interface DayLoad {
   load: number;        // fatigue load contributed by this day (0 for a full rest day)
   vehicleHrs: number;  // terrain-adjusted in-vehicle hours this day
   hasTransit: boolean; // false = a full day at a city (rest/light)
+  overnight?: boolean; // true = this transit day is a true overnight rail (restful)
   label?: string;
 }
 
@@ -122,6 +123,87 @@ export function dayLoadsFromDays(
       month, overnight,
       depMin: toMin(opt.depTime ?? null), arrMin: toMin(opt.arrTime ?? null),
     });
-    return { load, vehicleHrs: overnight ? 0 : vh, hasTransit: true, label: `${d.transit.from}→${d.transit.to}` };
+    return { load, overnight, vehicleHrs: overnight ? 0 : vh, hasTransit: true, label: `${d.transit.from}→${d.transit.to}` };
   });
+}
+
+
+// ---- L4b comfort projection (Sprint 3 inc-2, §7): per-day feel for the UI -----
+
+export interface DayComfort {
+  fatigue: 'easy' | 'full';
+  effort: number;       // 0..100 vs the party's daily load cap
+  comfortNote: string;  // one plain-voice line (facts only)
+  marker?: string;      // short highlight tag
+}
+
+function fmtHalfHrs(h: number): string {
+  const r = Math.round(h * 2) / 2;
+  const whole = Math.floor(r);
+  const half = r - whole >= 0.5 ? '½' : '';
+  if (whole === 0) return `${half || '0'} h`;
+  return `${whole}${half} h`;
+}
+
+/** Friendly party name for the headline (never leaks internal class ids). */
+function friendlyClass(cls: string): string {
+  switch (cls) {
+    case 'elderly': return 'senior';
+    case 'reduced_mobility': return 'reduced-mobility';
+    case 'family': return 'family';
+    case 'young': return 'young';
+    default: return 'standard';
+  }
+}
+
+/**
+ * Project the per-day loads into UI comfort fields. PURE + facts-only: 'full' when
+ * the day is heavy (load > 0.7*cap), else 'easy'; effort is the day's load as a
+ * percentage of the party's daily cap; the note + marker are rendered from the
+ * day's own transit/rest character. No invention — the narration AI polishes voice.
+ */
+export function projectComfort(
+  dayLoads: DayLoad[],
+  days: { transit?: { from: string; to: string; mode?: string } | null; city?: string; halt?: boolean }[],
+  tol: Tolerance,
+): DayComfort[] {
+  const cap = dailyLoadCap(tol);
+  let longestIdx = -1, longestVh = 0;
+  dayLoads.forEach((dl, i) => { if (dl.hasTransit && !dl.overnight && dl.vehicleHrs > longestVh) { longestVh = dl.vehicleHrs; longestIdx = i; } });
+
+  return dayLoads.map((dl, i) => {
+    const d = days[i] ?? {};
+    const heavy = isHeavy(dl.load, tol);
+    const effort = Math.max(0, Math.min(100, Math.round((dl.load / cap) * 100)));
+    const to = d.transit?.to;
+
+    let comfortNote: string;
+    let marker: string | undefined;
+    if (!dl.hasTransit) {
+      comfortNote = d.city ? `A full day in ${d.city} — no travelling.` : 'A full rest day — no travelling.';
+      marker = 'Rest day';
+    } else if (dl.overnight) {
+      comfortNote = `Overnight train${to ? ` to ${to}` : ''} — you travel while you sleep and save a hotel night.`;
+      marker = 'Overnight train';
+    } else if (heavy) {
+      comfortNote = `A long travel day${to ? ` to ${to}` : ''} — about ${fmtHalfHrs(dl.vehicleHrs)} in the vehicle.`;
+    } else {
+      comfortNote = `An easy travel day${to ? ` to ${to}` : ''} — about ${fmtHalfHrs(dl.vehicleHrs)} on the move.`;
+    }
+    if (marker === undefined && i === longestIdx && longestVh >= 3) marker = `Longest drive · ${fmtHalfHrs(longestVh)}`;
+
+    const fatigue: 'easy' | 'full' = heavy ? 'full' : 'easy';
+    return { fatigue, effort, comfortNote, marker };
+  });
+}
+
+/** One-line comfort verdict that NAMES the party's comfortable daily cap. */
+export function rhythmHeadline(ledger: LedgerResult, tol: Tolerance): string {
+  const who = friendlyClass(tol.cls);
+  const capH = tol.comfortableHrs;
+  if (ledger.ok) {
+    return `Comfort-paced for a ${who} group — up to about ${capH} h of travel on a day, with lighter days between the long ones.`;
+  }
+  const n = ledger.violations.length;
+  return `${n} day${n === 1 ? '' : 's'} run past a comfortable ${who} pace (about ${capH} h/day) — see the day notes.`;
 }

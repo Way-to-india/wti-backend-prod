@@ -144,17 +144,28 @@ function decisionRecordFor(
   const dMoneyPp = Math.round((rv.M - wv.M) / Math.max(1, pax)); // + = winner cheaper per person
   const dPhi = round1(rv.Phi - wv.Phi);                         // + = winner easier
 
-  const adv: string[] = [];
-  if (dHours >= 0.3) adv.push(`about ${fmtHrs(dHours)} quicker door-to-door`);
-  else if (dHours <= -0.3) adv.push(`about ${fmtHrs(-dHours)} slower but chosen for comfort or cost`);
-  if (dMoneyPp >= 200) adv.push(`${inr(dMoneyPp)}/person cheaper`);
-  else if (dMoneyPp <= -200) adv.push(`${inr(dMoneyPp)}/person more`);
-  if (isTrueOvernight(winner) && !isTrueOvernight(runnerUp)) adv.push('and saves a hotel night');
-  else if (dPhi >= 0.4) adv.push('and an easier ride');
+  // comparative clauses read "... than the runner-up"; trailing clauses stand alone
+  // ("... and it saves a hotel night") so the two never collide grammatically.
+  const comparative: string[] = [];
+  if (dHours >= 0.3) comparative.push(`about ${fmtHrs(dHours)} quicker door-to-door`);
+  else if (dHours <= -0.3) comparative.push(`about ${fmtHrs(-dHours)} longer door-to-door`);
+  if (dMoneyPp >= 200) comparative.push(`${inr(dMoneyPp)}/person cheaper`);
+  else if (dMoneyPp <= -200) comparative.push(`${inr(-dMoneyPp)}/person more`);
 
-  const marginText = adv.length
-    ? `${cap(adv.join(', '))} than the ${ruLabel.toLowerCase()}.`
-    : `A close call with the ${ruLabel.toLowerCase()}; chosen on balance.`;
+  const trailing: string[] = [];
+  if (isTrueOvernight(winner) && !isTrueOvernight(runnerUp)) trailing.push('saves a hotel night');
+  else if (dPhi >= 0.4) trailing.push('is the easier ride');
+
+  let marginText: string;
+  if (comparative.length) {
+    marginText = `${cap(comparative.join(', '))} than the ${ruLabel.toLowerCase()}`;
+    if (trailing.length) marginText += `, and it ${trailing.join(' and ')}`;
+    marginText += '.';
+  } else if (trailing.length) {
+    marginText = `Chosen because it ${trailing.join(' and ')}, where the ${ruLabel.toLowerCase()} does not.`;
+  } else {
+    marginText = `A close call with the ${ruLabel.toLowerCase()}; chosen on balance.`;
+  }
 
   return { winner: winLabel, runnerUp: ruLabel, marginText, why: whyLine(winner, runnerUp, { dHours, dMoneyPp, dPhi }) };
 }
