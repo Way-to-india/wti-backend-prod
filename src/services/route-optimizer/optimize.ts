@@ -22,6 +22,7 @@ import { verifyList } from './guardrails';
 import { fmtDuration } from './geo';
 import { ddcv, ddcvScalar, weightsForObjective, type LegCtx } from './ddcv';
 import { toleranceForProfile, type Tolerance } from './physiology';
+import { hybridAccessHours } from './fallback';
 
 const legKey = (a: string, b: string) => `${a}||${b}`;
 const BIG = 1e7;
@@ -33,7 +34,11 @@ const ACCESS = { RAIL: { from: 0.75, to: 0.75 }, AIR: { from: 1.5, to: 1.0 } } a
 const DEFAULT_TOL: Tolerance = toleranceForProfile(undefined);
 function legCtx(o: LegOption, tol: Tolerance, pax: number, month?: number): LegCtx {
   const a = o.mode === 'RAIL' ? ACCESS.RAIL : o.mode === 'AIR' ? ACCESS.AIR : { from: 0, to: 0 };
-  return { tol, pax, month, accessFromHrs: a.from, accessToHrs: a.to };
+  // §4.6 rung 2: a rail+road hybrid folds its onward Band-A road transfer into
+  // door-to-door access so the DDCV charges the extra hours + taxi honestly (a far
+  // drop railhead loses to a nearer one, exactly like a far airport).
+  const hyb = hybridAccessHours(o);
+  return { tol, pax, month, accessFromHrs: a.from, accessToHrs: a.to + hyb.hrs, accessCostPp: hyb.costPp };
 }
 
 export interface OptimizeDeps {

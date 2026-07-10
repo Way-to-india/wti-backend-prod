@@ -15,6 +15,7 @@ import type { CityNode, LegOption } from './types';
 import { haversineKm } from './geo';
 import { fmtMin } from './constraints';
 import { railJunctionOptions } from './railGraph';
+import { railRoadHybridOptions } from './fallback';
 
 const BOX_RAIL = 0.4;  // ~44 km around a city to find its railheads
 const BOX_AIR = 0.6;   // ~66 km around a city to find its airport
@@ -127,6 +128,12 @@ export async function multimodalOptions(a: CityNode, b: CityNode, ctx: FindCtx):
   if (d > 200 && !out.some((o) => o.mode === 'RAIL')) {
     const junc = await railJunctionOptions(a, b, ctx);
     out = out.concat(junc);
+    // rung 2: still no clean rail path => overnight/day train to a railhead within
+    // 150 km of B + a morning road transfer. Generated on a bigger corridor only.
+    if (d > 300 && !out.some((o) => o.mode === 'RAIL')) {
+      const hyb = await railRoadHybridOptions(a, b, ctx);
+      out = out.concat(hyb);
+    }
   }
   return out;
 }

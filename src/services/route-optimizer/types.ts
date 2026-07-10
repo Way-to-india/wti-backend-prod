@@ -94,6 +94,13 @@ export interface LegOption {
   seasonal?: boolean;
   source?: string;
   verifiedAt?: string | null; // ISO
+  /** rail+road hybrid (spec §4.6 rung 2): this RAIL option drops at a railhead
+   *  `viaNode`, then an onward Band-A road transfer of `onwardRoadKm`/`onwardRoadMin`
+   *  reaches the city. The engine folds the onward road into door-to-door access
+   *  (optimize.legCtx) so the DDCV charges it honestly. Additive + optional. */
+  onwardRoadKm?: number;
+  onwardRoadMin?: number;
+  viaNode?: string | null;
 }
 
 // ---- input -------------------------------------------------------------------
