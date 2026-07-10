@@ -16,7 +16,7 @@
 import type { CityNode, LegOption, OptimizeInput, OptimizeResult, Plan, Objective, MapRoute, MapRouteLeg } from './types';
 import { sequence } from './sequence';
 import { expandDays } from './dayExpand';
-import { resolveWeekdayLock, type WeekdayConstrainedLeg } from './constraints';
+import { resolveWeekdayLock, type WeekdayConstrainedLeg, phaseShift, type PhaseShiftResult } from './constraints';
 import { scorePlan, toTotals } from './score';
 import { verifyList } from './guardrails';
 import { fmtDuration } from './geo';
@@ -152,14 +152,24 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
       di = d.day - 1;
     }
   }
-  const { lock } = resolveWeekdayLock(constrained, input.startWeekday ?? null);
-
-  // pass 2 — expand with the resolved weekday lock
-  const startWd = lock ? (['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'].indexOf(lock) as any) : (input.startWeekday ?? null);
+  let { lock } = resolveWeekdayLock(constrained, input.startWeekday ?? null);
+  // §6.1 whole-trip phase shift: if the traveller's date is SOFT and their desired
+  // Day-1 weekday does not align the weekday-limited trains, slide the whole trip by
+  // up to ±softStartWindowDays days — the cheapest fix, tried before any reroute.
+  let phase: PhaseShiftResult | undefined;
+  let startWd: any = lock ? (['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'].indexOf(lock)) : (input.startWeekday ?? null);
+  if (input.startWeekday != null && (input.softStartWindowDays ?? 0) > 0) {
+    phase = phaseShift(input.startWeekday, constrained, input.softStartWindowDays);
+    if (phase.aligned && phase.startWeekday != null) {
+      startWd = phase.startWeekday;
+      lock = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'][phase.startWeekday];
+    }
+  }
   const exp = expandDays({ sequence: names, nights, nodes: nodesByName, chosen, profile: input.profile ?? 'standard', maxRoadKmDay: input.maxRoadKmDay, startWeekday: startWd, haltNames: deps.haltNames, anchorsByLeg: deps.anchorsByLeg, month: input.month });
 
   const metrics = scorePlan(exp.legs, exp.days, pax, input.profile ?? 'standard');
   const warnings = [...exp.warnings];
+  if (phase && (!phase.aligned || phase.shiftDays !== 0)) warnings.push(`Phase shift: ${phase.reason}`);
   // §3.3/§7 rhythm gates: accumulate the fatigue ledger over the scheduled days and
   // surface any two-consecutive-heavy / heavy→heavy-drive / 3-day-streak violation.
   const ledger = runFatigueLedger(dayLoadsFromDays(exp.days, chosen, tol, month), tol);
@@ -178,6 +188,7 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
     map: mapRoute(names, chosen, nodesByName),
     label,
     rhythm: { ok: ledger.ok, peakF: ledger.F.length ? Math.max(...ledger.F) : 0, violations: ledger.violations },
+    phaseShift: phase ? { aligned: phase.aligned, shiftDays: phase.shiftDays, startWeekday: phase.startWeekday != null ? ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'][phase.startWeekday] : null, reason: phase.reason } : undefined,
   };
 }
 

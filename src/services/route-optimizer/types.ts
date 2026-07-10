@@ -138,6 +138,10 @@ export interface OptimizeInput {
   maxRoadKmDay?: number; // hard cap; default 350 (senior 300)
   /** fixed Day-1 weekday if the client already has a date; else engine derives the lock. */
   startWeekday?: Weekday | null;
+  /** §6.1: how many days the traveller's start date can slide (0/undefined = fixed).
+   *  When > 0 and startWeekday is set, the engine tries a whole-trip phase shift to
+   *  align weekday-limited trains before any physical fallback. */
+  softStartWindowDays?: number;
   pins?: { legFrom: string; legTo: string; mode?: Mode; optionId?: number | string }[];
   /** halts the executive accepted from the suggestions — only these are inserted. */
   acceptedHalts?: { legFrom: string; legTo: string; name: string; lat: number; lng: number }[];
@@ -259,6 +263,8 @@ export interface Plan {
   dateFlexible?: boolean;
   /** §3.3/§7 fatigue-ledger + rhythm-gate summary for this plan. */
   rhythm?: { ok: boolean; peakF: number; violations: { day: number; kind: string; detail: string }[] };
+  /** §6.1 whole-trip phase shift applied to align weekday-limited trains. */
+  phaseShift?: { aligned: boolean; shiftDays: number; startWeekday: string | null; reason: string };
   /** side-by-side comparison metrics. */
   comparison?: PlanComparison;
   /** AI enrichment layer output (fares, hotels, guides, city content, trip cost). */

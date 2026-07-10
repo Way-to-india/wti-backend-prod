@@ -150,3 +150,50 @@ export function resolveWeekdayLock(
   const lock = constrained.length && feasible.length > 0 && feasible.length < 7 ? WEEKDAY_NAMES[feasible[0]] : null;
   return { lock, feasibleStarts: feasible, conflicts };
 }
+
+
+// ---- whole-trip phase shift (spec §6.1) --------------------------------------
+
+export interface PhaseShiftResult {
+  aligned: boolean;
+  /** signed day shift applied to the desired start (0 = none). */
+  shiftDays: number;
+  /** the Day-1 weekday after the shift, or null when nothing within the window aligns. */
+  startWeekday: Weekday | null;
+  feasibleStarts: Weekday[];
+  reason: string;
+}
+
+/**
+ * The cheapest fix for a thrice-weekly train is to start the WHOLE trip a day or
+ * two later, not to reroute (spec §6.1). Given the traveller's DESIRED Day-1
+ * weekday and a soft window (±windowDays), find the smallest shift that lands on a
+ * feasible Day-1 weekday (one that makes every weekday-limited leg run). Human
+ * experts do this first; optimizers never do. Returns aligned=false when nothing
+ * within the window works — the caller then climbs the physical fallback ladder
+ * (junction / rail+road hybrid / anchor split).
+ */
+export function phaseShift(
+  desired: Weekday,
+  legs: WeekdayConstrainedLeg[],
+  windowDays = 3,
+): PhaseShiftResult {
+  const { feasibleStarts } = resolveWeekdayLock(legs, null);
+  const constrained = legs.filter((l) => l.operatingDays != null && l.operatingDays !== 127);
+  if (!constrained.length) {
+    return { aligned: true, shiftDays: 0, startWeekday: desired, feasibleStarts, reason: 'no weekday-limited legs — any start date works' };
+  }
+  if (feasibleStarts.includes(desired)) {
+    return { aligned: true, shiftDays: 0, startWeekday: desired, feasibleStarts, reason: 'the chosen start date already aligns the weekday-limited trains' };
+  }
+  for (let mag = 1; mag <= windowDays; mag++) {
+    for (const dir of [1, -1] as const) {
+      const wd = ((((desired + dir * mag) % 7) + 7) % 7) as Weekday;
+      if (feasibleStarts.includes(wd)) {
+        const when = dir > 0 ? `${mag} day(s) later` : `${mag} day(s) earlier`;
+        return { aligned: true, shiftDays: dir * mag, startWeekday: wd, feasibleStarts, reason: `start ${when} (Day-1 = ${WEEKDAY_NAMES[wd]}) so the weekday-limited train runs — cheaper than rerouting` };
+      }
+    }
+  }
+  return { aligned: false, shiftDays: 0, startWeekday: null, feasibleStarts, reason: `no start within ±${windowDays} days aligns the weekday-limited legs — climb the physical fallback ladder (junction / rail+road hybrid / anchor split) or drop the constrained leg` };
+}
