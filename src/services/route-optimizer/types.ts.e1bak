@@ -283,7 +283,6 @@ export interface CityEnrichment {
   guides?: EnrichedGuide[];
   content?: EnrichedContent;
   enriching?: boolean;   // true when a background job was enqueued for a miss
-  cityId?: number;       // world_cities.id — key for city_enrichment polling (E-1)
 }
 export interface TripCostSummary {
   currency: string;

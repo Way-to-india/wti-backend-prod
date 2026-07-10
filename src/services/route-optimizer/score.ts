@@ -24,7 +24,12 @@ export function scorePlan(legs: PlanLeg[], days: DayItem[], pax: number, profile
   const transitMin = legs.reduce((a, l) => a + (l.durationMin ?? 0), 0);
   const roadKm = legs.filter((l) => l.mode === 'ROAD').reduce((a, l) => a + (l.distanceKm ?? 0), 0);
   const overnightCredits = legs.filter((l) => l.overnight).length;
-  const hotelNights = days.filter((d) => !d.transit || d.transit == null).length - 1 - 0; // rough: sightseeing days
+  // Hotel nights = calendar nights in the trip minus nights spent on an overnight
+  // train. Trip length = the last day's index; you don't sleep in a hotel the
+  // final day. (Previous logic counted only no-transit days − 1 → 0 for
+  // transit-heavy trips, which zeroed out hotel cost.)
+  const totalDays = days.length ? days[days.length - 1].day : 0;
+  const hotelNights = Math.max(0, totalDays - 1 - overnightCredits);
   const fareMid = legs.reduce((a, l) => a + (l.farePpBand ? (l.farePpBand[0] + l.farePpBand[1]) / 2 : 0), 0);
   const costLo = legs.reduce((a, l) => a + (l.farePpBand ? l.farePpBand[0] : 0), 0);
   const costHi = legs.reduce((a, l) => a + (l.farePpBand ? l.farePpBand[1] : 0), 0);

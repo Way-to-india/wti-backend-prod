@@ -63,6 +63,64 @@ export async function roadLeg(
   return { km, min: Math.round((km / 45) * 60), estimated: true };
 }
 
+export interface RouteGeometry { km: number; min: number; coords: LatLng[] }
+
+/**
+ * Full road geometry between two points (OSRM, GeoJSON). Used to (a) draw the
+ * route following real roads on the map, and (b) place en-route overnight halts
+ * at the correct distance along the actual road, not on a straight line.
+ */
+export async function osrmRouteGeometry(a: LatLng, b: LatLng, fetchImpl: Fetch = fetch): Promise<RouteGeometry | null> {
+  try {
+    const url = `${OSRM_DRIVING}/${a[1]},${a[0]};${b[1]},${b[0]}?overview=full&geometries=geojson`;
+    const r = await fetchImpl(url);
+    const j: any = await r.json();
+    const rt = j?.routes?.[0];
+    if (!rt) return null;
+    const coords: LatLng[] = (rt.geometry?.coordinates || []).map((c: number[]) => [c[1], c[0]] as LatLng);
+    return { km: Math.round(rt.distance / 1000), min: Math.round((rt.duration / 60) * 1.15), coords };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Alternative road corridors between two points (OSRM alternatives). Returns up to
+ * `max` physically distinct routes (different roads / towns en route), each with its
+ * own distance, time and geometry — the basis for the "Route A vs Route B" corridor
+ * comparison. The first element is always OSRM's primary (fastest) route.
+ */
+export async function osrmRouteAlternatives(a: LatLng, b: LatLng, max = 3, fetchImpl: Fetch = fetch): Promise<RouteGeometry[]> {
+  try {
+    const url = `${OSRM_DRIVING}/${a[1]},${a[0]};${b[1]},${b[0]}?alternatives=${max}&overview=full&geometries=geojson`;
+    const r = await fetchImpl(url);
+    const j: any = await r.json();
+    const routes = Array.isArray(j?.routes) ? j.routes : [];
+    return routes.map((rt: any) => ({
+      km: Math.round(rt.distance / 1000),
+      min: Math.round((rt.duration / 60) * 1.15),
+      coords: (rt.geometry?.coordinates || []).map((c: number[]) => [c[1], c[0]] as LatLng),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/** The coordinate that lies `targetKm` along a polyline (linear interpolation on the nearest segment). */
+export function pointAtKmAlong(coords: LatLng[], targetKm: number): LatLng | null {
+  if (coords.length < 2) return coords[0] ?? null;
+  let acc = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const seg = haversineKm(coords[i - 1], coords[i]);
+    if (acc + seg >= targetKm) {
+      const f = seg > 0 ? (targetKm - acc) / seg : 0;
+      return [coords[i - 1][0] + (coords[i][0] - coords[i - 1][0]) * f, coords[i - 1][1] + (coords[i][1] - coords[i - 1][1]) * f];
+    }
+    acc += seg;
+  }
+  return coords[coords.length - 1];
+}
+
 /** "2h 45m" from minutes (matches the map's timeText format). */
 export function fmtDuration(min: number | null | undefined): string | null {
   if (min == null) return null;

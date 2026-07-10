@@ -18,6 +18,14 @@
 import type { DayItem, LegOption, PlanLeg, CityNode, GroupProfile, Weekday } from './types';
 import { WEEKDAY_NAMES } from './types';
 import { isTrueOvernight, gateArrivalFeasible, gateReachMin, toMin, fmtMin } from './constraints';
+import { toleranceForProfile, roadDayHardCapExceeded } from './physiology';
+
+const DOW_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+export function freqLabel(bits?: number): string {
+  if (bits == null || bits === 127) return 'daily';
+  const days = DOW_SHORT.filter((_, i) => bits & (1 << i));
+  return days.length ? `${days.join(', ')} only` : 'daily';
+}
 
 const DEFAULT_DEPART_MIN = 7 * 60; // 07:00 default coach departure
 const TRANSFER_BUFFER_MIN = 60; // vehicle↔airport/station handling between chained legs
@@ -32,6 +40,8 @@ export interface ExpandInput {
   profile: GroupProfile;
   maxRoadKmDay?: number;
   startWeekday?: Weekday | null; // once the lock is known, stamp weekdays
+  haltNames?: Set<string>; // cities that are inserted en-route overnight halts
+  month?: number; // seasonality for terrain speed (monsoon ghat slow-down)
 }
 
 export interface ExpandOutput {
@@ -52,6 +62,7 @@ function inboundConstraints(node: CityNode | undefined) {
 
 export function expandDays(inp: ExpandInput): ExpandOutput {
   const maxKm = inp.maxRoadKmDay ?? (inp.profile === 'senior' ? SENIOR_MAX_KM : DEFAULT_MAX_KM);
+  const tol = toleranceForProfile(inp.profile); // §3 body-truth party tolerance
   const legs: PlanLeg[] = [];
   const days: DayItem[] = [];
   const warnings: string[] = [];
@@ -119,6 +130,13 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
         }
       }
     }
+    // ---- body-truth HOUR cap (spec §3): terrain-adjusted vehicle-hours, not km.
+    // The 350 km/day rule is now a derived special case; a hill/ghat corridor can
+    // breach the party cap at a small km figure and MUST be refused as one road day.
+    if (opt.mode === 'ROAD') {
+      const cap = roadDayHardCapExceeded(opt, tol, { month: inp.month });
+      if (cap.exceeded) violations.push(`${from} → ${to}: ${cap.hrs.toFixed(1)} h in-vehicle exceeds the ${cap.capHrs} h/day cap for a ${tol.cls} party — split via an en-route anchor or move to rail/air.`);
+    }
     if (violations.length) infeasible = true;
 
     // ---- road-day cap
@@ -135,6 +153,8 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
       distanceKm: opt.distanceKm ?? null, durationMin: opt.durationMin ?? null,
       farePpBand: opt.farePpMin != null && opt.farePpMax != null ? [opt.farePpMin, opt.farePpMax] : null,
       verifyFlag, positioning, overnight,
+      operatingDays: opt.operatingDays,
+      frequency: opt.mode !== 'ROAD' ? freqLabel(opt.operatingDays) : undefined,
       note: positioning ? `Positioning drive to reach ${to} gateway — disclosed.` : violations.length ? violations.join(' ') : undefined,
     });
 
@@ -146,9 +166,15 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     const dayAdvance = overnight ? 1 : Math.max((opt.arrDayOffset ?? 0), nightsAtTo > 0 ? 1 : 0);
     dayIdx += Math.max(1, dayAdvance);
 
+    const isHalt = inp.haltNames?.has(to) ?? false;
+    const verb = opt.mode === 'AIR' ? 'Fly' : opt.mode === 'RAIL' ? 'Train' : opt.mode === 'FERRY' ? 'Ferry' : 'Drive';
+    const freq = opt.mode !== 'ROAD' ? freqLabel(opt.operatingDays) : 'daily';
+    const idTxt = opt.identifier ? ` · ${opt.identifier}${opt.mode !== 'ROAD' && freq !== 'daily' ? ` (${freq})` : ''}` : '';
     days.push({
-      day: dayIdx + 1, weekday: stamp(dayIdx), city: to,
-      activity: overnight ? `Overnight ${mapMode} ${from} → ${to} (saves a hotel night)` : `Travel ${from} → ${to}${positioning ? ' (positioning)' : ''}`,
+      day: dayIdx + 1, weekday: stamp(dayIdx), city: to, halt: isHalt,
+      activity: isHalt ? `En-route overnight halt at ${to} (break the ${from} drive; sightseeing + hotel)`
+        : overnight ? `Overnight train ${from} → ${to}${idTxt} (saves a hotel night)`
+        : `${verb} ${from} → ${to}${idTxt}${positioning ? ' (positioning)' : ''}`,
       transit: { from, to, mode: opt.mode, identifier: opt.identifier ?? null, dep: opt.depTime ?? null, arr: opt.arrTime ?? null },
       roadKm: opt.mode === 'ROAD' ? km : 0,
       transitMin: durationMin,
