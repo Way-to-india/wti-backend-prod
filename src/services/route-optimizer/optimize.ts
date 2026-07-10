@@ -23,6 +23,7 @@ import { fmtDuration } from './geo';
 import { ddcv, ddcvScalar, weightsForObjective, type LegCtx } from './ddcv';
 import { toleranceForProfile, type Tolerance } from './physiology';
 import { hybridAccessHours } from './fallback';
+import type { AnchorCandidate } from './anchors';
 
 const legKey = (a: string, b: string) => `${a}||${b}`;
 const BIG = 1e7;
@@ -48,6 +49,8 @@ export interface OptimizeDeps {
   haltNames?: Set<string>;
   /** force daily-only services (the date-flexible alternate). */
   dailyOnly?: boolean;
+  /** §4.4 candidate anchors per leg key (from||to), for pearl-split reasoning. */
+  anchorsByLeg?: Map<string, AnchorCandidate[]>;
 }
 
 /**
@@ -136,7 +139,7 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
   const nodesByName = new Map(deps.nodes.map((n) => [n.name, n] as const));
 
   // pass 1 — expand with no weekday to learn each constrained leg's day index
-  const pass1 = expandDays({ sequence: names, nights, nodes: nodesByName, chosen, profile: input.profile ?? 'standard', maxRoadKmDay: input.maxRoadKmDay, startWeekday: null, haltNames: deps.haltNames, month: input.month });
+  const pass1 = expandDays({ sequence: names, nights, nodes: nodesByName, chosen, profile: input.profile ?? 'standard', maxRoadKmDay: input.maxRoadKmDay, startWeekday: null, haltNames: deps.haltNames, anchorsByLeg: deps.anchorsByLeg, month: input.month });
   const constrained: WeekdayConstrainedLeg[] = [];
   {
     let di = 0;
@@ -152,7 +155,7 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
 
   // pass 2 — expand with the resolved weekday lock
   const startWd = lock ? (['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'].indexOf(lock) as any) : (input.startWeekday ?? null);
-  const exp = expandDays({ sequence: names, nights, nodes: nodesByName, chosen, profile: input.profile ?? 'standard', maxRoadKmDay: input.maxRoadKmDay, startWeekday: startWd, haltNames: deps.haltNames, month: input.month });
+  const exp = expandDays({ sequence: names, nights, nodes: nodesByName, chosen, profile: input.profile ?? 'standard', maxRoadKmDay: input.maxRoadKmDay, startWeekday: startWd, haltNames: deps.haltNames, anchorsByLeg: deps.anchorsByLeg, month: input.month });
 
   const metrics = scorePlan(exp.legs, exp.days, pax, input.profile ?? 'standard');
   const warnings = [...exp.warnings];

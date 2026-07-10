@@ -171,6 +171,10 @@ export interface PlanLeg {
   verifyFlag?: boolean;
   /** road leg that exists purely to reach a gateway (airport/railhead), not a sightseeing stop. */
   positioning?: boolean;
+  /** §4.4 pearl-on-the-string: an over-cap road leg should be split at this anchor. */
+  pearlSplit?: { anchor: string; detourPct: number; subHrs?: [number, number]; why?: string | null };
+  /** §4.4: over-cap road leg with NO worthwhile anchor — prefer re-sequencing. */
+  deadHalt?: boolean;
   /** true overnight rail (saves a hotel night). */
   overnight?: boolean;
   note?: string;

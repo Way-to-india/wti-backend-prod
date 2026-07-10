@@ -19,6 +19,7 @@ import type { DayItem, LegOption, PlanLeg, CityNode, GroupProfile, Weekday } fro
 import { WEEKDAY_NAMES } from './types';
 import { isTrueOvernight, gateArrivalFeasible, gateReachMin, toMin, fmtMin } from './constraints';
 import { toleranceForProfile, roadDayHardCapExceeded } from './physiology';
+import { chooseAnchor, type AnchorCandidate } from './anchors';
 
 const DOW_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export function freqLabel(bits?: number): string {
@@ -42,6 +43,9 @@ export interface ExpandInput {
   startWeekday?: Weekday | null; // once the lock is known, stamp weekdays
   haltNames?: Set<string>; // cities that are inserted en-route overnight halts
   month?: number; // seasonality for terrain speed (monsoon ghat slow-down)
+  /** §4.4 candidate anchors per leg key (from||to), injected by the controller.
+   *  Optional + graceful: absent = no pearl-split reasoning, behaviour unchanged. */
+  anchorsByLeg?: Map<string, AnchorCandidate[]>;
 }
 
 export interface ExpandOutput {
@@ -137,6 +141,23 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
       const cap = roadDayHardCapExceeded(opt, tol, { month: inp.month });
       if (cap.exceeded) violations.push(`${from} → ${to}: ${cap.hrs.toFixed(1)} h in-vehicle exceeds the ${cap.capHrs} h/day cap for a ${tol.cls} party — split via an en-route anchor or move to rail/air.`);
     }
+    // §4.4 pearl-on-the-string: an over-cap ROAD leg should be split at a worthy
+    // anchor (value ≥ ½ day, detour ≤ 15%, both halves within cap). No anchor => dead
+    // halt, prefer re-sequencing. Graceful: only runs when candidates were injected.
+    let pearlSplit: { anchor: string; detourPct: number; subHrs?: [number, number]; why?: string | null } | undefined;
+    let deadHalt = false;
+    if (opt.mode === 'ROAD' && roadDayHardCapExceeded(opt, tol, { month: inp.month }).exceeded) {
+      const cands = inp.anchorsByLeg?.get(legKey(from, to));
+      const fc = inp.nodes.get(from)?.coord, tc = inp.nodes.get(to)?.coord;
+      if (cands && cands.length && fc && tc) {
+        const ch = chooseAnchor(fc, tc, cands, tol, { month: inp.month });
+        if (ch.deadHalt) { deadHalt = true; warnings.push(`${from} → ${to}: ${ch.reason}`); }
+        else if (ch.anchor) {
+          pearlSplit = { anchor: ch.anchor.name, detourPct: ch.detourPct, subHrs: ch.subLegs ? [ch.subLegs[0].hrs, ch.subLegs[1].hrs] : undefined, why: ch.anchor.why };
+          warnings.push(`${from} → ${to}: ${ch.reason}. Insert an overnight at ${ch.anchor.name} and split the drive.`);
+        }
+      }
+    }
     if (violations.length) infeasible = true;
 
     // ---- road-day cap
@@ -155,6 +176,7 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
       verifyFlag, positioning, overnight,
       operatingDays: opt.operatingDays,
       frequency: opt.mode !== 'ROAD' ? freqLabel(opt.operatingDays) : undefined,
+      pearlSplit, deadHalt: deadHalt || undefined,
       note: positioning ? `Positioning drive to reach ${to} gateway — disclosed.` : violations.length ? violations.join(' ') : undefined,
     });
 
