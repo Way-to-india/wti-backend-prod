@@ -14,6 +14,7 @@ import prisma from '@/config/db';
 import type { CityNode, LegOption } from './types';
 import { haversineKm } from './geo';
 import { fmtMin } from './constraints';
+import { railJunctionOptions } from './railGraph';
 
 const BOX_RAIL = 0.4;  // ~44 km around a city to find its railheads
 const BOX_AIR = 0.6;   // ~66 km around a city to find its airport
@@ -119,5 +120,13 @@ export async function multimodalOptions(a: CityNode, b: CityNode, ctx: FindCtx):
   if (d > 350) jobs.push(airOptions(a, b, ctx));
   if (!jobs.length) return [];
   const res = await Promise.all(jobs);
-  return res.flat();
+  let out = res.flat();
+  // spec 4.6 rung 1: a rail-worthy corridor with NO direct train => try composing
+  // two trains via a same-station junction. Lazy (only on a direct-rail miss) so the
+  // heavier graph search stays rare on the 2 GB box.
+  if (d > 200 && !out.some((o) => o.mode === 'RAIL')) {
+    const junc = await railJunctionOptions(a, b, ctx);
+    out = out.concat(junc);
+  }
+  return out;
 }
