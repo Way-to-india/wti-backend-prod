@@ -26,6 +26,7 @@ import { toleranceForProfile, type Tolerance } from './physiology';
 import { hybridAccessHours } from './fallback';
 import type { AnchorCandidate } from './anchors';
 import { runFatigueLedger, dayLoadsFromDays, projectComfort, rhythmHeadline } from './fatigue';
+import { buildArchetypes } from './archetypes';
 
 const legKey = (a: string, b: string) => `${a}||${b}`;
 const BIG = 1e7;
@@ -226,6 +227,25 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
   };
 }
 
+/**
+ * Solve ONE full plan under a fixed objective (matrix → sequence → buildPlan).
+ * Exported so the §8 archetype builder can produce Swift/Balanced/Gentle without
+ * re-implementing sequencing. Deliberately does NOT build cards, so there is no
+ * recursion with optimize(). The objective is forced into the input the plan sees so
+ * its DDCV weights, ranking and decision records are all consistent with it.
+ */
+export function solveForObjective(input: OptimizeInput, deps: OptimizeDeps, objective: Objective, label: string): Plan {
+  const names0 = deps.nodes.map((n) => n.name);
+  const pax = input.pax ?? 2;
+  const startIdx = input.start ? names0.findIndex((n) => n.toLowerCase() === input.start!.toLowerCase()) : null;
+  const endIdx = input.end ? names0.findIndex((n) => n.toLowerCase() === input.end!.toLowerCase()) : null;
+  const preferDaily = input.startWeekday == null;
+  const solveTol = toleranceForProfile(input.profile);
+  const matrix = buildMatrix(names0, deps, objective, pax, preferDaily, solveTol, input.month);
+  const { order } = sequence(matrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null });
+  return buildPlan(order, names0, { ...input, objective }, deps, label);
+}
+
 export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResult {
   const names0 = deps.nodes.map((n) => n.name);
   const pax = input.pax ?? 2;
@@ -256,7 +276,10 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
   alt2.dateFlexible = true;
 
   const plans = dedupePlans([best, alt1, alt2]);
-  return { plans };
+  // §8 additive: Swift/Balanced/Gentle archetype cards (each a full solve under a
+  // fixed objective). plans[] stays present + unchanged — loadFromOptimizer is safe.
+  const cards = buildArchetypes(input, deps);
+  return { plans, cards };
 }
 
 /**

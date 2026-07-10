@@ -293,8 +293,32 @@ export interface Plan {
   enrichment?: PlanEnrichment;
 }
 
+/** §8 archetype id — the three named plans the Pareto set collapses into. */
+export type ArchetypeId = 'swift' | 'balanced' | 'gentle';
+
+/** §8 archetype card — a design-ready summary of one full scheduled plan. Facts
+ *  only; `fatigue[]` mirrors the plan's per-day comfort projection (Sprint 3 inc-2).
+ *  Field names match the design data.js / handoff §4 contract EXACTLY. `totals` is
+ *  the §4 canonical nested shape; the flat `costPpBand`/`easeScore` mirror it for the
+ *  data.js binding (parent handoff §5). */
+export interface ArchetypeCard {
+  id: ArchetypeId;
+  label: string;
+  recommended: boolean;
+  days: number;
+  hotelNights: number;
+  totals: { costPpBand: [number, number] | null; easeScore: number };
+  costPpBand: [number, number] | null;
+  easeScore: number;
+  sequence: string[];
+  fatigue: ('easy' | 'full')[];
+}
+
 export interface OptimizeResult {
   plans: Plan[];
+  /** §8 Swift/Balanced/Gentle archetype cards. Additive + optional — plans[] stays
+   *  present + unchanged so loadFromOptimizer (reads plans[0]) is safe. */
+  cards?: ArchetypeCard[];
 }
 
 // ---- enrichment (AI layer) output ------------------------------------------
