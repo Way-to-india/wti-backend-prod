@@ -1,8 +1,14 @@
 import prisma from '@/config/db';
 import type { Request, Response } from 'express';
-import { optimize } from '@/services/route-optimizer/optimize';
-import { haversineKm, osrmDriving } from '@/services/route-optimizer/geo';
-import type { CityNode, LegOption, OptimizeInput, InputCity, LatLng } from '@/services/route-optimizer/types';
+import { optimize, planFromSequence, estCostPp } from '@/services/route-optimizer/optimize';
+import { haversineKm, osrmDriving, osrmRouteGeometry, osrmRouteAlternatives, pointAtKmAlong, fmtDuration, type RouteGeometry } from '@/services/route-optimizer/geo';
+import { multimodalOptions } from '@/services/route-optimizer/providers';
+import { freqLabel } from '@/services/route-optimizer/dayExpand';
+import { isTrueOvernight } from '@/services/route-optimizer/constraints';
+import { enrichPlan } from '@/services/enrichment/orchestrator';
+import { enrichmentEnabled } from '@/services/enrichment/core';
+import type { CityNode, LegOption, OptimizeInput, InputCity, LatLng, Plan, HaltSuggestion, PlanComparison, LegModeOption } from '@/services/route-optimizer/types';
+import type { AnchorCandidate } from '@/services/route-optimizer/anchors';
 
 /**
  * Route Optimizer — POST /api/admin/route-optimizer/optimize
@@ -40,6 +46,53 @@ async function osrmCached(a: LatLng, b: LatLng, fromName: string, toName: string
 }
 
 export class RouteOptimizerController {
+  /** GET /route-optimizer/city-search?q= — world_cities autosuggest, India-preferred.
+   *  Self-contained (mirrors routeStops.searchCities) so the optimizer works on any
+   *  backend build without depending on the tour route-editor controller. */
+  static async searchCities(req: Request, res: Response) {
+    try {
+      const q = String(req.query.q || '').trim();
+      if (q.length < 2) return res.deliver(200, true, []);
+      const rows = await prisma.$queryRaw<
+        { name: string; latitude: number; longitude: number; countryName: string; admin1Code: string }[]
+      >`SELECT name, latitude, longitude, "countryName", "admin1Code"
+        FROM world_cities
+        WHERE name ILIKE ${q + '%'}
+        ORDER BY ("countryCode" = 'IN') DESC, population DESC NULLS LAST
+        LIMIT 12`;
+      return res.deliver(200, true, rows.map((c) => ({
+        name: c.name,
+        lat: Number(c.latitude),
+        lng: Number(c.longitude),
+        region: [c.admin1Code, c.countryName].filter(Boolean).join(', '),
+      })));
+    } catch (e) {
+      console.error('optimizer city-search failed:', e);
+      return res.deliver(500, false, undefined, 'City search failed');
+    }
+  }
+
+  /** POST /route-optimizer/city — register a custom stop into world_cities (idempotent). */
+  static async addCity(req: Request, res: Response) {
+    try {
+      const name = String(req.body?.name || '').trim();
+      const lat = Number(req.body?.lat);
+      const lng = Number(req.body?.lng);
+      if (!name || isNaN(lat) || isNaN(lng)) return res.deliver(400, false, undefined, 'name, lat, lng required');
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return res.deliver(400, false, undefined, 'Invalid coordinates');
+      const isIndia = lat >= 6 && lat <= 37.5 && lng >= 68 && lng <= 97.5;
+      await prisma.$executeRaw`
+        INSERT INTO world_cities (name, "asciiName", latitude, longitude, "countryCode", "countryName", population, "searchRank", source)
+        SELECT ${name}, ${name}, ${lat}, ${lng},
+               ${isIndia ? 'IN' : null}, ${isIndia ? 'India' : null}, 0, 0, 'ADMIN'
+        WHERE NOT EXISTS (SELECT 1 FROM world_cities WHERE lower(name) = lower(${name}))`;
+      return res.deliver(200, true, { name, lat, lng, registered: true });
+    } catch (e) {
+      console.error('optimizer addCity failed:', e);
+      return res.deliver(500, false, undefined, 'Failed to register city');
+    }
+  }
+
   /** POST /route-optimizer/optimize */
   static async optimize(req: Request, res: Response) {
     try {
@@ -93,14 +146,18 @@ export class RouteOptimizerController {
           .sort((a, b) => haversineKm(nodes[i].coord, nodes[a].coord) - haversineKm(nodes[i].coord, nodes[b].coord))
           .slice(0, 12);
         for (const j of near) {
-          const r = await osrmCached(nodes[i].coord, nodes[j].coord, nodes[i].name, nodes[j].name);
+          const [r, mm] = await Promise.all([
+            osrmCached(nodes[i].coord, nodes[j].coord, nodes[i].name, nodes[j].name),
+            multimodalOptions(nodes[i], nodes[j], { pax }),  // concurrent rail + air
+          ]);
           const km = r?.km ?? Math.round(haversineKm(nodes[i].coord, nodes[j].coord) * 1.3);
           const min = r?.min ?? Math.round((km / 45) * 60);
-          pool.set(`${nodes[i].name}||${nodes[j].name}`, [{
+          const roadOpt: LegOption = {
             from: nodes[i].name, to: nodes[j].name, mode: 'ROAD',
             distanceKm: km, durationMin: min, operatingDays: 127, reliability: 4,
             source: r ? 'osrm' : 'haversine', verifiedAt: new Date().toISOString(),
-          }]);
+          };
+          pool.set(`${nodes[i].name}||${nodes[j].name}`, [roadOpt, ...mm]);
         }
       }
 
@@ -110,14 +167,58 @@ export class RouteOptimizerController {
         start: body.start ?? null,
         end: body.end ?? null,
         objective: (['TIME', 'COST', 'EASE', 'BALANCED'].includes(body.objective) ? body.objective : 'BALANCED'),
+        tripType: body.tripType === 'oneway' ? 'oneway' : 'roundtrip',
         month: body.month, pax,
         profile: (['standard', 'family', 'senior'].includes(body.profile) ? body.profile : 'standard'),
         overnightTrains: body.overnightTrains !== false,
         maxRoadKmDay: Number(body.maxRoadKmDay) || PROFILE_MAX_KM[body.profile] || 350,
         startWeekday: body.startWeekday ?? null,
         pins: Array.isArray(body.pins) ? body.pins : [],
+        acceptedHalts: Array.isArray(body.acceptedHalts) ? body.acceptedHalts : [],
+        dayBudget: body.dayBudget != null && Number.isFinite(Number(body.dayBudget)) ? Number(body.dayBudget) : undefined,
+        softStartWindowDays: body.softStartWindowDays != null && Number.isFinite(Number(body.softStartWindowDays)) ? Number(body.softStartWindowDays) : undefined,
       };
-      const result = optimize(input, { nodes, pool });
+      // §4.4 curated en-route anchors per leg (both directions) so pearl-split
+      // reasoning fires on over-cap road legs. One query; absent-safe.
+      const anchorsByLeg = await RouteOptimizerController.loadAnchorsByLeg(nodes);
+      const result = optimize(input, { nodes, pool, anchorsByLeg });
+
+      // ---- Stage E+: opt-in halt suggestions, road corridors (A/B), comparison
+      const nodeMap = new Map(nodes.map((n) => [n.name.toLowerCase(), n] as const));
+      const finalized: Plan[] = [];
+      const best = result.plans[0];
+      if (best) {
+        best.corridorId = 'A'; best.corridorLabel = 'Route A — fastest';
+        try { finalized.push(await RouteOptimizerController.finalizePlan(best, nodeMap, input, pool, undefined, anchorsByLeg)); }
+        catch (e) { console.error('finalize A failed:', e); finalized.push(best); }
+        // Route B — a physically different road corridor on the longest leg
+        try {
+          const alt = await RouteOptimizerController.altCorridor(best, nodeMap);
+          if (alt) {
+            const bPlan: Plan = { ...best, corridorId: 'B', corridorLabel: 'Route B — alternate corridor' };
+            finalized.push(await RouteOptimizerController.finalizePlan(bPlan, nodeMap, input, pool, alt, anchorsByLeg));
+          }
+        } catch (e) { console.error('corridor B failed:', e); }
+      }
+      // itinerary alternates (different ordering / date-flexible)
+      for (const p of result.plans.slice(1)) {
+        try { finalized.push(await RouteOptimizerController.finalizePlan(p, nodeMap, input, pool, undefined, anchorsByLeg)); }
+        catch (e) { console.error('finalize alt failed:', e); finalized.push(p); }
+      }
+      result.plans = finalized;
+
+      // ---- AI enrichment layer (cache-first; live fares each time) ----------
+      // Attaches real fares, hotels, govt-recognised guides, city content and a
+      // website-model trip cost. Fail-safe: never blocks the plan on error.
+      if (enrichmentEnabled() && body.enrich !== false) {
+        const enrichMode = body.enrich === 'deep' ? 'deep' : 'fast';
+        const tier = ['standard', '3', '4', '5'].includes(body.hotelTier) ? body.hotelTier : undefined;
+        try {
+          await Promise.all(result.plans.map((p) =>
+            enrichPlan(p, { month: input.month, pax, profile: input.profile, tier, mode: enrichMode, budgetMs: 50000 })
+              .catch((e) => { console.error('enrichPlan failed (non-fatal):', e); return p; })));
+        } catch (e) { console.error('enrichment pass failed (non-fatal):', e); }
+      }
 
       // ---- audit log --------------------------------------------------------
       try {
@@ -132,5 +233,358 @@ export class RouteOptimizerController {
       console.error('route optimize failed:', e);
       return res.deliver(500, false, undefined, 'Route optimization failed');
     }
+  }
+
+  /**
+   * §4.4 curated en-route anchors for every ordered pair among the trip cities,
+   * keyed `from||to` in BOTH directions (exact node-name casing dayExpand looks up),
+   * so pearl-split reasoning fires on over-cap road legs. ONE query over the curated
+   * en_route_anchors table (the authoritative source); lean for the 2 GB box and
+   * fully absent-safe (returns an empty map on any error).
+   */
+  static async loadAnchorsByLeg(nodes: CityNode[]): Promise<Map<string, AnchorCandidate[]>> {
+    const byLeg = new Map<string, AnchorCandidate[]>();
+    if (nodes.length < 2) return byLeg;
+    const names = nodes.map((n) => n.name);
+    const low = names.map((n) => n.trim().toLowerCase());
+    const nameByLower = new Map(names.map((n) => [n.trim().toLowerCase(), n] as const));
+    try {
+      const rows = await prisma.$queryRaw<{ city_a: string; city_b: string; anchor_name: string; anchor_lat: number; anchor_lng: number; anchor_value_days: number; why: string | null }[]>`
+        SELECT city_a, city_b, anchor_name, anchor_lat, anchor_lng, anchor_value_days, why
+        FROM en_route_anchors
+        WHERE lower(city_a) = ANY(${low}) AND lower(city_b) = ANY(${low})`;
+      for (const r of rows) {
+        const a = nameByLower.get(String(r.city_a).trim().toLowerCase());
+        const b = nameByLower.get(String(r.city_b).trim().toLowerCase());
+        if (!a || !b) continue;
+        const cand: AnchorCandidate = {
+          name: String(r.anchor_name),
+          coord: [Number(r.anchor_lat), Number(r.anchor_lng)] as [number, number],
+          valueDays: Number(r.anchor_value_days) || 0.5,
+          why: r.why ?? null,
+          source: 'curated',
+        };
+        for (const key of [`${a}||${b}`, `${b}||${a}`]) {
+          const arr = byLeg.get(key) ?? []; arr.push(cand); byLeg.set(key, arr);
+        }
+      }
+    } catch (e) { console.error('loadAnchorsByLeg failed (non-fatal):', e); }
+    return byLeg;
+  }
+
+  /**
+   * Finalize a plan: insert only ACCEPTED halts (opt-in), attach real road
+   * geometry, attach opt-in halt SUGGESTIONS to any leg still over the day cap,
+   * and compute the comparison block. `legOverride` forces one leg onto a specific
+   * road corridor (used for Route B).
+   */
+  static async finalizePlan(plan: Plan, nodeMap: Map<string, CityNode>, input: OptimizeInput, mmPool: Map<string, LegOption[]>, legOverride?: { key: string; geom: RouteGeometry }, anchorsByLeg?: Map<string, AnchorCandidate[]>): Promise<Plan> {
+    const maxKm = Number(input.maxRoadKmDay) || (input.profile === 'senior' ? 300 : 350);
+    const seq = plan.sequence;
+    if (seq.length < 2) return plan;
+
+    const accepted = input.acceptedHalts || [];
+    const nodesByName = new Map<string, CityNode>();
+    for (const n of seq) { const nd = nodeMap.get(n.toLowerCase()); if (nd) nodesByName.set(n, nd); }
+
+    // 1. final sequence with accepted halts inserted at their leg
+    const expanded: string[] = [];
+    const haltNames = new Set<string>();
+    const extraCities: InputCity[] = [];
+    for (let i = 1; i < seq.length; i++) {
+      const a = seq[i - 1], b = seq[i];
+      if (expanded.length === 0) expanded.push(a);
+      for (const h of accepted.filter((x) => x.legFrom === a && x.legTo === b)) {
+        nodesByName.set(h.name, { name: h.name, coord: [Number(h.lat), Number(h.lng)], profile: {} });
+        haltNames.add(h.name); extraCities.push({ name: h.name, nights: 1 }); expanded.push(h.name);
+      }
+      expanded.push(b);
+    }
+
+    // 2. pool: reuse the MULTIMODAL options (road+rail+air) for original pairs so
+    //    the chosen mode is preserved; OSRM road for new halt sub-legs only.
+    const pool = new Map<string, LegOption[]>();
+    for (let i = 1; i < expanded.length; i++) {
+      const x = expanded[i - 1], y = expanded[i];
+      const key = `${x}||${y}`;
+      if (mmPool.has(key)) {
+        let opts = mmPool.get(key)!;
+        if (legOverride && legOverride.key === key) {
+          opts = opts.map((o) => o.mode === 'ROAD' ? { ...o, distanceKm: legOverride.geom.km, durationMin: legOverride.geom.min, source: 'osrm-alt' } : o);
+        }
+        pool.set(key, opts);
+      } else {
+        const xN = nodesByName.get(x), yN = nodesByName.get(y);
+        if (!xN || !yN) continue;
+        const g = await osrmRouteGeometry(xN.coord, yN.coord);
+        const km = g?.km ?? Math.round(haversineKm(xN.coord, yN.coord) * 1.3);
+        const min = g?.min ?? Math.round((km / 45) * 60);
+        pool.set(key, [{ from: x, to: y, mode: 'ROAD', distanceKm: km, durationMin: min, operatingDays: 127, reliability: 4, source: g ? 'osrm' : 'haversine', verifiedAt: new Date().toISOString() }]);
+      }
+    }
+
+    const uniqueNodes: CityNode[] = [];
+    const seen = new Set<string>();
+    for (const nm of expanded) { const k = nm.toLowerCase(); const nd = nodesByName.get(nm); if (!seen.has(k) && nd) { seen.add(k); uniqueNodes.push(nd); } }
+
+    const expandedInput: OptimizeInput = { ...input, cities: [...input.cities, ...extraCities] };
+    const np = planFromSequence(expanded, expandedInput, { nodes: uniqueNodes, pool, haltNames, dailyOnly: plan.dateFlexible, anchorsByLeg }, plan.label || 'Plan');
+    np.corridorId = plan.corridorId; np.corridorLabel = plan.corridorLabel; np.dateFlexible = plan.dateFlexible;
+
+    // 3. attach real-road geometry to ROAD legs; opt-in halt suggestions on over-cap road legs
+    const used = new Set(expanded.map((n) => n.toLowerCase()));
+    for (const leg of np.legs) {
+      if (leg.mode !== 'ROAD') continue;
+      const xN = nodesByName.get(leg.from), yN = nodesByName.get(leg.to);
+      if (!xN || !yN) continue;
+      const geom = legOverride && legOverride.key === `${leg.from}||${leg.to}` ? legOverride.geom : await osrmRouteGeometry(xN.coord, yN.coord);
+      if (geom?.coords?.length) {
+        const mapLeg = np.map.legs.find((m) => m.from === leg.from && m.to === leg.to && m.mode === 'road');
+        if (mapLeg) mapLeg.geometry = geom.coords.map((c) => [c[0], c[1]] as [number, number]);
+      }
+      if (geom && leg.distanceKm && leg.distanceKm > maxKm) {
+        const targetKm = Math.min(maxKm, Math.round(geom.km / 2));
+        const pt = pointAtKmAlong(geom.coords, targetKm);
+        if (!pt) continue;
+        const cands = await RouteOptimizerController.findTouristHalts(pt[0], pt[1], used, 3);
+        if (!cands.length) continue;
+        leg.haltSuggestions = cands.map((c) => ({
+          name: c.name, lat: c.lat, lng: c.lng, tourCount: c.tour, monuments: c.mon, atKm: targetKm,
+          detourKm: Math.max(0, Math.round(haversineKm(xN.coord, [c.lat, c.lng]) + haversineKm([c.lat, c.lng], yN.coord) - haversineKm(xN.coord, yN.coord))),
+          why: c.tour > 0 ? `On ${c.tour} WTI tour${c.tour > 1 ? 's' : ''}${c.mon ? `, ${c.mon} attractions` : ''}` : c.mon ? `${c.mon} attractions nearby` : 'Practical overnight town',
+        } as HaltSuggestion));
+        np.warnings.push(`${leg.from} → ${leg.to} is ${leg.distanceKm} km by road — over the ${maxKm} km/day cap. Add an overnight halt (${cands.map((c) => c.name).join(', ')}) or pick a train/flight if offered.`);
+      }
+    }
+
+    // 4. per-leg mode alternatives (flight/train/road) + indicative fares
+    for (const leg of np.legs) {
+      const opts = pool.get(`${leg.from}||${leg.to}`) || [];
+      if (opts.length) {
+        leg.modeOptions = opts.map((o) => ({
+          mode: o.mode, identifier: o.identifier ?? null, durationMin: o.durationMin ?? null, distanceKm: o.distanceKm ?? null,
+          costPp: estCostPp(o), frequency: o.mode !== 'ROAD' ? freqLabel(o.operatingDays) : 'daily',
+          dep: o.depTime ?? null, arr: o.arrTime ?? null, overnight: isTrueOvernight(o),
+          chosen: o.mode === leg.mode && (o.identifier ?? null) === (leg.identifier ?? null),
+        } as LegModeOption)).sort((a, b) => a.costPp - b.costPp);
+      }
+      if (!leg.farePpBand) {
+        const chosen = opts.find((o) => o.mode === leg.mode && (o.identifier ?? null) === (leg.identifier ?? null)) || opts[0];
+        if (chosen) { const c = estCostPp(chosen); leg.farePpBand = [Math.round(c * 0.85), Math.round(c * 1.2)]; }
+      }
+    }
+
+    // 5. round-trip: append the return journey to the origin via the access gateway.
+    //    Skip when the user fixed a DIFFERENT end gateway — that's an intentional
+    //    open-jaw itinerary (enter one city, exit another); respect the endpoint.
+    const originCity = (input.start || np.sequence[0] || '').toLowerCase();
+    const endFixed = (input.end || '').trim().toLowerCase();
+    const openJaw = !!endFixed && endFixed !== originCity;
+    if (input.tripType === 'roundtrip' && !openJaw) {
+      try { await RouteOptimizerController.appendReturnJourney(np, mmPool); }
+      catch (e) { console.error('appendReturnJourney failed (non-fatal):', e); }
+    }
+
+    np.comparison = await RouteOptimizerController.computeComparison(np);
+    return np;
+  }
+
+  /**
+   * Append a return journey from the last destination back to the ORIGIN, routed
+   * through the access gateway so a landlocked stop (e.g. Gangtok) returns via its
+   * airport/railhead (Bagdogra) instead of a straight-line drive. The gateway may
+   * legitimately recur. Adds return legs, one travel day, map geometry, and folds
+   * the return into totals — reusing the existing multimodal pool (no re-optimise).
+   */
+  static async appendReturnJourney(plan: Plan, mmPool: Map<string, LegOption[]>): Promise<void> {
+    const seq = plan.sequence;
+    if (seq.length < 2) return;
+    const origin = seq[0];
+    const lastDest = seq[seq.length - 1];
+    if (lastDest.toLowerCase() === origin.toLowerCase()) return; // already a loop
+
+    // access gateway = arrival city of the last AIR/RAIL leg on the outbound path
+    let gateway: string | null = null;
+    let gatewayMode: 'AIR' | 'RAIL' | null = null;
+    for (const l of plan.legs) if (l.mode === 'AIR' || l.mode === 'RAIL') { gateway = l.to; gatewayMode = l.mode; }
+    if (gateway && (gateway.toLowerCase() === lastDest.toLowerCase() || gateway.toLowerCase() === origin.toLowerCase())) gateway = null;
+
+    const pick = (from: string, to: string, prefer?: 'ROAD' | 'AIR' | 'RAIL'): LegOption | null => {
+      const opts = mmPool.get(`${from}||${to}`) || [];
+      if (!opts.length) return null;
+      if (prefer) { const m = opts.find((o) => o.mode === prefer); if (m) return m; }
+      return opts.slice().sort((a, b) => estCostPp(a) - estCostPp(b))[0];
+    };
+
+    // build the return hop list
+    const hops: { from: string; to: string; opt: LegOption }[] = [];
+    if (gateway) {
+      const toGw = pick(lastDest, gateway, 'ROAD') || pick(lastDest, gateway);
+      const toHome = pick(gateway, origin, gatewayMode || 'AIR') || pick(gateway, origin);
+      if (toGw) hops.push({ from: lastDest, to: gateway, opt: toGw });
+      if (toHome) hops.push({ from: gateway, to: origin, opt: toHome });
+    }
+    if (!hops.length) {
+      const direct = pick(lastDest, origin);
+      if (direct) hops.push({ from: lastDest, to: origin, opt: direct });
+    }
+    if (!hops.length) { plan.warnings.push(`Return to ${origin} could not be routed automatically — add the return leg manually.`); return; }
+
+    // append plan legs (marked as return)
+    let retRoadKm = 0, retMin = 0;
+    const verbOf = (m: string) => m === 'AIR' ? 'Fly' : m === 'RAIL' ? 'Train' : m === 'FERRY' ? 'Ferry' : 'Drive';
+    const actParts: string[] = [];
+    for (const h of hops) {
+      const o = h.opt;
+      const km = o.distanceKm ?? 0;
+      const mn = o.durationMin ?? 0;
+      if (o.mode === 'ROAD') retRoadKm += km;
+      retMin += mn;
+      const c = estCostPp(o);
+      plan.legs.push({
+        from: h.from, to: h.to, mode: o.mode, identifier: o.identifier ?? null,
+        dep: o.depTime ?? null, arr: o.arrTime ?? null, distanceKm: o.distanceKm ?? null, durationMin: o.durationMin ?? null,
+        farePpBand: o.farePpMin != null && o.farePpMax != null ? [o.farePpMin, o.farePpMax] : [Math.round(c * 0.85), Math.round(c * 1.2)],
+        frequency: o.mode !== 'ROAD' ? freqLabel(o.operatingDays) : undefined, operatingDays: o.operatingDays,
+        note: 'Return journey', overnight: false,
+      });
+      actParts.push(`${verbOf(o.mode)} ${h.from} → ${h.to}${o.identifier ? ` · ${o.identifier}` : ''}`);
+    }
+
+    // one return travel day
+    const lastDay = plan.days.length ? plan.days[plan.days.length - 1].day : plan.sequence.length;
+    const retDay = lastDay + 1;
+    plan.days.push({
+      day: retDay, weekday: null, city: origin,
+      activity: `Return to ${origin} — ${actParts.join(', then ')}. Trip ends at ${origin}.`,
+      transit: { from: lastDest, to: origin, mode: hops[hops.length - 1].opt.mode }, roadKm: Math.round(retRoadKm), transitMin: retMin,
+    });
+    if (retRoadKm > 350) plan.warnings.push(`Return drive ${lastDest} → ${gateway || origin} is ${Math.round(retRoadKm)} km — consider splitting or an early start.`);
+
+    // map: append return stops + legs (with road geometry) so it draws the way back
+    const nextOrder = (plan.map.stops[plan.map.stops.length - 1]?.order ?? plan.sequence.length) + 1;
+    let ord = nextOrder;
+    for (const h of hops) {
+      const o = h.opt;
+      const mapMode = o.mode === 'AIR' ? 'flight' : o.mode === 'RAIL' ? 'train' : o.mode === 'FERRY' ? 'ferry' : 'road';
+      // find coords for the 'to' city from existing map stops (outbound had them)
+      const toStop = plan.map.stops.find((s) => s.name.toLowerCase() === h.to.toLowerCase());
+      const fromStop = plan.map.stops.find((s) => s.name.toLowerCase() === h.from.toLowerCase());
+      let geometry: [number, number][] | undefined;
+      if (o.mode === 'ROAD' && fromStop?.lat != null && toStop?.lat != null) {
+        const g = await osrmRouteGeometry([fromStop.lat, fromStop.lng!], [toStop.lat, toStop.lng!]);
+        if (g?.coords?.length) geometry = g.coords.map((c) => [c[0], c[1]] as [number, number]);
+      }
+      plan.map.stops.push({ order: ord, name: h.to, day: retDay, lat: toStop?.lat ?? null, lng: toStop?.lng ?? null });
+      plan.map.legs.push({ day: retDay, from: h.from, to: h.to, mode: mapMode as any, km: o.distanceKm ?? null, timeText: fmtDuration(o.durationMin), estimated: o.source === 'osrm' || o.source === 'haversine', geometry });
+      ord++;
+    }
+
+    // fold the return into totals (comparison recomputes from legs right after this)
+    plan.totals.roadKm = plan.legs.filter((l) => l.mode === 'ROAD').reduce((a, l) => a + (l.distanceKm || 0), 0);
+    plan.totals.transitHrs = Math.round(plan.legs.reduce((a, l) => a + (l.durationMin || 0), 0) / 60 * 10) / 10;
+    plan.map.roadTotalKm = Math.round(plan.map.legs.filter((l) => l.mode === 'road' && l.km).reduce((a, l) => a + (l.km || 0), 0));
+    const overnights = plan.legs.filter((l) => l.overnight).length;
+    plan.totals.hotelNights = Math.max(0, retDay - 1 - overnights);
+    plan.sequence = [...plan.sequence, ...hops.map((h) => h.to)];
+  }
+
+  /** A physically different road corridor for the plan's longest leg (OSRM alternatives). */
+  static async altCorridor(plan: Plan, nodeMap: Map<string, CityNode>): Promise<{ key: string; geom: RouteGeometry } | null> {
+    const seq = plan.sequence;
+    let best: { a: string; b: string; km: number } | null = null;
+    for (let i = 1; i < seq.length; i++) {
+      const aN = nodeMap.get(seq[i - 1].toLowerCase()), bN = nodeMap.get(seq[i].toLowerCase());
+      if (!aN || !bN) continue;
+      const d = haversineKm(aN.coord, bN.coord);
+      if (!best || d > best.km) best = { a: seq[i - 1], b: seq[i], km: d };
+    }
+    if (!best) return null;
+    const aN = nodeMap.get(best.a.toLowerCase())!, bN = nodeMap.get(best.b.toLowerCase())!;
+    const alts = await osrmRouteAlternatives(aN.coord, bN.coord, 3);
+    if (alts.length < 2) return null;
+    const primary = alts[0];
+    const alt = alts.slice(1).find((r) => Math.abs(r.km - primary.km) / Math.max(1, primary.km) > 0.03);
+    return alt ? { key: `${best.a}||${best.b}`, geom: alt } : null;
+  }
+
+  /** Top-N tourist-worthy towns near a point (WTI destinations by tourCount + POI
+   *  monuments; else nearest sizeable world_cities towns). */
+  static async findTouristHalts(lat: number, lng: number, exclude: Set<string>, limit = 3): Promise<{ name: string; lat: number; lng: number; tour: number; mon: number }[]> {
+    const B = 0.7;
+    try {
+      // candidate towns from WTI destinations (tourCount + POI) AND ASI monuments
+      const [cityRows, asiRows] = await Promise.all([
+        prisma.$queryRawUnsafe<{ name: string; lat: number; lng: number; tour: number; mon: number }[]>(
+          `SELECT c.name, c.latitude AS lat, c.longitude AS lng, c."tourCount" AS tour, COALESCE(pc.monument_count,0) AS mon
+           FROM cities c LEFT JOIN poi_cities pc ON lower(pc.name)=lower(c.name)
+           WHERE c."isActive"=true AND c.latitude IS NOT NULL
+             AND c.latitude BETWEEN ${lat - B} AND ${lat + B} AND c.longitude BETWEEN ${lng - B} AND ${lng + B}`),
+        prisma.$queryRawUnsafe<{ name: string; lat: number; lng: number; asi: number }[]>(
+          `SELECT location AS name, avg(lat) AS lat, avg(lng) AS lng, count(*) AS asi
+           FROM asi_sites WHERE lat IS NOT NULL
+             AND lat BETWEEN ${lat - B} AND ${lat + B} AND lng BETWEEN ${lng - B} AND ${lng + B}
+           GROUP BY location`),
+      ]);
+      const m = new Map<string, { name: string; lat: number; lng: number; tour: number; mon: number; asi: number }>();
+      for (const c of cityRows) m.set(c.name.trim().toLowerCase(), { name: c.name, lat: Number(c.lat), lng: Number(c.lng), tour: Number(c.tour) || 0, mon: Number(c.mon) || 0, asi: 0 });
+      for (const a of asiRows) {
+        if (!a.name) continue;
+        const k = a.name.trim().toLowerCase(); const ex = m.get(k);
+        if (ex) ex.asi = Number(a.asi) || 0;
+        else m.set(k, { name: a.name, lat: Number(a.lat), lng: Number(a.lng), tour: 0, mon: 0, asi: Number(a.asi) || 0 });
+      }
+      const scored = [...m.values()]
+        .filter((c) => !exclude.has(c.name.toLowerCase()) && Number.isFinite(c.lat) && Number.isFinite(c.lng))
+        .map((c) => ({ ...c, dist: haversineKm([lat, lng], [c.lat, c.lng]) }))
+        .filter((c) => c.dist <= 75)
+        .sort((a, b) => (b.tour * 2 + b.mon + b.asi * 1.5 - b.dist * 0.15) - (a.tour * 2 + a.mon + a.asi * 1.5 - a.dist * 0.15));
+      if (scored.length) return scored.slice(0, limit).map((c) => ({ name: c.name, lat: c.lat, lng: c.lng, tour: c.tour, mon: c.mon + c.asi }));
+
+      // fallback — nearest sizeable world_cities town
+      const wc = await prisma.$queryRaw<{ name: string; latitude: number; longitude: number; population: number }[]>`
+        SELECT name, latitude, longitude, COALESCE(population,0) AS population FROM world_cities
+        WHERE latitude BETWEEN ${lat - 0.6} AND ${lat + 0.6}
+          AND longitude BETWEEN ${lng - 0.6} AND ${lng + 0.6}
+          AND COALESCE(population,0) > 20000`;
+      return wc
+        .map((c) => ({ name: c.name, lat: Number(c.latitude), lng: Number(c.longitude), dist: haversineKm([lat, lng], [Number(c.latitude), Number(c.longitude)]) }))
+        .filter((c) => !exclude.has(c.name.toLowerCase()) && c.dist <= 75)
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, limit)
+        .map((c) => ({ name: c.name, lat: c.lat, lng: c.lng, tour: 0, mon: 0 }));
+    } catch (e) {
+      console.error('findTouristHalts failed:', e);
+      return [];
+    }
+  }
+
+  /** Comparison metrics for A/B route cards. */
+  static async computeComparison(plan: Plan): Promise<PlanComparison> {
+    const totalKm = plan.legs.reduce((a, l) => a + (l.distanceKm || 0), 0);
+    const roadKm = plan.legs.filter((l) => l.mode === 'ROAD').reduce((a, l) => a + (l.distanceKm || 0), 0);
+    const driveMin = plan.legs.filter((l) => l.mode === 'ROAD').reduce((a, l) => a + (l.durationMin || 0), 0);
+    let touristStops = 0, amenity = 0;
+    try {
+      const names = plan.sequence.map((n) => n.toLowerCase());
+      const rows = await prisma.$queryRaw<{ name: string }[]>`
+        SELECT name FROM cities WHERE "isActive" = true AND lower(name) = ANY(${names})`;
+      const set = new Set(rows.map((r) => r.name.toLowerCase()));
+      touristStops = plan.sequence.filter((n) => set.has(n.toLowerCase())).length;
+      amenity = Math.round((100 * touristStops) / Math.max(1, plan.sequence.length));
+    } catch { /* best-effort */ }
+    const costLo = plan.legs.reduce((a, l) => a + (l.farePpBand ? l.farePpBand[0] : 0), 0);
+    const costHi = plan.legs.reduce((a, l) => a + (l.farePpBand ? l.farePpBand[1] : 0), 0);
+    return {
+      distanceKm: Math.round(totalKm),
+      roadKm: Math.round(roadKm),
+      driveHrs: Math.round((driveMin / 60) * 10) / 10,
+      transitHrs: plan.totals.transitHrs,
+      touristStops,
+      amenityScore: amenity,
+      easeScore: plan.totals.easeScore,
+      costPpBand: costHi > 0 ? [Math.round(costLo), Math.round(costHi)] : null,
+      weekdayLock: plan.weekdayLock,
+    };
   }
 }
