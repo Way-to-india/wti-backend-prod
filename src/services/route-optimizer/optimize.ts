@@ -20,7 +20,8 @@ import { resolveWeekdayLock, type WeekdayConstrainedLeg, phaseShift, type PhaseS
 import { scorePlan, toTotals } from './score';
 import { verifyList } from './guardrails';
 import { fmtDuration } from './geo';
-import { ddcv, ddcvScalar, weightsForObjective, type LegCtx } from './ddcv';
+import { ddcv, ddcvScalar, weightsForObjective, type LegCtx, type Weights } from './ddcv';
+import { applyTPP } from './tpp';
 import { buildLegExplain } from './explain';
 import { toleranceForProfile, type Tolerance } from './physiology';
 import { hybridAccessHours } from './fallback';
@@ -76,44 +77,44 @@ export function estCostPp(o: LegOption): number {
 /** scalarize one option to a comparable cost under the objective (lower = better).
  *  preferDaily: when the travel date is unknown, penalise non-daily services so the
  *  plan stays date-flexible unless nothing daily exists. */
-function optionCost(o: LegOption, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number): number {
+function optionCost(o: LegOption, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights): number {
   // ALL mode comparisons now run on the Door-to-Door Cost Vector (spec §4.1): raw
   // durations never compete. A body-truth hard-blocked option (over hour cap,
   // chronotype breach, class-floor fail) is strongly deprioritised for LIVE
   // sequencing but still connects the graph — dayExpand surfaces the infeasibility.
   const nonDaily = preferDaily && o.operatingDays != null && o.operatingDays !== 127;
   const penalty = nonDaily ? 40 : 0;
-  const scalar = ddcvScalar(ddcv(o, legCtx(o, tol, pax, month)), weightsForObjective(obj));
+  const scalar = ddcvScalar(ddcv(o, legCtx(o, tol, pax, month)), w ?? weightsForObjective(obj));
   const base = Number.isFinite(scalar) ? scalar : 1e6;
   return base + penalty;
 }
 
-function bestOption(opts: LegOption[] | undefined, obj: Objective, pax: number, opts2?: { overnightTrains?: boolean; preferDaily?: boolean; dailyOnly?: boolean }, tol: Tolerance = DEFAULT_TOL, month?: number): LegOption | undefined {
+function bestOption(opts: LegOption[] | undefined, obj: Objective, pax: number, opts2?: { overnightTrains?: boolean; preferDaily?: boolean; dailyOnly?: boolean }, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights): LegOption | undefined {
   if (!opts || !opts.length) return undefined;
   let usable = opts.filter((o) => opts2?.overnightTrains === false ? !(o.mode === 'RAIL') : true);
   if (opts2?.dailyOnly) { const daily = usable.filter((o) => (o.operatingDays ?? 127) === 127); if (daily.length) usable = daily; }
-  const pick = (usable.length ? usable : opts).slice().sort((a, b) => optionCost(a, obj, pax, opts2?.preferDaily, tol, month) - optionCost(b, obj, pax, opts2?.preferDaily, tol, month));
+  const pick = (usable.length ? usable : opts).slice().sort((a, b) => optionCost(a, obj, pax, opts2?.preferDaily, tol, month, w) - optionCost(b, obj, pax, opts2?.preferDaily, tol, month, w));
   return pick[0];
 }
 
 /** Rank a leg's candidate options best→worst under the objective, mirroring
  *  bestOption's usable-filter EXACTLY so ranked[0] === the chosen option. This is
  *  what lets the §10 decision record name a truthful winner + runner-up. */
-function rankLegOptions(opts: LegOption[] | undefined, obj: Objective, pax: number, opts2?: { overnightTrains?: boolean; preferDaily?: boolean; dailyOnly?: boolean }, tol: Tolerance = DEFAULT_TOL, month?: number): LegOption[] {
+function rankLegOptions(opts: LegOption[] | undefined, obj: Objective, pax: number, opts2?: { overnightTrains?: boolean; preferDaily?: boolean; dailyOnly?: boolean }, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights): LegOption[] {
   if (!opts || !opts.length) return [];
   let usable = opts.filter((o) => opts2?.overnightTrains === false ? !(o.mode === 'RAIL') : true);
   if (opts2?.dailyOnly) { const daily = usable.filter((o) => (o.operatingDays ?? 127) === 127); if (daily.length) usable = daily; }
   const pool = usable.length ? usable : opts;
-  return pool.slice().sort((a, b) => optionCost(a, obj, pax, opts2?.preferDaily, tol, month) - optionCost(b, obj, pax, opts2?.preferDaily, tol, month));
+  return pool.slice().sort((a, b) => optionCost(a, obj, pax, opts2?.preferDaily, tol, month, w) - optionCost(b, obj, pax, opts2?.preferDaily, tol, month, w));
 }
 
-function buildMatrix(names: string[], deps: OptimizeDeps, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number): number[][] {
+function buildMatrix(names: string[], deps: OptimizeDeps, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights): number[][] {
   const n = names.length;
   const m: number[][] = Array.from({ length: n }, () => new Array(n).fill(BIG));
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
     if (i === j) { m[i][j] = 0; continue; }
-    const best = bestOption(deps.pool.get(legKey(names[i], names[j])), obj, pax, { preferDaily }, tol, month);
-    m[i][j] = best ? optionCost(best, obj, pax, preferDaily, tol, month) : BIG;
+    const best = bestOption(deps.pool.get(legKey(names[i], names[j])), obj, pax, { preferDaily }, tol, month, w);
+    m[i][j] = best ? optionCost(best, obj, pax, preferDaily, tol, month, w) : BIG;
   }
   return m;
 }
@@ -149,10 +150,12 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
   // §10: rank each leg's options once (same objective ordering the sequencer uses),
   // keep ranked[0] as the chosen option, and retain the ranking for decision records.
   const explainByLeg = new Map<string, ReturnType<typeof buildLegExplain>>();
-  const w = weightsForObjective(input.objective);
+  // §14.5 the DDCV weight vector, rescaled by the traveller's psyche (w' = w ∘ M(TPP)).
+  // Absent TPP = the objective weights unchanged (v1.0 behaviour). Hard gates untouched.
+  const w = applyTPP(weightsForObjective(input.objective), input.tpp);
   for (let i = 1; i < names.length; i++) {
     const key = legKey(names[i - 1], names[i]);
-    const ranked = rankLegOptions(deps.pool.get(key), input.objective, pax, { overnightTrains: input.overnightTrains, preferDaily, dailyOnly: deps.dailyOnly }, tol, month);
+    const ranked = rankLegOptions(deps.pool.get(key), input.objective, pax, { overnightTrains: input.overnightTrains, preferDaily, dailyOnly: deps.dailyOnly }, tol, month, w);
     if (ranked.length) {
       const opt = ranked[0];
       chosen.set(key, opt); chosenList.push(opt);
@@ -242,7 +245,8 @@ export function solveForObjective(input: OptimizeInput, deps: OptimizeDeps, obje
   const endIdx = input.end ? names0.findIndex((n) => n.toLowerCase() === input.end!.toLowerCase()) : null;
   const preferDaily = input.startWeekday == null;
   const solveTol = toleranceForProfile(input.profile);
-  const matrix = buildMatrix(names0, deps, objective, pax, preferDaily, solveTol, input.month);
+  const solveW = applyTPP(weightsForObjective(objective), input.tpp);
+  const matrix = buildMatrix(names0, deps, objective, pax, preferDaily, solveTol, input.month, solveW);
   const { order } = sequence(matrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null });
   return buildPlan(order, names0, { ...input, objective }, deps, label);
 }
@@ -255,7 +259,8 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
 
   const preferDaily = input.startWeekday == null;
   const solveTol = toleranceForProfile(input.profile);
-  const matrix = buildMatrix(names0, deps, input.objective, pax, preferDaily, solveTol, input.month);
+  const solveW = applyTPP(weightsForObjective(input.objective), input.tpp);
+  const matrix = buildMatrix(names0, deps, input.objective, pax, preferDaily, solveTol, input.month, solveW);
   const { order } = sequence(matrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null });
 
   const best = buildPlan(order, names0, input, deps, `Best (${input.objective})`);
@@ -271,7 +276,7 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
     nodes: deps.nodes,
     pool: new Map(Array.from(deps.pool.entries()).map(([k, v]) => [k, v.filter((o) => (o.operatingDays ?? 127) === 127)] as const)),
   };
-  const roadMatrix = buildMatrix(names0, roadOnlyDeps, input.objective, pax, true, solveTol, input.month);
+  const roadMatrix = buildMatrix(names0, roadOnlyDeps, input.objective, pax, true, solveTol, input.month, solveW);
   const alt2Order = sequence(roadMatrix, { start: startIdx ?? null, end: endIdx ?? null }).order;
   const alt2 = buildPlan(alt2Order, names0, input, { ...deps, pool: roadOnlyDeps.pool, dailyOnly: true }, 'Alternate (date-flexible, no weekday lock)');
   alt2.dateFlexible = true;

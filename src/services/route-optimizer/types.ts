@@ -124,6 +124,31 @@ export interface InputCity {
   custom?: boolean;
 }
 
+/**
+ * §14 Traveler Psyche Profile — eight psyche dimensions, each ∈ [−1,+1], default 0
+ * (= the physiology-class + segment prior). It rescales the DDCV SOFT weights only
+ * (`w' = w ∘ M(TPP)`, see route-optimizer/tpp.ts) and can NEVER override a body-truth
+ * hard gate (§3 / §14.1). Additive + optional: absent TPP = the v1.0 engine exactly.
+ */
+export interface TPP {
+  /** Pace: −1 savour (fewer, deeper) … +1 packer (more, faster). */
+  P1?: number;
+  /** Novelty: −1 comfort-seeking … +1 adventure-seeking. */
+  P2?: number;
+  /** Structure: −1 spontaneous … +1 planned-rigid (soft rules; not a DDCV weight). */
+  P3?: number;
+  /** Crowd tolerance: −1 solitude … +1 festival-energy (soft rules; not a DDCV weight). */
+  P4?: number;
+  /** Budget elasticity: −1 price-first … +1 comfort-first. */
+  P5?: number;
+  /** Transit meaning: −1 transit=cost … +1 transit=experience. */
+  P6?: number;
+  /** Control need: −1 "just decide for me" … +1 wants options & reasons (UI only). */
+  P7?: number;
+  /** Anchoring: −1 wanderer … +1 nester/hub-and-spoke (soft rules; not a DDCV weight). */
+  P8?: number;
+}
+
 export interface OptimizeInput {
   cities: InputCity[];
   start?: string | null;
@@ -148,6 +173,9 @@ export interface OptimizeInput {
   /** §9 the traveller's day budget (e.g. 8). When set and the honest plan runs
    *  longer, the request is infeasible and optimize() attaches a negotiation. */
   dayBudget?: number;
+  /** §14 Traveler Psyche Profile — rescales the DDCV soft weights per mind. Absent =
+   *  today's behaviour exactly; can never relax a body-truth hard gate. */
+  tpp?: TPP;
 }
 
 /** A suggested (opt-in) en-route overnight town on an over-long road leg. */
