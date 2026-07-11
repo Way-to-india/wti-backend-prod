@@ -9,6 +9,7 @@ import { enrichPlan } from '@/services/enrichment/orchestrator';
 import { enrichmentEnabled } from '@/services/enrichment/core';
 import type { CityNode, LegOption, OptimizeInput, InputCity, LatLng, Plan, HaltSuggestion, PlanComparison, LegModeOption } from '@/services/route-optimizer/types';
 import type { AnchorCandidate } from '@/services/route-optimizer/anchors';
+import { toPlannerPayload } from '@/services/route-optimizer/plannerPayload';
 
 /**
  * Route Optimizer — POST /api/admin/route-optimizer/optimize
@@ -228,7 +229,25 @@ export class RouteOptimizerController {
           VALUES (${JSON.stringify(input)}::jsonb, ${input.objective}, ${JSON.stringify(result.plans)}::jsonb, ${uid})`;
       } catch (e) { console.error('optimizer_runs log failed (non-fatal):', e); }
 
-      return res.deliver(200, true, { ...result, meta: { registered, missing } });
+      // ---- US-501/502: trip-planner payload (OPT-IN, purely additive) -------
+      // The public trip-planner design binds to a TRIP_DATA shape whose leg detail
+      // lives on days[].transit, while the engine emits that THIN (the rich facts are
+      // on plan.legs[]). toPlannerPayload() performs that join + the display
+      // formatting. It is OPT-IN (`planner: true`) so every existing CRM call keeps a
+      // byte-identical response — plans[0] is untouched and loadFromOptimizer is safe.
+      // Fail-safe: an adapter error must never sink a good solve.
+      let planner: unknown;
+      if (body.planner === true) {
+        try {
+          planner = toPlannerPayload(result, { request: typeof body.request === 'string' ? body.request : null });
+        } catch (e) { console.error('planner payload failed (non-fatal):', e); }
+      }
+
+      return res.deliver(200, true, {
+        ...result,
+        ...(planner ? { planner } : {}),
+        meta: { registered, missing },
+      });
     } catch (e) {
       console.error('route optimize failed:', e);
       return res.deliver(500, false, undefined, 'Route optimization failed');
