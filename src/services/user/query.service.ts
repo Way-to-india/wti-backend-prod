@@ -1,4 +1,5 @@
 import prisma from '@/config/db';
+import { attachLead, isUuid } from '@/services/route-optimizer/planStore';
 import { generateLeadReference } from '@/utils/lead-reference.util';
 import { BadRequestError } from '@/middlewares/handlers/errorHandler';
 import { calculateLeadScore, determinePriority, calculateConversionProbability, suggestNextFollowUp } from '@/utils/lead-scoring.util';
@@ -12,6 +13,10 @@ export interface TourQueryData {
   departureCity?: string;
   dateOfTravel?: string;
   specialRequest?: string;
+  /** US-701 — the share token of the plan he built on /plan. When it is present, the
+   *  executive opens THE EXACT PLAN THE TRAVELLER SAW, instead of rebuilding it by hand
+   *  and quoting a trip the traveller never asked for. */
+  planToken?: string;
 }
 
 export interface HotelQueryData {
@@ -45,6 +50,9 @@ export interface ContactUsData {
   subject: string;
   message: string;
 }
+
+/** Where a traveller's saved plan lives. The executive clicks this straight from the lead. */
+const PLAN_BASE_URL = (process.env.PUBLIC_SITE_URL || 'https://www.waytoindia.com').replace(/\/$/, '');
 
 class QueryService {
   private readonly TOUR_QUERY_LIMIT = 5;
@@ -182,6 +190,17 @@ class QueryService {
     const description = this.buildTourDescription(data, referenceNumber);
     const metadata = this.getRequestMetadata(req);
 
+    // US-701 — put the plan link where the executive CANNOT miss it. `details` is a
+    // JSON column the CRM does not surface today; `specialRequests` is on the face of
+    // every lead. So the operator opens the traveller's exact plan on day one, with no
+    // CRM change at all. The traveller's own words stay exactly as he wrote them,
+    // underneath.
+    const specialRequests = isUuid(data.planToken)
+      ? [`Trip plan the traveller built: ${PLAN_BASE_URL}/plan/${data.planToken}`, data.specialRequest]
+          .filter(Boolean)
+          .join('\n\n')
+      : data.specialRequest;
+
     const lead = await prisma.lead.create({
       data: {
         referenceNumber,
@@ -194,16 +213,27 @@ class QueryService {
         destination: data.tourPackage,
         numberOfTravelers: data.numberOfTravellers,
         travelStartDate: data.dateOfTravel ? new Date(data.dateOfTravel) : null,
-        specialRequests: data.specialRequest,
+        specialRequests,
         details: {
           departureCity: data.departureCity,
           tourPackage: data.tourPackage,
           dateOfTravel: data.dateOfTravel,
+          // US-701: the plan he actually saw. Both the token (for any UI we build later)
+          // and the plain link (so the executive can open it TODAY, with no CRM change).
+          ...(isUuid(data.planToken)
+            ? { planToken: data.planToken, planUrl: `${PLAN_BASE_URL}/plan/${data.planToken}` }
+            : {}),
         },
         ipAddress: metadata.ipAddress,
         userAgent: metadata.userAgent,
       },
     });
+
+    // US-701 — bind the plan to the lead, in BOTH directions. Non-fatal: an enquiry must
+    // never fail because we could not link a plan to it.
+    if (isUuid(data.planToken)) {
+      void attachLead(data.planToken, lead.id).catch(() => {});
+    }
 
     // Score lead and trigger AI qualification
     await this.scoreAndQualifyLead(lead.id, 'TOUR_QUERY', {

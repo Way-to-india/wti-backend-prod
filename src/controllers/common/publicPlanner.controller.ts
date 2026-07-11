@@ -28,6 +28,7 @@ import { anthropic, enrichmentEnabled } from '@/services/enrichment/core';
 import { verifyCity } from '@/services/route-optimizer/cityVerify';
 import { inferGateway, type StartSource } from '@/services/route-optimizer/gateway';
 import prisma from '@/config/db';
+import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 
 // ---- per-IP rate limit (in-memory; nginx sits in front, single process) ----
 const HOUR = 60 * 60 * 1000;
@@ -349,13 +350,98 @@ export class PublicPlannerController {
 
       // THE PUBLIC GATE: only the scrubbed planner payload ever leaves.
       // plans[], enrichment PII, costBreakdown, warnings never reach the wire.
+      const publicPayload = toPublicPayload(planner);
+
+      // ---- US-701: KEEP IT --------------------------------------------------
+      // We store EXACTLY what we are about to send — the scrubbed payload, nothing
+      // more. So the store can never leak what it was never given. The write is
+      // non-fatal: if it fails he still gets his plan, he just cannot keep it.
+      //
+      // We save it even when he has told us NOTHING about himself. That is the
+      // founder's law #1 ("no gate, no telephone number") taken seriously: the plan
+      // is his the moment it exists, not the moment he pays for it with a phone
+      // number. The link is what travels round the family WhatsApp group, and the
+      // family is where the real customers are.
+      const token = await savePlan({
+        input: innerBody,
+        payload: publicPayload,
+        understanding,
+      });
+
+      // ---- US-506: even a stranger teaches us something ----------------------
+      // FIREWALLED to the business. Where do people want to go, with whom, in which
+      // month — and above all, WHAT COULD WE NOT GIVE THEM. This row is written for
+      // every solve, and it is why an anonymous visitor is worth serving at all.
+      void recordDemand(buildDemandRow({
+        planId: token,
+        request,
+        cities,
+        start: start || null,
+        end: end || null,
+        month,
+        pax,
+        profile,
+        solved: !!publicPayload.plan,
+        dropped: (planner.negotiation ?? []).flatMap((r: any) => Array.isArray(r?.dropCities) ? r.dropCities : []),
+      }));
+
       return res.status(200).json({
         status: true,
-        payload: { planner: toPublicPayload(planner), understanding },
+        payload: { planner: publicPayload, understanding, token },
       });
     } catch (e) {
       console.error('public planner failed:', e);
       return res.status(500).json({ status: false, message: 'We could not build your plan just now. Please try again in a minute.' });
     }
+  }
+
+  /**
+   * GET /planner/plan/:token — RE-OPEN a saved plan.
+   *
+   * READ-ONLY, DELIBERATELY. Anyone holding the link can READ the itinerary — that is
+   * exactly what makes it travel round a family WhatsApp group, and it is founder law
+   * #1. Nobody who merely holds the link can CHANGE it: a cousin who opens Papa's trip
+   * must not be able to overwrite it, and since an anonymous plan has no owner we could
+   * not prove the plan was his anyway. Someone who wants it different builds his own
+   * plan, or (US-505) joins and says so in the family notes — which costs him a contact,
+   * and that is the whole registration engine.
+   *
+   * It is a cheap DB read of the payload we already scrubbed and stored. No re-solve,
+   * so a plan going round a family group costs us nothing, and it can never drift from
+   * the plan he actually saw.
+   */
+  static async get(req: Request, res: Response) {
+    try {
+      const token = String(req.params.token || '');
+      if (!isUuid(token)) {
+        return res.status(404).json({ status: false, message: 'We could not find that plan. The link may be incomplete.' });
+      }
+      const stored = await getPlan(token);
+      if (!stored) {
+        return res.status(404).json({ status: false, message: 'We could not find that plan. The link may be old or incomplete.' });
+      }
+      return res.status(200).json({
+        status: true,
+        payload: {
+          planner: stored.payload,
+          understanding: stored.understanding ?? [],
+          token: stored.id,
+          title: stored.title,
+          savedAt: stored.createdAt,
+          readOnly: true,
+        },
+      });
+    } catch (e) {
+      console.error('public planner get failed:', e);
+      return res.status(500).json({ status: false, message: 'We could not open that plan just now. Please try again in a minute.' });
+    }
+  }
+
+  /** POST /planner/plan/:token/share — he copied the link. That is the moment the plan
+   *  stopped being a browser tab he would have lost. Nothing is returned; it is a signal. */
+  static async share(req: Request, res: Response) {
+    const token = String(req.params.token || '');
+    if (isUuid(token)) void markShared(token);
+    return res.status(200).json({ status: true });
   }
 }
