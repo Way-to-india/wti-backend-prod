@@ -26,6 +26,7 @@ import { toPublicPayload } from '@/services/route-optimizer/publicPayload';
 import type { PlannerPayload } from '@/services/route-optimizer/plannerPayload';
 import { anthropic, enrichmentEnabled } from '@/services/enrichment/core';
 import { verifyCity } from '@/services/route-optimizer/cityVerify';
+import { inferGateway, type StartSource } from '@/services/route-optimizer/gateway';
 import prisma from '@/config/db';
 
 // ---- per-IP rate limit (in-memory; nginx sits in front, single process) ----
@@ -109,8 +110,23 @@ const OBJECTIVE_MAP: Record<string, string> = {
   TIME: 'TIME', COST: 'COST', EASE: 'EASE',
 };
 
+/** The ONLY thing we truly cannot plan without: somewhere to go. Even then we ask a
+ *  question, we do not scold. (One destination is enough — the origin is the second node.) */
 const ASK_AGAIN =
-  'Please tell us at least two places you want to visit, like "Delhi, Agra and Varanasi in November".';
+  'Tell us at least one place you would like to visit, like "Tirthan Valley" or "Delhi and Agra", and we will build the rest.';
+
+const ASK_START =
+  'Almost there. Where will you be starting your journey from? Tell us your city, and we will plan it from there.';
+
+/** What the plan is resting on — every fact, and whether HE gave it or WE assumed it.
+ *  The confirm screen renders exactly this. Nothing is assumed silently, ever. */
+export interface UnderstoodField {
+  key: 'start' | 'destinations' | 'nights' | 'travellers' | 'month' | 'hotel';
+  label: string;
+  value: string;
+  source: StartSource;      // 'you_said' | 'we_guessed' | 'we_need_it'
+  why?: string;
+}
 
 export class PublicPlannerController {
   /** POST /planner/plan — anonymous, rate-limited, sanitized. */
@@ -139,6 +155,12 @@ export class PublicPlannerController {
       let month = Number.isInteger(body.month) && body.month >= 1 && body.month <= 12 ? body.month : undefined;
       const request = typeof body.request === 'string' ? body.request.slice(0, 1000) : null;
 
+      // Where did each value actually come from? A value the model read out of his
+      // sentence is an ASSUMPTION, not his word — and it must be labelled as one.
+      const paxFromField = Number.isFinite(Number(body.pax));
+      const monthFromField = Number.isInteger(body.month) && body.month >= 1 && body.month <= 12;
+      let paxFromText = false, monthFromText = false;
+
       // Free-text ask → candidate structure (validated below)
       if (cities.length < 2 && request) {
         const parsed = await parseAsk(request);
@@ -146,11 +168,27 @@ export class PublicPlannerController {
           if (parsed.cities.length) cities = parsed.cities;
           start = start || parsed.start || null;
           end = end || parsed.end || null;
-          if (!Number.isFinite(Number(body.pax)) && parsed.pax) pax = parsed.pax;
+          // "I along with few friends" must never become 1 traveller. If the model
+          // returns a single traveller while the text plainly speaks of a group, we
+          // discard the model's number and fall back to our stated default — and we SAY
+          // that we assumed it. A wrong number quietly presented as his word is the
+          // worst of both worlds.
+          const soundsLikeAGroup = /\b(friends?|family|we|us|our|group|couple|parents|kids|children|wife|husband)\b/i.test(request);
+          if (!paxFromField && parsed.pax) {
+            if (parsed.pax === 1 && soundsLikeAGroup) { /* keep the default of 2, and label it */ }
+            else { pax = parsed.pax; paxFromText = true; }
+          }
           if (!['standard', 'family', 'senior'].includes(body.profile) && parsed.profile) profile = parsed.profile;
-          if (month === undefined && parsed.month) month = parsed.month;
+          if (month === undefined && parsed.month) { month = parsed.month; monthFromText = true; }
         }
       }
+
+      // ---- the starting city (founder ruling 2026-07-11) --------------------
+      // He may have TYPED it ("from Mumbai"). Claude already pulls it out; until now
+      // we threw it away. Keep it, verify it like any other place, and make it a real
+      // node. If he did not say, we infer a gateway BELOW (after the destinations are
+      // resolved and we know where he is actually going) — and we say that we did.
+      const startWasStated = !!(start && String(start).trim());
 
       // validation gate: only real places survive. Unresolved names are NOT
       // silently dropped — each gets the full verify ladder (exact → fuzzy
@@ -181,10 +219,55 @@ export class PublicPlannerController {
         });
       }
       const totalNights = cities.reduce((s, c) => s + c.nights, 0);
-      if (cities.length < 2) return res.status(400).json({ status: false, message: ASK_AGAIN });
+      // THE ONLY HARD FLOOR: somewhere to go. One place is enough — the starting city
+      // is the second node. (Was: "at least two places", which dead-ended the single-
+      // destination request, i.e. the commonest request in travel.)
+      if (cities.length < 1) return res.status(400).json({ status: false, message: ASK_AGAIN });
       if (totalNights > 21) return res.status(400).json({ status: false, message: 'That is a very long trip for one plan. Please keep it within 21 nights, or split it into two trips.' });
-      if (start && !ok.has(start.toLowerCase())) start = null;
       if (end && !ok.has(end.toLowerCase())) end = null;
+
+      // ---- resolve the ORIGIN -----------------------------------------------
+      // Ladder: he said it → we verify it. He did not → we infer the gateway and say so.
+      let startSource: StartSource = 'we_guessed';
+      let startWhy = '';
+
+      if (start && !ok.has(start.toLowerCase())) {
+        // he named a starting city we have not resolved yet — run the same ladder
+        const v = await verifyCity(start);
+        if (v.ok && v.name) { start = v.name; ok.add(v.name.toLowerCase()); }
+        else start = null;
+      }
+
+      if (start && startWasStated) {
+        startSource = 'you_said';
+        startWhy = 'You told us where you are starting from';
+      } else {
+        // fetch the coordinates of the destinations so the gateway is inferred from
+        // WHERE HE IS ACTUALLY GOING, not from a guess about who he is.
+        const destRows = await prisma.$queryRaw<{ name: string; latitude: number; longitude: number }[]>`
+          SELECT name, latitude, longitude FROM world_cities
+           WHERE lower(name) = ANY(${cities.map((c) => c.name.toLowerCase())})`;
+        const byName = new Map(destRows.map((r) => [r.name.toLowerCase(), [Number(r.latitude), Number(r.longitude)] as [number, number]]));
+        const dests = cities
+          .map((c) => ({ name: c.name, coord: byName.get(c.name.toLowerCase()) }))
+          .filter((d): d is { name: string; coord: [number, number] } => !!d.coord);
+
+        const gw = await inferGateway(dests);
+        if (gw.city) {
+          start = gw.city;
+          startSource = 'we_guessed';
+          startWhy = gw.why;
+        } else {
+          // we could not even work out a gateway — ASK. One question, not a wall.
+          return res.status(400).json({ status: false, message: ASK_START, need: 'start' });
+        }
+      }
+
+      // The origin is a NODE. If it is not already one of the places he sleeps in, add
+      // it with ZERO nights — a gateway you pass through, not a place you stay.
+      if (start && !cities.some((c) => c.name.toLowerCase() === start!.toLowerCase())) {
+        cities = [{ name: start, nights: 0 }, ...cities];
+      }
 
       // sanitized body for the SAME admin pipeline — planner on, enrichment
       // cache-first 'fast' (never deep), no pins/halts/custom coords
@@ -224,9 +307,52 @@ export class PublicPlannerController {
         return res.status(500).json({ status: false, message: 'We could not build your plan just now. Please try again in a minute.' });
       }
 
+      // ---- WHAT WE UNDERSTOOD ------------------------------------------------
+      // Every fact the plan rests on, and who supplied it. The confirm screen renders
+      // this. An assumption we make is shown as an assumption — never as his word.
+      const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const stops = cities.filter((c) => c.nights > 0).map((c) => c.name);
+      const understanding: UnderstoodField[] = [
+        {
+          key: 'start', label: 'Starting from', value: start || '—',
+          source: startSource, why: startWhy || undefined,
+        },
+        {
+          key: 'destinations', label: 'Going to', value: stops.join(', ') || '—',
+          source: 'you_said',
+        },
+        {
+          key: 'nights', label: 'Nights', value: String(totalNights),
+          source: request && !Array.isArray(body.cities) ? 'we_guessed' : 'you_said',
+          why: request && !Array.isArray(body.cities) ? 'We split your days across the places you named' : undefined,
+        },
+        {
+          key: 'travellers', label: 'Travellers', value: String(pax),
+          source: paxFromField ? 'you_said' : 'we_guessed',
+          why: paxFromField ? undefined
+            : paxFromText ? 'We read this from your message — tap to correct it'
+            : 'We assumed two of you — tap to change',
+        },
+        {
+          key: 'month', label: 'Month', value: month ? MONTH_NAMES[month - 1] : '—',
+          source: monthFromField ? 'you_said' : month ? 'we_guessed' : 'we_need_it',
+          why: monthFromField ? undefined
+            : month ? 'We read this from your message — tap to correct it'
+            : 'Tell us the month and we will use the right trains and the right season',
+        },
+        {
+          key: 'hotel', label: 'Hotels', value: '3 star',
+          source: 'we_guessed',
+          why: 'Our costs assume a 3 star hotel. The real cost varies with the hotel and category you choose.',
+        },
+      ];
+
       // THE PUBLIC GATE: only the scrubbed planner payload ever leaves.
       // plans[], enrichment PII, costBreakdown, warnings never reach the wire.
-      return res.status(200).json({ status: true, payload: { planner: toPublicPayload(planner) } });
+      return res.status(200).json({
+        status: true,
+        payload: { planner: toPublicPayload(planner), understanding },
+      });
     } catch (e) {
       console.error('public planner failed:', e);
       return res.status(500).json({ status: false, message: 'We could not build your plan just now. Please try again in a minute.' });
