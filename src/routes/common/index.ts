@@ -1,6 +1,7 @@
 import AppRoutes from '@/common/appRoutes';
 import { Router } from 'express';
 import BlogRouter from './blog.routes';
+import PlannerRouter from './planner.routes';
 import CityRouter from './city.routes';
 import HeroSlideRouter from './hero-slide.routes';
 import PoiRouter from './poi.routes';
@@ -19,5 +20,6 @@ router.use(AppRoutes.TRAVEL_GUIDE, TravelGuideRouter);
 router.use(AppRoutes.POI, PoiRouter);
 router.use(AppRoutes.HERO_SLIDES, HeroSlideRouter);
 router.use(AppRoutes.BLOGS, BlogRouter);
+router.use('/planner', PlannerRouter);
 
 export default router;
