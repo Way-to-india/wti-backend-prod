@@ -25,6 +25,7 @@ import { RouteOptimizerController } from '@/controllers/admin/routeOptimizer.con
 import { toPublicPayload } from '@/services/route-optimizer/publicPayload';
 import type { PlannerPayload } from '@/services/route-optimizer/plannerPayload';
 import { anthropic, enrichmentEnabled } from '@/services/enrichment/core';
+import { verifyCity } from '@/services/route-optimizer/cityVerify';
 import prisma from '@/config/db';
 
 // ---- per-IP rate limit (in-memory; nginx sits in front, single process) ----
@@ -151,9 +152,34 @@ export class PublicPlannerController {
         }
       }
 
-      // validation gate: only gazetteer-resolvable cities survive
+      // validation gate: only real places survive. Unresolved names are NOT
+      // silently dropped — each gets the full verify ladder (exact → fuzzy
+      // spelling fix → AI existence check + registration). Only a name that
+      // fails ALL gates is rejected, and then we SAY SO by name.
       const ok = await resolvable(cities.map((c) => c.name));
+      const failed: string[] = [];
+      let repairs = 0;
+      for (const c of cities) {
+        if (ok.has(c.name.toLowerCase())) continue;
+        if (repairs >= 3) { failed.push(c.name); continue; } // bound the spend per request
+        repairs += 1;
+        const v = await verifyCity(c.name);
+        if (v.ok && v.name) {
+          if (start && start.toLowerCase() === c.name.toLowerCase()) start = v.name;
+          if (end && end.toLowerCase() === c.name.toLowerCase()) end = v.name;
+          c.name = v.name; // canonical spelling
+          ok.add(v.name.toLowerCase());
+        } else {
+          failed.push(c.name);
+        }
+      }
       cities = cities.filter((c) => ok.has(c.name.toLowerCase()));
+      if (failed.length) {
+        return res.status(400).json({
+          status: false,
+          message: `We could not find ${failed.length === 1 ? 'this place' : 'these places'}: ${failed.join(', ')}. Please check the spelling, or use the nearest big town.`,
+        });
+      }
       const totalNights = cities.reduce((s, c) => s + c.nights, 0);
       if (cities.length < 2) return res.status(400).json({ status: false, message: ASK_AGAIN });
       if (totalNights > 21) return res.status(400).json({ status: false, message: 'That is a very long trip for one plan. Please keep it within 21 nights, or split it into two trips.' });
