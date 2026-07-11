@@ -106,8 +106,14 @@ export function sequence(cost: number[][], opts: SequenceOptions = {}): { order:
   if (n <= 1) return { order: n === 1 ? [0] : [], cost: 0 };
   if (n === 2) return { order: [0, 1], cost: cost[0][1] ?? INF };
 
-  const start = opts.start ?? null;
-  const end = opts.end ?? null;
+  // HARDENING (2026-07-11): a caller can hand us a stale index (e.g. the start
+  // city was dropped upstream because its coordinates could not be resolved,
+  // so findIndex returned -1). An out-of-range index must degrade to a FREE
+  // start/end, never reach the DP (1 << -1 corrupts the mask and crashes).
+  const rawStart = opts.start ?? null;
+  const rawEnd = opts.end ?? null;
+  const start = rawStart != null && rawStart >= 0 && rawStart < n ? rawStart : null;
+  const end = rawEnd != null && rawEnd >= 0 && rawEnd < n ? rawEnd : null;
 
   if (n <= HELD_KARP_MAX) {
     if (start != null) return heldKarpFixedStart(cost, start, end);

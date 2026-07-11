@@ -268,7 +268,7 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
   // alternate 1 — edge-penalty diversification (penalise 30% of chosen edges, re-sequence)
   const alt1Matrix = matrix.map((row) => row.slice());
   for (let i = 1; i < order.length; i++) if (i % 3 === 0) alt1Matrix[order[i - 1]][order[i]] *= 1.6;
-  const alt1Order = sequence(alt1Matrix, { start: startIdx ?? null, end: endIdx ?? null }).order;
+  const alt1Order = sequence(alt1Matrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null }).order;
   const alt1 = buildPlan(alt1Order, names0, input, deps, 'Alternate (diversified)');
 
   // alternate 2 — weekday-free fallback: force road/daily modes only (no weekday lock)
@@ -277,7 +277,7 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
     pool: new Map(Array.from(deps.pool.entries()).map(([k, v]) => [k, v.filter((o) => (o.operatingDays ?? 127) === 127)] as const)),
   };
   const roadMatrix = buildMatrix(names0, roadOnlyDeps, input.objective, pax, true, solveTol, input.month, solveW);
-  const alt2Order = sequence(roadMatrix, { start: startIdx ?? null, end: endIdx ?? null }).order;
+  const alt2Order = sequence(roadMatrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null }).order;
   const alt2 = buildPlan(alt2Order, names0, input, { ...deps, pool: roadOnlyDeps.pool, dailyOnly: true }, 'Alternate (date-flexible, no weekday lock)');
   alt2.dateFlexible = true;
 
