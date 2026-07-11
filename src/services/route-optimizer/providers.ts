@@ -27,8 +27,8 @@ export async function railOptions(a: CityNode, b: CityNode, _ctx: FindCtx): Prom
   const [aLat, aLng] = a.coord, [bLat, bLng] = b.coord;
   try {
     const rows = await prisma.$queryRawUnsafe<any[]>(`
-      WITH a_st AS (SELECT code FROM train_stations WHERE lat BETWEEN ${aLat - BOX_RAIL} AND ${aLat + BOX_RAIL} AND lng BETWEEN ${aLng - BOX_RAIL} AND ${aLng + BOX_RAIL}),
-           b_st AS (SELECT code FROM train_stations WHERE lat BETWEEN ${bLat - BOX_RAIL} AND ${bLat + BOX_RAIL} AND lng BETWEEN ${bLng - BOX_RAIL} AND ${bLng + BOX_RAIL})
+      WITH a_st AS (SELECT code FROM train_stations WHERE lat BETWEEN ${aLat - BOX_RAIL} AND ${aLat + BOX_RAIL} AND lng BETWEEN ${aLng - BOX_RAIL} AND ${aLng + BOX_RAIL} AND code NOT IN (SELECT code FROM train_station_quality WHERE suspect = true)),
+           b_st AS (SELECT code FROM train_stations WHERE lat BETWEEN ${bLat - BOX_RAIL} AND ${bLat + BOX_RAIL} AND lng BETWEEN ${bLng - BOX_RAIL} AND ${bLng + BOX_RAIL} AND code NOT IN (SELECT code FROM train_station_quality WHERE suspect = true))
       SELECT da.train_no, sch.train_name, sch.running_days,
              da.dep_min AS a_dep, da.day_offset AS a_day, da.cum_km AS a_km, da.station_name AS a_station,
              db.arr_min AS b_arr, db.day_offset AS b_day, db.cum_km AS b_km, db.station_name AS b_station

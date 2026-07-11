@@ -101,8 +101,8 @@ export async function railRoadHybridOptions(
   const [aLat, aLng] = a.coord, [bLat, bLng] = b.coord;
   try {
     const rows = await prisma.$queryRawUnsafe<any[]>(`
-      WITH a_st AS (SELECT code FROM train_stations WHERE lat BETWEEN ${aLat - BOX_RAIL_A} AND ${aLat + BOX_RAIL_A} AND lng BETWEEN ${aLng - BOX_RAIL_A} AND ${aLng + BOX_RAIL_A}),
-           drop_st AS (SELECT code, name, lat, lng FROM train_stations WHERE lat BETWEEN ${bLat - BOX_DROP} AND ${bLat + BOX_DROP} AND lng BETWEEN ${bLng - BOX_DROP} AND ${bLng + BOX_DROP})
+      WITH a_st AS (SELECT code FROM train_stations WHERE lat BETWEEN ${aLat - BOX_RAIL_A} AND ${aLat + BOX_RAIL_A} AND lng BETWEEN ${aLng - BOX_RAIL_A} AND ${aLng + BOX_RAIL_A} AND code NOT IN (SELECT code FROM train_station_quality WHERE suspect = true)),
+           drop_st AS (SELECT code, name, lat, lng FROM train_stations WHERE lat BETWEEN ${bLat - BOX_DROP} AND ${bLat + BOX_DROP} AND lng BETWEEN ${bLng - BOX_DROP} AND ${bLng + BOX_DROP} AND code NOT IN (SELECT code FROM train_station_quality WHERE suspect = true))
       SELECT da.train_no, sch.train_name, sch.running_days,
              da.dep_min AS a_dep, da.day_offset AS a_day, da.cum_km AS a_km, da.station_name AS a_station,
              dd.arr_min AS d_arr, dd.day_offset AS d_day, dd.cum_km AS d_km,
