@@ -103,9 +103,40 @@ export class RouteOptimizerController {
 
       // ---- Stage A: resolve coordinates -------------------------------------
       const names = cities.map((c) => String(c.name || '').trim()).filter(Boolean);
+
+      /**
+       * A NAME IS NOT A PLACE. (2026-07-11 — the bug that offered a 76-hour drive to Goa.)
+       *
+       * This query used to be `WHERE lower(name) = ANY(...)`, and the loop below kept whichever
+       * row the database returned LAST. There are two Goas — one in India, one in the PHILIPPINES
+       * — so the engine planned a road trip to the Philippines, found no Indian airport within
+       * 66 km of it, and offered the traveller seventy-six hours in a car. The plan was not wrong.
+       * The place was.
+       *
+       * The same bug wore three other hats today: "Turturiya" became Turtuk in Ladakh, "Hyderabad"
+       * became Hyderabad in Pakistan, and "Gorakhpur" sat in Haryana, 811 km from itself.
+       *
+       * So the resolution is now DETERMINISTIC and it prefers, in strict order:
+       *   1. INDIA. This is an India planner. A foreign namesake never wins.
+       *   2. A place a traveller can actually REACH — one with a real airport or a railway station
+       *      near it. A city you can get to is more likely to be the city he meant.
+       *   3. Population, last — because population lies here: our gazetteer gives a Haryana village
+       *      the population of the Uttar Pradesh city of Gorakhpur (1,324,570), and that single
+       *      corrupt number has already defeated a population-first rule once today.
+       */
       const gazRows = await prisma.$queryRaw<{ name: string; latitude: number; longitude: number }[]>`
-        SELECT name, latitude, longitude FROM world_cities
-        WHERE lower(name) = ANY(${names.map((n) => n.toLowerCase())})`;
+        SELECT DISTINCT ON (lower(w.name)) w.name, w.latitude, w.longitude
+          FROM world_cities w
+         WHERE lower(w.name) = ANY(${names.map((n) => n.toLowerCase())})
+         ORDER BY lower(w.name),
+                  (w."countryCode" = 'IN') DESC,                      -- 1. India, always
+                  (EXISTS (SELECT 1 FROM airport_cities a            -- 2. a place he can reach
+                            WHERE abs(a.lat - w.latitude) < 0.8
+                              AND abs(a.lng - w.longitude) < 0.8)) DESC,
+                  (EXISTS (SELECT 1 FROM train_stations t
+                            WHERE abs(t.lat - w.latitude) < 0.5
+                              AND abs(t.lng - w.longitude) < 0.5)) DESC,
+                  w.population DESC NULLS LAST`;   // 3. size, last of all — population lies here
       const gaz = new Map<string, LatLng>();
       for (const r of gazRows) gaz.set(r.name.toLowerCase(), [Number(r.latitude), Number(r.longitude)]);
 
