@@ -31,8 +31,25 @@ import type { PlannerPayload } from './plannerPayload';
 /** Key names that may NEVER appear anywhere in a public payload, at any depth. */
 export const PUBLIC_FORBIDDEN_KEYS: readonly string[] = ['phone', 'email', 'piiFlag'] as const;
 
+/**
+ * FOUNDER RULING 2026-07-11 — no money on the public planner until the hotel rates
+ * are real (contracted rates, or a supplier feed). Today the hotel line is a flat
+ * estimate, so any band we print is a promise we cannot keep. We would rather show
+ * NO price than a wrong one, on a page that promises nothing is invented.
+ *
+ * Flip it on with:  PLANNER_PUBLIC_PRICE=on
+ * The admin/CRM payload is never affected — operators keep every number.
+ */
+export const publicPriceEnabled = (): boolean =>
+  String(process.env.PLANNER_PUBLIC_PRICE || '').toLowerCase() === 'on';
+
+/** Price keys stripped from the public payload while public pricing is off. */
+const PRICE_KEYS: readonly string[] = ['price', 'costPpBand', 'costBreakdown'] as const;
+
 /** The public shape: the admin payload minus the cost split, minus internal warnings,
- *  minus all PII. The price BAND survives on `plan.totals.costPpBand`. */
+ *  minus all PII. The price BAND survives on `plan.totals.costPpBand`, and — since
+ *  2026-07-11 — the price BAND, the assumption and the levers survive on `price`.
+ *  Those are what the traveller needs; none of them reveal our cost structure. */
 export type PublicPayload = Omit<PlannerPayload, 'costBreakdown' | 'plan'> & {
   plan: (Omit<NonNullable<PlannerPayload['plan']>, 'warnings'>) | null;
 };
@@ -75,5 +92,10 @@ export function toPublicPayload(payload: PlannerPayload): PublicPayload {
     ? (() => { const { warnings: _w, ...planRest } = payload.plan!; return planRest; })()
     : null;
 
-  return scrubKeys({ ...rest, plan } as unknown as PublicPayload);
+  const out = scrubKeys({ ...rest, plan } as unknown as PublicPayload);
+
+  // No money on the public page until the hotel rates are real. Deep-scrub by key
+  // name, exactly like the PII gate — so a price cannot leak from a field somebody
+  // adds next month either.
+  return publicPriceEnabled() ? out : scrubKeys(out, PRICE_KEYS);
 }

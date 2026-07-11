@@ -1,0 +1,55 @@
+/**
+ * Enrichment queue worker — drains enrichment_jobs, filling/refreshing caches so
+ * repeat plans are complete and instant. Run as a PM2 process or a cron tick.
+ *   bun run src/scripts/enrichment-worker.ts          # continuous
+ *   bun run src/scripts/enrichment-worker.ts --once    # single drain (cron)
+ */
+import { claim, complete, type Job } from './jobs';
+import { runFareJob } from './fareRefresh';
+import { runHotelJob } from './hotelFinder';
+import { runGuideJob } from './guideFinder';
+import { runContentJob } from './cityContent';
+import { enrichmentEnabled } from './core';
+
+async function handle(job: Job): Promise<boolean> {
+  const k = job.job_key || {};
+  switch (job.kind) {
+    case 'fare':    return runFareJob({ mode: k.mode, origin: k.origin, dest: k.dest, month: k.month });
+    case 'hotel':   return runHotelJob({ city: k.city, category: k.category || 'standard' });
+    case 'guide':   return runGuideJob({ city: k.city });
+    case 'content': return runContentJob({ city: k.city });
+    default: return false;
+  }
+}
+
+/** Drain up to `limit` jobs once. Returns how many were processed. */
+export async function drainOnce(limit = 5): Promise<number> {
+  if (!enrichmentEnabled()) return 0;
+  const jobs = await claim(limit);
+  for (const job of jobs) {
+    const t0 = Date.now();
+    try {
+      const ok = await handle(job);
+      await complete(job.id, ok, ok ? undefined : 'no result / no source');
+      console.log(`[enrichment-worker] ${job.kind} ${JSON.stringify(job.job_key)} → ${ok ? 'done' : 'empty'} (${Date.now() - t0}ms, attempt ${job.attempts})`);
+    } catch (e: any) {
+      await complete(job.id, false, e?.message || String(e));
+      console.log(`[enrichment-worker] ${job.kind} ${JSON.stringify(job.job_key)} → ERROR ${e?.message || e} (${Date.now() - t0}ms)`);
+    }
+  }
+  return jobs.length;
+}
+
+/** Continuous loop with idle backoff. */
+export async function runWorker(): Promise<void> {
+  console.log('[enrichment-worker] started');
+  let idle = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const n = await drainOnce(4);
+    if (n === 0) { idle = Math.min(idle + 1, 6); await sleep(2000 * idle + 3000); }
+    else { idle = 0; await sleep(500); }
+  }
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

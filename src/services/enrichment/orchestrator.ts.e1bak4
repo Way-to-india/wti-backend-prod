@@ -1,0 +1,153 @@
+/**
+ * Enrichment orchestrator — augments a finalized Plan with real fares, hotels,
+ * guides, city content and a website-model trip cost. Cache-first; bounded live
+ * fan-out; misses are enqueued for the background worker (learn-over-time loop).
+ *
+ * mode:
+ *   'fast'  (default) — live fares inline (they're the cost driver, few per plan);
+ *                       hotels/guides/content served from cache, misses enqueued.
+ *   'deep'            — live everything inline (first-fill), still time-budgeted.
+ */
+import type { Plan, PlanEnrichment, CityEnrichment, TripCostSummary } from '@/services/route-optimizer/types';
+import { estCostPp } from '@/services/route-optimizer/optimize';
+import { enrichmentEnabled, currentMonthIST, mapLimit } from './core';
+import { resolveFare } from './fareRefresh';
+import { findHotels, type HotelCategory } from './hotelFinder';
+import { findGuides } from './guideFinder';
+import { findCityContent } from './cityContent';
+import { computeTripCost, categoryToTier, tierToCategory, type HotelTier } from './costModel';
+
+export interface EnrichOpts {
+  month?: number;
+  pax?: number;
+  tier?: HotelTier;       // hotel tier for costing + hotel category
+  profile?: string;
+  mode?: 'fast' | 'deep';
+  budgetMs?: number;      // overall wall-clock budget for live calls
+}
+
+function tierForProfile(profile?: string, explicit?: HotelTier): HotelTier {
+  if (explicit) return explicit;
+  if (profile === 'senior') return '4';
+  return '3';
+}
+
+/** distinct overnight cities in itinerary order + rough nights each. */
+function overnightCities(plan: Plan): { city: string; nights: number }[] {
+  const order: string[] = [];
+  const nights = new Map<string, number>();
+  for (const d of plan.days) {
+    const c = d.city;
+    if (!c) continue;
+    if (!nights.has(c)) { nights.set(c, 0); order.push(c); }
+    nights.set(c, (nights.get(c) || 0) + 1);
+  }
+  // last city on the final day is usually a departure, not an overnight — but we
+  // still enrich it (guides/content are useful); nights come from the day count.
+  return order.map((c) => ({ city: c, nights: Math.max(1, nights.get(c) || 1) }));
+}
+
+export async function enrichPlan(plan: Plan, opts: EnrichOpts = {}): Promise<Plan> {
+  if (!enrichmentEnabled()) return plan;
+  const start = Date.now();
+  const budgetMs = opts.budgetMs ?? 45000;
+  const mode = opts.mode ?? 'fast';
+  const month = opts.month ?? currentMonthIST();
+  const pax = opts.pax ?? 2;
+  const tier = tierForProfile(opts.profile, opts.tier);
+  const category: HotelCategory = tierToCategory(tier);
+  const overBudget = () => Date.now() - start > budgetMs;
+
+  // ---- 1. FARES (live each time, bounded) — real farePpBand on AIR/RAIL legs --
+  const fareLegs = plan.legs.filter((l) => l.mode === 'AIR' || l.mode === 'RAIL');
+  await mapLimit(fareLegs, 3, async (leg) => {
+    const f = await resolveFare(leg.mode as 'AIR' | 'RAIL', leg.from, leg.to, {
+      month, pax, allowLive: !overBudget(), timeoutMs: 22000,
+    });
+    if (f) {
+      leg.farePpBand = [f.min, f.max];
+      if (leg.modeOptions) {
+        const mo = leg.modeOptions.find((o) => o.mode === leg.mode);
+        if (mo) mo.costPp = Math.round((f.min + f.max) / 2);
+      }
+      (leg as any).fareSource = f.source;
+    }
+  });
+
+  // ---- 2. TRIP COST (website model with resolved intercity fares) ------------
+  let intercityMin = 0, intercityMax = 0;
+  for (const leg of plan.legs) {
+    if (leg.mode === 'ROAD') continue;            // road is priced by vehicle/day
+    if (leg.farePpBand) { intercityMin += leg.farePpBand[0]; intercityMax += leg.farePpBand[1]; }
+    else { const c = estCostPp(leg as any); intercityMin += Math.round(c * 0.85); intercityMax += Math.round(c * 1.2); }
+  }
+  const totalDays = plan.days.length || (plan.sequence.length);
+  const airLegs = plan.legs.filter((l) => l.mode === 'AIR').length;
+  const roadDays = Math.max(1, totalDays - airLegs); // vehicle at disposal minus full-fly days
+  const hotelNights = plan.totals?.hotelNights ?? Math.max(0, totalDays - 1);
+  const tc = computeTripCost({ pax, tier, totalDays, roadDays, hotelNights, intercityFarePpMin: intercityMin, intercityFarePpMax: intercityMax });
+  const tripCost: TripCostSummary = {
+    currency: tc.currency, perPersonMin: tc.perPersonMin, perPersonMax: tc.perPersonMax,
+    totalMin: tc.totalMin, totalMax: tc.totalMax, breakdown: tc.breakdown,
+    tier, pax, indicative: tc.indicative, gstPending: tc.gstPending,
+  };
+  // refresh the plan's headline cost band to the real, all-in per-person number
+  plan.totals.costPpBand = [tripCost.perPersonMin, tripCost.perPersonMax];
+  if (plan.comparison) plan.comparison.costPpBand = [tripCost.perPersonMin, tripCost.perPersonMax];
+
+  // ---- 3. STATIC enrichment per city (hotels/guides/content) -----------------
+  const cities = overnightCities(plan);
+  const allowStaticLive = mode === 'deep';
+  let anyEnriching = false;
+  const cityEnrich: CityEnrichment[] = await mapLimit(cities, 2, async ({ city }) => {
+    const live = allowStaticLive && !overBudget();
+    const [hotels, guides, content] = await Promise.all([
+      findHotels(city, category, { allowLive: live, timeoutMs: 32000 }),
+      findGuides(city, { allowLive: live, timeoutMs: 34000 }),
+      findCityContent(city, { allowLive: live, timeoutMs: 42000 }),
+    ]);
+    const enriching = !hotels || !guides || !content;
+    if (enriching) anyEnriching = true;
+    return {
+      city, overnight: true,
+      hotels: hotels ?? undefined,
+      guides: guides ?? undefined,
+      content: content ?? undefined,
+      enriching,
+    } as CityEnrichment;
+  });
+
+  // ---- 4. weave sightseeing into the day-by-day (itinerary, not a routing log) --
+  // For each stay day at a city we have content for, inject that city's attractions,
+  // distributing them across multi-night stays so each day reads differently.
+  const contentByCity = new Map<string, { attractions?: { name: string }[]; itineraryBody?: string | null }>();
+  for (const c of cityEnrich) if (c.content && ((c.content.attractions && c.content.attractions.length) || c.content.itineraryBody)) contentByCity.set(c.city.toLowerCase(), c.content);
+  const usedByCity = new Map<string, number>();
+  for (const d of plan.days) {
+    const key = d.city.toLowerCase();
+    const c = contentByCity.get(key);
+    if (!c) continue;
+    const isStay = !d.transit || /full day|arrive|sightseeing/i.test(d.activity);
+    if (!isStay) continue;
+    const names = (c.attractions || []).map((a) => a.name).filter(Boolean);
+    const start = usedByCity.get(key) || 0;
+    const slice = names.slice(start, start + 3);
+    if (slice.length) {
+      usedByCity.set(key, start + slice.length);
+      const see = slice.join(', ');
+      if (/full day/i.test(d.activity)) d.activity = `${d.city} — sightseeing: ${see}`;
+      else d.activity = `${d.activity} · Sightseeing: ${see}`;
+    } else if (c.itineraryBody && /full day/i.test(d.activity)) {
+      d.activity = `${d.city} — ${c.itineraryBody}`;
+    }
+  }
+
+  const enrichment: PlanEnrichment = {
+    cities: cityEnrich,
+    tripCost,
+    enriching: anyEnriching,
+    generatedAt: new Date().toISOString(),
+  };
+  plan.enrichment = enrichment;
+  return plan;
+}

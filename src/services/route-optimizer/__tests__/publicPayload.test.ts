@@ -89,9 +89,19 @@ check('ADMIN payload HAS the 4-line costBreakdown (operator tool)', admin.costBr
 check('PUBLIC payload has NO costBreakdown key at all', !('costBreakdown' in (pub as any)));
 check('PUBLIC payload does NOT leak the internal split numbers (19400 / 8900 / 9300 / 4900)',
   !/19400|8900|9300|4900/.test(pubJson));
-check('…but the PRICE BAND survives on plan.totals.costPpBand (what the public sees)',
-  Array.isArray(pub.plan?.totals?.costPpBand) || pub.plan?.totals?.costPpBand === null,
-  JSON.stringify(pub.plan?.totals?.costPpBand));
+// FOUNDER RULING 2026-07-11 — NO MONEY ON THE PUBLIC PLANNER until the hotel rates are
+// real. The hotel line is still a flat estimate (contracted tables empty, no supplier
+// feed), so any band we print is a promise we cannot keep — on a page that promises
+// nothing is invented. The band, the levers and the split are ALL withheld from the
+// public payload, and ALL kept for the CRM operator. One env flag brings them back.
+check('PUBLIC payload carries NO price block at all', !('price' in (pub as any)));
+check('PUBLIC plan carries NO costPpBand', !('costPpBand' in ((pub.plan?.totals ?? {}) as any)));
+check('PUBLIC cards carry NO costPpBand', (pub.cards ?? []).every((c) => !('costPpBand' in (c as any))));
+check('NOT A SINGLE rupee figure of ours leaks publicly (no costPpBand / price / costBreakdown key anywhere)',
+  !/"costPpBand"|"price"|"costBreakdown"/.test(pubJson));
+check('the ADMIN payload still HAS the price band (the operator must quote from it)',
+  Array.isArray(admin.plan?.totals?.costPpBand) || admin.plan?.totals?.costPpBand === null,
+  JSON.stringify(admin.plan?.totals?.costPpBand));
 
 // ---- (3) internal warnings are gone -----------------------------------------------
 check('PUBLIC plan has NO internal warnings[]', !('warnings' in ((pub.plan ?? {}) as any)));

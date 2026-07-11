@@ -94,13 +94,6 @@ export interface LegOption {
   seasonal?: boolean;
   source?: string;
   verifiedAt?: string | null; // ISO
-  /** rail+road hybrid (spec §4.6 rung 2): this RAIL option drops at a railhead
-   *  `viaNode`, then an onward Band-A road transfer of `onwardRoadKm`/`onwardRoadMin`
-   *  reaches the city. The engine folds the onward road into door-to-door access
-   *  (optimize.legCtx) so the DDCV charges it honestly. Additive + optional. */
-  onwardRoadKm?: number;
-  onwardRoadMin?: number;
-  viaNode?: string | null;
 }
 
 // ---- input -------------------------------------------------------------------
@@ -124,31 +117,6 @@ export interface InputCity {
   custom?: boolean;
 }
 
-/**
- * §14 Traveler Psyche Profile — eight psyche dimensions, each ∈ [−1,+1], default 0
- * (= the physiology-class + segment prior). It rescales the DDCV SOFT weights only
- * (`w' = w ∘ M(TPP)`, see route-optimizer/tpp.ts) and can NEVER override a body-truth
- * hard gate (§3 / §14.1). Additive + optional: absent TPP = the v1.0 engine exactly.
- */
-export interface TPP {
-  /** Pace: −1 savour (fewer, deeper) … +1 packer (more, faster). */
-  P1?: number;
-  /** Novelty: −1 comfort-seeking … +1 adventure-seeking. */
-  P2?: number;
-  /** Structure: −1 spontaneous … +1 planned-rigid (soft rules; not a DDCV weight). */
-  P3?: number;
-  /** Crowd tolerance: −1 solitude … +1 festival-energy (soft rules; not a DDCV weight). */
-  P4?: number;
-  /** Budget elasticity: −1 price-first … +1 comfort-first. */
-  P5?: number;
-  /** Transit meaning: −1 transit=cost … +1 transit=experience. */
-  P6?: number;
-  /** Control need: −1 "just decide for me" … +1 wants options & reasons (UI only). */
-  P7?: number;
-  /** Anchoring: −1 wanderer … +1 nester/hub-and-spoke (soft rules; not a DDCV weight). */
-  P8?: number;
-}
-
 export interface OptimizeInput {
   cities: InputCity[];
   start?: string | null;
@@ -163,19 +131,9 @@ export interface OptimizeInput {
   maxRoadKmDay?: number; // hard cap; default 350 (senior 300)
   /** fixed Day-1 weekday if the client already has a date; else engine derives the lock. */
   startWeekday?: Weekday | null;
-  /** §6.1: how many days the traveller's start date can slide (0/undefined = fixed).
-   *  When > 0 and startWeekday is set, the engine tries a whole-trip phase shift to
-   *  align weekday-limited trains before any physical fallback. */
-  softStartWindowDays?: number;
   pins?: { legFrom: string; legTo: string; mode?: Mode; optionId?: number | string }[];
   /** halts the executive accepted from the suggestions — only these are inserted. */
   acceptedHalts?: { legFrom: string; legTo: string; name: string; lat: number; lng: number }[];
-  /** §9 the traveller's day budget (e.g. 8). When set and the honest plan runs
-   *  longer, the request is infeasible and optimize() attaches a negotiation. */
-  dayBudget?: number;
-  /** §14 Traveler Psyche Profile — rescales the DDCV soft weights per mind. Absent =
-   *  today's behaviour exactly; can never relax a body-truth hard gate. */
-  tpp?: TPP;
 }
 
 /** A suggested (opt-in) en-route overnight town on an over-long road leg. */
@@ -192,14 +150,6 @@ export interface HaltSuggestion {
 
 // ---- output ------------------------------------------------------------------
 
-/** §10 decision record — the "Why this way?" note. Facts only; the
- *  Sprint-5 narration AI polishes the voice, never the facts. */
-export interface DecisionRecord { winner: string; runnerUp: string | null; marginText: string; why: string }
-
-/** §10 one compared service on a leg (ranked, chosen flagged). `dur` = honest
- *  door-to-door minutes; `fare` = indicative ₹ per person. */
-export interface LegOptionRow { id: string | number; dur: number | null; fare: number | null; freq: string; chosen: boolean; note?: string }
-
 export interface PlanLeg {
   from: string;
   to: string;
@@ -214,10 +164,6 @@ export interface PlanLeg {
   verifyFlag?: boolean;
   /** road leg that exists purely to reach a gateway (airport/railhead), not a sightseeing stop. */
   positioning?: boolean;
-  /** §4.4 pearl-on-the-string: an over-cap road leg should be split at this anchor. */
-  pearlSplit?: { anchor: string; detourPct: number; subHrs?: [number, number]; why?: string | null };
-  /** §4.4: over-cap road leg with NO worthwhile anchor — prefer re-sequencing. */
-  deadHalt?: boolean;
   /** true overnight rail (saves a hotel night). */
   overnight?: boolean;
   note?: string;
@@ -230,11 +176,6 @@ export interface PlanLeg {
   /** every mode/service that was compared for this leg — lets the desk pick the
    *  budget train over the fast flight, etc. */
   modeOptions?: LegModeOption[];
-  /** §10 decision record: winner / runner-up / margin / why. Additive +
-   *  absent-safe (UI renders nothing when absent). */
-  decisionRecord?: DecisionRecord;
-  /** §10 every service compared for this leg, ranked best→worst, chosen flagged. */
-  legOptions?: LegOptionRow[];
 }
 
 export interface LegModeOption {
@@ -262,15 +203,6 @@ export interface DayItem {
   halt?: boolean;
   /** hard-constraint violations that made this day infeasible (day was rejected/rerouted). */
   violations?: string[];
-  /** §7 per-day comfort projection (Sprint 3 inc-2): 'full' = a heavy travel day,
-   *  'easy' = rest/light/overnight. */
-  fatigue?: 'easy' | 'full';
-  /** effort 0–100 = this day's load vs the party's daily cap. */
-  effort?: number;
-  /** one plain-voice line on how the day feels. */
-  comfortNote?: string;
-  /** short highlight tag, e.g. "Rest day" / "Longest drive · 4½ h" / "Overnight train". */
-  marker?: string;
 }
 
 export interface Totals {
@@ -314,68 +246,14 @@ export interface Plan {
   corridorLabel?: string;
   /** the date-flexible alternate (daily services only). */
   dateFlexible?: boolean;
-  /** §3.3/§7 fatigue-ledger + rhythm-gate summary for this plan. */
-  rhythm?: { ok: boolean; peakF: number; headline?: string; violations: { day: number; kind: string; detail: string }[] };
-  /** §6.1 whole-trip phase shift applied to align weekday-limited trains. */
-  phaseShift?: { aligned: boolean; shiftDays: number; startWeekday: string | null; reason: string };
   /** side-by-side comparison metrics. */
   comparison?: PlanComparison;
   /** AI enrichment layer output (fares, hotels, guides, city content, trip cost). */
   enrichment?: PlanEnrichment;
 }
 
-/** §8 archetype id — the three named plans the Pareto set collapses into. */
-export type ArchetypeId = 'swift' | 'balanced' | 'gentle';
-
-/** §8 archetype card — a design-ready summary of one full scheduled plan. Facts
- *  only; `fatigue[]` mirrors the plan's per-day comfort projection (Sprint 3 inc-2).
- *  Field names match the design data.js / handoff §4 contract EXACTLY. `totals` is
- *  the §4 canonical nested shape; the flat `costPpBand`/`easeScore` mirror it for the
- *  data.js binding (parent handoff §5). */
-export interface ArchetypeCard {
-  id: ArchetypeId;
-  label: string;
-  recommended: boolean;
-  days: number;
-  hotelNights: number;
-  totals: { costPpBand: [number, number] | null; easeScore: number };
-  costPpBand: [number, number] | null;
-  easeScore: number;
-  sequence: string[];
-  fatigue: ('easy' | 'full')[];
-}
-
-/** §9 the classic relaxation kinds a senior expert offers on an infeasible request. */
-export type RelaxationKind =
-  | 'add_day' | 'drop_node' | 'upgrade_mode' | 'shift_start_date' | 'allow_1_heavy_day' | 'swap_node';
-
-/** §9 one priced relaxation — plain, facts-only English naming what it costs (days /
- *  ₹ per person / comfort). The Sprint-5 narration AI polishes the voice, never the
- *  facts. `deltaCostPp` is ₹ per person vs the baseline; `deltaFatigue` is the peak-
- *  fatigue delta. The optional `feasibilityGained`/`experienceLost`/`score` diagnostics
- *  expose the ranking key (feasibility gained ÷ experience lost). */
-export interface Relaxation {
-  kind: RelaxationKind;
-  label: string;
-  deltaDays: number;
-  deltaCostPp: number;
-  deltaFatigue: number;
-  plainText: string;
-  feasibilityGained?: number;
-  experienceLost?: number;
-  score?: number;
-  /** relies on a thin/unverified candidate — reconfirm before booking. */
-  verifyFlag?: boolean;
-}
-
 export interface OptimizeResult {
   plans: Plan[];
-  /** §8 Swift/Balanced/Gentle archetype cards. Additive + optional — plans[] stays
-   *  present + unchanged so loadFromOptimizer (reads plans[0]) is safe. */
-  cards?: ArchetypeCard[];
-  /** §9 top-3 priced relaxations when the request is infeasible / over the day
-   *  budget. Additive + optional — absent on a feasible solve. */
-  negotiation?: Relaxation[];
 }
 
 // ---- enrichment (AI layer) output ------------------------------------------
@@ -405,30 +283,6 @@ export interface CityEnrichment {
   guides?: EnrichedGuide[];
   content?: EnrichedContent;
   enriching?: boolean;   // true when a background job was enqueued for a miss
-  cityId?: number;       // world_cities.id — key for city_enrichment polling (E-1)
-}
-/** What the price ASSUMED. Never publish a band without it — a price without its
- *  assumption printed next to it is not a price, it is bait. (Founder, 2026-07-11.) */
-export interface TripCostAssumptions {
-  pax: number;
-  tier: string;
-  tierLabel: string;          // "3 star"
-  vehicle: string;            // "Sedan" / "Innova + Sedan"
-  hotelSource: 'contracted' | 'live' | 'estimate';
-  landOnly: boolean;
-  note: string;               // "These are estimated costs based on a 3 star hotel…"
-  includes: string[];
-  excludes: string[];
-}
-/** A lever the traveller can actually pull, and what it does to the price. The same
- *  computation, re-run — never an invented discount. */
-export interface TripCostLever {
-  kind: 'GROUP_SIZE' | 'HOTEL_LEVEL';
-  label: string;
-  perPersonMin: number;
-  perPersonMax: number;
-  current: boolean;
-  delta?: string;             // "₹11,000 less each"
 }
 export interface TripCostSummary {
   currency: string;
@@ -436,12 +290,6 @@ export interface TripCostSummary {
   totalMin: number; totalMax: number;
   breakdown: { hotel: number; roadTransport: number; intercityTransport: number; serviceTaxes: number };
   tier: string; pax: number; indicative: boolean; gstPending: boolean;
-  /** the assumption, said out loud — public-safe */
-  assumptions?: TripCostAssumptions;
-  /** group-size and hotel-level levers — public-safe */
-  levers?: TripCostLever[];
-  /** what the vehicle actually does — public-safe, and it explains the road line */
-  car?: { fullDays: number; transferLegs: number; vehicle: string; perDay: number; perLeg: number };
 }
 export interface PlanEnrichment {
   cities: CityEnrichment[];

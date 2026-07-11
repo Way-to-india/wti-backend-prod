@@ -34,7 +34,7 @@
 
 import type {
   OptimizeResult, Plan, PlanLeg, DayItem, ArchetypeCard,
-  DecisionRecord, LegOptionRow, CityEnrichment,
+  DecisionRecord, LegOptionRow, CityEnrichment, TripCostAssumptions, TripCostLever,
 } from './types';
 
 // ---- display formatting (pure) ------------------------------------------------
@@ -75,6 +75,29 @@ export interface PlannerLegOptionRow {
   id: string | number; dur: string | null; fare: string | null; freq: string;
   chosen?: boolean; note?: string;
 }
+/**
+ * THE PRICE, AS THE TRAVELLER SHOULD MEET IT (founder rulings, 2026-07-11).
+ *
+ *   band        — rounded, never a precise number. "₹43,247" is a promise we cannot
+ *                 keep and the exact string he pastes into a competitor's search box.
+ *   assumptions — the sentence that must sit under every band: how many travellers,
+ *                 which hotel level, what is in, what is out. A price without its
+ *                 assumption printed next to it is not a price, it is bait.
+ *   levers      — group size and hotel level, each re-computed by the SAME engine.
+ *                 This is what turns a number he argues with into a decision he can
+ *                 make: "two more of you and it is ₹9,000 less each."
+ *
+ * PUBLIC-SAFE by construction: no hotel/road/tax split, no supplier, no margin.
+ */
+export interface PlannerPrice {
+  currency: string;
+  perPersonMin: number;
+  perPersonMax: number;
+  assumptions: TripCostAssumptions;
+  levers: TripCostLever[];
+  car?: { fullDays: number; transferLegs: number; vehicle: string };
+}
+
 export interface PlannerCostBreakdown {
   perPerson: { label: string; amount: number }[];
   pax: number; note: string;
@@ -90,6 +113,10 @@ export interface PlannerPayload {
     days: PlannerDay[];
   } | null;
   legOptions: Record<string, PlannerLegOptionRow[]>;
+  /** the honest, public price. null when enrichment did not run — and then we show
+   *  NO price at all, because a wrong price is worse than no price. */
+  price: PlannerPrice | null;
+  /** ADMIN ONLY — publicPayload.ts strips this. */
   costBreakdown: PlannerCostBreakdown | null;
   enrichment: CityEnrichment[];
   mapStops: Plan['map']['stops'];
@@ -173,6 +200,22 @@ export function buildLegOptions(legs: PlanLeg[]): Record<string, PlannerLegOptio
   return out;
 }
 
+/** The public price: band + assumption + levers. Straight from the engine's own
+ *  computation — no invented number, no invented discount. Null when there is no
+ *  trip cost, and then the UI shows no price rather than a guess. */
+export function buildPrice(plan: Plan): PlannerPrice | null {
+  const tc = plan.enrichment?.tripCost;
+  if (!tc || !tc.assumptions) return null;
+  return {
+    currency: tc.currency,
+    perPersonMin: tc.perPersonMin,
+    perPersonMax: tc.perPersonMax,
+    assumptions: tc.assumptions,
+    levers: tc.levers ?? [],
+    ...(tc.car ? { car: { fullDays: tc.car.fullDays, transferLegs: tc.car.transferLegs, vehicle: tc.car.vehicle } } : {}),
+  };
+}
+
 /** The four cost lines the design renders — straight from the enrichment tripCost. */
 export function buildCostBreakdown(plan: Plan): PlannerCostBreakdown | null {
   const tc = plan.enrichment?.tripCost;
@@ -211,7 +254,7 @@ export function toPlannerPayload(
     // an infeasible solve can still carry negotiation[] — surface it, invent nothing
     return {
       request: opts.request ?? null, cards, plan: null, legOptions: {},
-      costBreakdown: null, enrichment: [], mapStops: [], mapLegs: [], reasoning: [],
+      price: null, costBreakdown: null, enrichment: [], mapStops: [], mapLegs: [], reasoning: [],
       ...(result.negotiation ? { negotiation: result.negotiation } : {}),
     };
   }
@@ -245,6 +288,7 @@ export function toPlannerPayload(
       days,
     },
     legOptions: buildLegOptions(legs),
+    price: buildPrice(plan),
     costBreakdown: buildCostBreakdown(plan),
     enrichment: plan.enrichment?.cities ?? [],
     mapStops: plan.map?.stops ?? [],
