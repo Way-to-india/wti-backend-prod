@@ -296,3 +296,288 @@ export function withAnsweredMonth(intent: TravellerIntent, month: number, quote:
   const t = intent.timeInHand.value ?? {};
   return { ...intent, timeInHand: heSaid({ ...t, month }, quote) };
 }
+
+// ==============================================================================
+// US-602 — THE PLAN CONTRACT: what his words compile to.
+// ==============================================================================
+
+/**
+ * THE ONLY BRIDGE INTENT HAS TO THE BODY GATES — and it is a one-way street.
+ *
+ * Read the field names: every one of them can only make the traveller's day HARDER to
+ * fill, never easier. There is no `hardCapHrsRaise`. There is no `deadHoursArrival:
+ * false` — the type is the literal `true`, so "switch the dead-hours gate off" is not a
+ * value you can hold in your hand. A future engineer who wants a comfort-first party to
+ * accept a 03:50 arrival cannot express the wish in this type; he must come and argue
+ * with the law instead. That is the point.
+ */
+export interface Tightening {
+  /** may only LOWER the party's hard road-hour cap. */
+  hardCapHrs?: number;
+  /** may only LOWER the civil arrival ceiling. */
+  latestArrivalMin?: number;
+  /** may only RAISE the earliest civil start. */
+  earliestStartMin?: number;
+  /** may only ADD the gate. Literal `true` — `false` is not expressible. */
+  deadHoursArrival?: true;
+  /** may only ADD ceilings: the ordeal a leg of this mode may not exceed. */
+  perModeOrdealCeiling?: Partial<Record<Mode, number>>;
+  /** may only ADD a ceiling: the ordeal ANY leg may not exceed. */
+  legOrdealCeiling?: number;
+}
+
+/** The structural subset of a body Tolerance that a tightening may touch. Declared
+ *  HERE, so intent.ts imports nothing whatsoever from physiology.ts (the same doctrine,
+ *  and the same reason, as tpp.ts). The real Tolerance satisfies it structurally. */
+export interface Clampable {
+  hardCapHrs: number;
+  latestArrivalMin: number;
+  earliestStartMin: number;
+}
+
+/**
+ * Merge a tightening into a body tolerance. CLAMP-ONLY, in one direction, whatever
+ * values arrive at runtime — a caller who passes hardCapHrs: 99 does not get a 99-hour
+ * driving day; he gets the party's own cap back, unchanged. Loosening is not refused
+ * here; it is arithmetically impossible here.
+ */
+export function tightened<T extends Clampable>(base: T, t?: Tightening): T {
+  if (!t) return base;
+  return {
+    ...base,
+    hardCapHrs: Math.min(base.hardCapHrs, t.hardCapHrs ?? Infinity),
+    latestArrivalMin: Math.min(base.latestArrivalMin, t.latestArrivalMin ?? Infinity),
+    earliestStartMin: Math.max(base.earliestStartMin, t.earliestStartMin ?? -Infinity),
+  };
+}
+
+/** One row of the "what we understood" panel — the fact, and who supplied it. */
+export interface EchoRow {
+  key: string;
+  label: string;
+  value: string;
+  provenance: Provenance;
+  quote?: string;
+  why?: string;
+}
+
+export interface PlanContract {
+  // LEVEL 1 — his refusals. The brief, not a weight (Law 1).
+  filters: {
+    banModes: Mode[];          // unqualified refusals: the mode leaves the pool
+    banOvernightRail: boolean; // the overnight, not all rail (the old flag lied — US-604)
+  };
+  // LEVEL 2 — tightenings. May only clamp down; loosening is not expressible (above).
+  tighten: Tightening;
+  // LEVEL 3 — objective surgery.
+  rewardSwitches: {
+    /** false ⇒ the ddcv.ts:120 "overnight saves a hotel night" bonus is REMOVED, not
+     *  scaled. It is a MONEY reward wearing a convenience costume, and for a
+     *  comfort-first traveller the comfort dial would otherwise AMPLIFY it ×1.3. */
+    hotelNightSaving: boolean;
+  };
+  /** Law 3. 'tiebreak_only' ⇒ money is absent from levels 0–4 and may only split an
+   *  ordeal band — inside which comfort is equal by construction. So a saving can never
+   *  buy discomfort. Not by a rupee. Not ever. */
+  moneyRule: 'normal' | 'tiebreak_only';
+  // LEVEL 4 — the soft residual, and the human layer.
+  tpp: TPP;
+  voice: { purpose?: Purpose; partyWords?: string; quotes: Record<string, string> };
+  echo: EchoRow[];
+}
+
+/** Ordeal ceilings (spec Part 2.6). Shapes principled, numbers tuned — pinned by tests. */
+export const CEILING = {
+  /** a comfort-first party: no single leg may be an ordeal. */
+  COMFORT_FIRST_LEG: 45,
+  /** "no LONG road journeys" — about a 4–5 h chauffeured drive. His words, given a number. */
+  LONG_REFUSED: 30,
+  /** "I'd rather not, at all" (avoid + no qualifier): discouraged, not banned. */
+  AVOIDED_ANY: 35,
+} as const;
+
+const isComfortFirst = (i: TravellerIntent): boolean =>
+  i.budgetStance.value === 'comfort_first' || i.budgetStance.value === 'money_no_object'
+  || i.comfortTier.value === 'luxury' || i.comfortTier.value === 'premium';
+
+/**
+ * US-602 — his words → the contract the engine is bound by. PURE.
+ *
+ * The compilation of a refusal is the heart of Law 2, and it turns on the QUALIFIER:
+ *
+ *   "no trains"              refuse + any    → a FILTER. The mode leaves the pool.
+ *   "no long road journeys"  avoid  + long   → a CEILING. The eight-hour drive is
+ *                                              banned; the three-hour drive through
+ *                                              Mysuru is blessed — because what he
+ *                                              refused was the ordeal, not the road.
+ */
+export function compileContract(intent: TravellerIntent): PlanContract {
+  const comfortFirst = isComfortFirst(intent);
+  const banModes: Mode[] = [];
+  let banOvernightRail = false;
+  const perModeOrdealCeiling: Partial<Record<Mode, number>> = {};
+  const quotes: Record<string, string> = {};
+  let deadHours: true | undefined;
+
+  for (const s of intent.modeStances) {
+    if (s.reading.quote) quotes[`mode_${s.mode.toLowerCase()}`] = s.reading.quote;
+
+    if (s.stance === 'refuse' && s.qualifier === 'any') {
+      // A category refusal. The mode leaves the pool wherever an alternative exists; where
+      // NONE exists the engine does not sneak it back in — it escalates to the consultant
+      // fallback and says so out loud (Law 4, procedure step 6 / US-607).
+      if (!banModes.includes(s.mode)) banModes.push(s.mode);
+      if (s.mode === 'RAIL') banOvernightRail = true;
+      continue;
+    }
+    if (s.stance === 'refuse' || s.stance === 'avoid') {
+      switch (s.qualifier) {
+        case 'overnight':
+          banOvernightRail = true;
+          break;
+        case 'night_arrival':
+          deadHours = true;
+          break;
+        case 'long': {
+          const c = CEILING.LONG_REFUSED;
+          perModeOrdealCeiling[s.mode] = Math.min(perModeOrdealCeiling[s.mode] ?? Infinity, c);
+          break;
+        }
+        default: {
+          // "I would rather not fly/take a train at all", but he did not forbid it.
+          const c = CEILING.AVOIDED_ANY;
+          perModeOrdealCeiling[s.mode] = Math.min(perModeOrdealCeiling[s.mode] ?? Infinity, c);
+        }
+      }
+    }
+  }
+
+  // ---- the comfort-first surgery (Laws 2 and 3) ---------------------------------
+  const tighten: Tightening = { ...(Object.keys(perModeOrdealCeiling).length ? { perModeOrdealCeiling } : {}) };
+  if (comfortFirst) {
+    // No arrival in the dead hours. This is the gate that should have refused the
+    // Netravathi at 03:50 and did not exist (F3). It is now a gate, not a price.
+    tighten.deadHoursArrival = true;
+    tighten.legOrdealCeiling = CEILING.COMFORT_FIRST_LEG;
+  }
+  if (deadHours) tighten.deadHoursArrival = true;
+
+  // ---- the soft residual: TPP, finally wired (spec 1.4) ---------------------------
+  const tpp: TPP = {};
+  const tier = intent.comfortTier.value;
+  const stance = intent.budgetStance.value;
+  if (tier === 'luxury' || stance === 'comfort_first' || stance === 'money_no_object') { tpp.P5 = 0.9; tpp.P1 = -0.3; }
+  else if (tier === 'premium') tpp.P5 = 0.5;
+  else if (stance === 'price_first' || tier === 'budget') tpp.P5 = -0.8;
+
+  switch (intent.purpose.value) {
+    case 'honeymoon': tpp.P4 = -0.5; tpp.P2 = -0.3; break;
+    case 'pilgrimage': tpp.P3 = 0.3; tpp.P4 = 0.2; break;
+    case 'adventure': tpp.P2 = 0.6; break;
+    default: break;
+  }
+  if (intent.pace.value === 'savour') tpp.P1 = -0.6;
+  else if (intent.pace.value === 'packed') tpp.P1 = 0.6;
+
+  // ---- the human layer -------------------------------------------------------------
+  for (const [k, r] of Object.entries({ purpose: intent.purpose, comfortTier: intent.comfortTier, party: intent.party })) {
+    if (r.provenance === 'he_said' && r.quote) quotes[k] = r.quote;
+  }
+
+  return {
+    filters: { banModes, banOvernightRail },
+    tighten,
+    // Law 3, structurally: for a comfort-first party the hotel-night reward is DELETED.
+    // Down-weighting it is not enough — the comfort dial multiplies q by 1.3, so the
+    // luxury setting would have made the engine love the overnight train MORE (F4).
+    rewardSwitches: { hotelNightSaving: !comfortFirst },
+    moneyRule: comfortFirst ? 'tiebreak_only' : 'normal',
+    tpp,
+    voice: {
+      purpose: intent.purpose.value ?? undefined,
+      partyWords: partyWords(intent),
+      quotes,
+    },
+    echo: buildEcho(intent),
+  };
+}
+
+/** How we will address him. "You and your wife", not "the pax". */
+export function partyWords(intent: TravellerIntent): string | undefined {
+  const p = intent.party.value;
+  if (!p) return undefined;
+  switch (p.composition) {
+    case 'couple': return p.pax === 2 ? 'you and your wife' : 'the two of you';
+    case 'family_kids': return 'your family';
+    case 'seniors': return 'your parents';
+    case 'friends': return 'you and your friends';
+    case 'solo': return 'you';
+    default: return undefined;
+  }
+}
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+function row<T>(key: string, label: string, r: Reading<T>, fmt: (v: T) => string): EchoRow | null {
+  if (r.value == null) return { key, label, value: '—', provenance: 'we_need_it' };
+  return {
+    key, label, value: fmt(r.value), provenance: r.provenance,
+    ...(r.quote ? { quote: r.quote } : {}),
+    ...(r.basis ? { why: r.basis } : {}),
+  };
+}
+
+/**
+ * `timeInHand` carries TWO facts in one reading — the month and the nights — and they do
+ * not always share a provenance. He told us neither, we split his nights ourselves, and
+ * the month we simply do not have. A row must not inherit "our suggestion" from its
+ * sibling: a fact we DO NOT HOLD is `we_need_it`, and it must say so, or the panel is
+ * quietly claiming to know something it does not.
+ */
+function subRow<T, K>(key: string, label: string, r: Reading<T>, pick: (v: T) => K | null | undefined, fmt: (v: K) => string): EchoRow {
+  const sub = r.value != null ? pick(r.value) : null;
+  if (sub == null) return { key, label, value: '—', provenance: 'we_need_it' };
+  return {
+    key, label, value: fmt(sub), provenance: r.provenance,
+    ...(r.quote ? { quote: r.quote } : {}),
+    ...(r.basis ? { why: r.basis } : {}),
+  };
+}
+
+/**
+ * The echo panel: every fact the plan rests on, and who supplied it. The chip text is
+ * DERIVED from the provenance enum, never hand-set — so a value we inferred cannot be
+ * rendered under a "you said" chip. Not "should not". Cannot.
+ */
+export function buildEcho(intent: TravellerIntent): EchoRow[] {
+  const rows: (EchoRow | null)[] = [
+    row('purpose', 'Trip', intent.purpose, (v) => v.replace(/_/g, ' ')),
+    row('comfortTier', 'Comfort', intent.comfortTier, (v) => v),
+    row('party', 'Travellers', intent.party, (v) => `${v.pax}`),
+    row('origin', 'Starting from', intent.origin, (v) => v),
+    subRow('month', 'Month', intent.timeInHand, (v) => v.month, (m) => MONTH_NAMES[m - 1]),
+    subRow('nights', 'Nights', intent.timeInHand, (v) => v.nights, (n) => String(n)),
+  ];
+  for (const s of intent.modeStances) {
+    if (s.stance !== 'refuse' && s.stance !== 'avoid') continue;
+    const word = s.mode === 'RAIL' ? 'trains' : s.mode === 'ROAD' ? 'road journeys' : s.mode === 'AIR' ? 'flights' : 'ferries';
+    rows.push({
+      key: `mode_${s.mode.toLowerCase()}`,
+      label: 'You asked us to avoid',
+      value: s.qualifier === 'long' ? `long ${word}` : s.qualifier === 'overnight' ? `overnight ${word}` : word,
+      provenance: s.reading.provenance,
+      ...(s.reading.quote ? { quote: s.reading.quote } : {}),
+      ...(s.reading.basis ? { why: s.reading.basis } : {}),
+    });
+  }
+  if (intent.interests.length) {
+    const first = intent.interests[0];
+    rows.push({
+      key: 'interests', label: 'You love', value: intent.interests.map((i) => i.value).join(', '),
+      provenance: first.provenance,
+      ...(first.quote ? { quote: first.quote } : {}),
+    });
+  }
+  // A month/nights row with no value is a "we need it" row, and it must not appear twice.
+  return rows.filter((r): r is EchoRow => !!r && !(r.key === 'nights' && r.value === '—'));
+}
