@@ -60,8 +60,26 @@ check('the overnight-train leg is flagged overnight (a hotel night saved)', gent
 // ---- (2) the CARDS: standard party ------------------------------------------
 const res = optimize(baseInput('standard'), deps);
 const cards = res.cards ?? [];
-check('optimize() emits three cards', cards.length === 3, `len=${cards.length}`);
-check('cards are Swift, Balanced, Gentle in order', cards.map((c) => c.id).join(',') === 'swift,balanced,gentle', cards.map((c) => c.id).join(','));
+// ---- UPDATED BY US-610 (card honesty), and the change is the point ---------------
+// These two lines used to assert THREE CARDS, ALWAYS. On this very fixture, Balanced and
+// Gentle solve to the IDENTICAL PLAN — and the test was faithfully asserting that we show the
+// traveller two doors into the same room and invite him to choose between them.
+//
+// The founder's ruling: "Two identical cards presented as a choice is a lie." So the old
+// assertion was encoding the lie. What we assert now is honesty: at most three cards, every
+// card a genuinely different trip, and any merge SAID OUT LOUD.
+check('optimize() emits at most three cards, and never two of the same trip', cards.length >= 1 && cards.length <= 3, `len=${cards.length}`);
+check('the cards shown are in the stable Swift → Balanced → Gentle order', cards.map((c) => c.id).join(',') === ['swift', 'balanced', 'gentle'].filter((id) => cards.some((c) => c.id === id)).join(','), cards.map((c) => c.id).join(','));
+// Two cards may legitimately share a route and a day-count and still be different trips —
+// Swift flies the leg, Gentle drives it. Identity is the route AND THE SERVICES, which is what
+// planSignature() compares. What must never happen is two cards that are indistinguishable in
+// everything the traveller can actually SEE — that is the door-into-the-same-room lie.
+check('no two cards are indistinguishable to the traveller', new Set(cards.map((c) => [c.sequence.join('>'), c.days, c.easeScore, c.fatigue.join('')].join('|'))).size === cards.length,
+  cards.map((c) => `${c.id}:${c.days}d/ease${c.easeScore}`).join(' vs '));
+{
+  const mergedCard = cards.find((c) => !!c.mergedFrom);
+  check('...and where two solves turned out to be the same trip, we SAY so', !mergedCard || /turn out to be the same, so we show it once\./.test(mergedCard.note ?? ''), mergedCard?.note);
+}
 check('each card carries the design contract fields', cards.every((c) =>
   typeof c.label === 'string' && typeof c.days === 'number' && typeof c.hotelNights === 'number' &&
   Array.isArray(c.sequence) && Array.isArray(c.fatigue) && typeof c.easeScore === 'number' &&
@@ -83,7 +101,13 @@ check('Swift and Gentle are not identical cards (they differ explainably)', JSON
 check('standard party is not classified senior', isSeniorParty(baseInput('standard')) === false);
 const recStd = cards.filter((c) => c.recommended);
 check('exactly one card is recommended', recStd.length === 1, `count=${recStd.length}`);
-check('for a standard party the recommended card is Balanced', recStd[0]?.id === 'balanced', recStd[0]?.id);
+// US-610: when Balanced and Gentle are the same trip they are merged into ONE card, and the
+// merged card keeps the gentler label — so the recommendation may legitimately land on Gentle.
+// What must remain true is that exactly one card is recommended, and that it is the expert's
+// own pick (Balanced) whenever Balanced is still a card in its own right.
+check('for a standard party the recommendation is Balanced — or the card that absorbed it',
+  recStd[0]?.id === 'balanced' || (recStd[0]?.mergedFrom ?? []).includes('balanced'),
+  `${recStd[0]?.id} mergedFrom=${JSON.stringify(recStd[0]?.mergedFrom)}`);
 
 // ---- recommended: senior → Gentle -------------------------------------------
 const resSenior = optimize(baseInput('senior'), deps);

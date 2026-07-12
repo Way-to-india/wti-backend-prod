@@ -355,6 +355,13 @@ export interface ArchetypeCard {
   easeScore: number;
   sequence: string[];
   fatigue: ('easy' | 'full')[];
+  /** US-610 — the cards this one absorbed, because they were the SAME TRIP. Two doors into
+   *  the same room is a lie, and we would rather show one door and say so. Additive +
+   *  absent-safe: an un-merged card carries neither field, and the UI renders as before. */
+  mergedFrom?: ArchetypeId[];
+  /** "For your trip, the balanced plan and the gentle plan turn out to be the same, so we
+   *  show it once." We do not hide the merge; we report it. */
+  note?: string;
 }
 
 /** §9 the classic relaxation kinds a senior expert offers on an infeasible request. */
