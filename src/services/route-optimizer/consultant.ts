@@ -158,12 +158,13 @@ export function consultantChoose(cands: ConsultantCandidate[], opts: ConsultantO
     // (ddcv() carries both: the body's own gates, and the tightenings HE added. It can
     //  never carry a loosening — see intent.ts.)
     if (v.hardBlock) {
-      // A dead-hours refusal already speaks in his voice; a body refusal speaks in ours,
-      // and we say it plainly rather than dressing it up.
       const isDeadHours = v.blockReasons.some((r) => /in the morning|at night/.test(r));
+      // The body refused it. But if HIS OWN ceiling would have refused it too, he should hear
+      // that as well — it is his brief, and he is entitled to know it was honoured.
+      const alsoBeyondHisCeiling = !!ceilingBreach(o, ord.total, tighten);
       const cause: RejectionCause = isDeadHours
         ? { kind: 'dead_hours' }
-        : { kind: 'body', reasons: v.blockReasons };
+        : { kind: 'body', reasons: v.blockReasons, alsoBeyondHisCeiling };
       rejected.push({ opt: o, cause, reason: sayRejection(o, cause, d2dMin), ordeal: ord.total });
       continue;
     }

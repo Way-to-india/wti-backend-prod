@@ -51,7 +51,7 @@ export type RejectionCause =
   | { kind: 'refused_mode'; mode: Mode; quote?: string }
   | { kind: 'dead_hours' }
   | { kind: 'ceiling'; ceiling: number; ordeal: number; qualified: 'long' | 'any'; quote?: string }
-  | { kind: 'body'; reasons: string[] }
+  | { kind: 'body'; reasons: string[]; alsoBeyondHisCeiling?: boolean }
   | { kind: 'lost'; winner: string };
 
 const NUM = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
@@ -122,10 +122,22 @@ export function sayRejection(o: LegOption, cause: RejectionCause, doorToDoorMin?
   const clock = clockProblem(o);
 
   switch (cause.kind) {
-    case 'body':
-      // The body's own refusal. It is not a preference and it is not negotiable, so we say
-      // it plainly and we do not dress it up.
-      return `${name} — this one is too hard on your party: ${cause.reasons[0] ?? 'it is beyond what this journey should ask of you'}.`;
+    case 'body': {
+      // The body's own refusal — and it must still be spoken in HIS language, not the gate's.
+      //
+      // The gate's own words are "road day 7.5 h exceeds the 7 h cap for a midage party —
+      // split or use rail/air". Every word of that is true, and not one word of it is his. A
+      // rejection he cannot feel is a rejection he cannot trust, and the rejected list is the
+      // most trust-building thing on the page.
+      const bits: string[] = [];
+      if (dur) bits.push(o.mode === 'ROAD' ? `${dur} on the road` : dur);
+      if (clock) bits.push(`and it ${clock}`);
+      const why = o.mode === 'ROAD'
+        ? 'which is longer than a day at the wheel should be'
+        : 'which is more than one day should ask of you';
+      const his = cause.alsoBeyondHisCeiling ? ', and longer than you asked for' : '';
+      return bits.length ? `${name} — ${bits.join(', ')}, ${why}${his}.` : `${name} — ${why}${his}.`;
+    }
 
     case 'dead_hours': {
       const bits = [dur, clock].filter(Boolean);
