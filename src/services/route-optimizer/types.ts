@@ -154,6 +154,10 @@ export interface TPP {
 }
 
 export interface OptimizeInput {
+  /** US-803c — city name (lower-case) -> metres. INJECTED; the engine never reads a DB.
+   *  Feeds roadQualityIndex, which feeds terrainSpeedKmh, which feeds the BODY GATES.
+   *  Absent => the engine keeps its existing safe default. We never guess an altitude. */
+  elevations?: Record<string, number>;
   cities: InputCity[];
   start?: string | null;
   end?: string | null;

@@ -104,6 +104,41 @@ export interface HoursCtx { roadQualityIndex?: number | null; month?: number | n
  * COMFORT quantity, not a feasibility breach, so they must not tip the hard gate.
  */
 export function vehicleHours(leg: Pick<LegOption, 'mode' | 'durationMin' | 'distanceKm'>, ctx: HoursCtx = {}): number {
+  // ---- THE TIGHTENING (US-803c; founder ruling, 2026-07-12) -------------------------
+  //
+  // THE DEFECT THIS REPLACES. The old first line was:
+  //
+  //     if (leg.durationMin != null) return leg.durationMin / 60;
+  //
+  // and the comment above it claimed OSRM x1.15 was "already terrain-real". IT IS NOT.
+  // OSRM claims 79 km/h on the Guwahati-Shillong road. That road is 99 km of mountain:
+  // better than three hours. THE ENGINE BELIEVED 1h26.
+  //
+  // And because this function feeds roadDayHardCapExceeded(), THE GATE THAT PROTECTS A
+  // 56-YEAR-OLD'S SPINE COULD NOT FIRE ON A MOUNTAIN ROAD -- the one place it exists to
+  // fire. A five-hour Himalayan day sailed through a five-hour cap. We would have sold a
+  // man who asked for "comfortable" an ordeal, and called it comfort. That is the exact
+  // crime THE-CONSULTANTS-LAW was written to stop, and 570 green assertions never saw it.
+  //
+  // THE RULE. On a ROAD leg the router's clock is an OPINION; the terrain is a FACT. We
+  // take the SLOWER of the two. Never the faster. A marginal optimism may not buy a
+  // traveller's discomfort -- not by a minute, not ever. (Law 3.)
+  //
+  // Math.max IS A TIGHTENING, and it is structurally incapable of being anything else: it
+  // can never return a shorter day than either source claims, so no body gate can be
+  // loosened through this line, by anyone, ever. Same doctrine as intent.ts/Tightening --
+  // made unrepresentable rather than merely forbidden.
+  //
+  // RAIL and AIR are untouched. Their durationMin is a PUBLISHED TIMETABLE, not a guess:
+  // a train takes exactly as long as the railway says it takes.
+  if (leg.mode === 'ROAD') {
+    const routerHrs = leg.durationMin != null ? leg.durationMin / 60 : null;
+    const terrainHrs = leg.distanceKm != null
+      ? leg.distanceKm / terrainSpeedKmh(ctx.roadQualityIndex, ctx.month)
+      : null;
+    if (routerHrs != null && terrainHrs != null) return Math.max(routerHrs, terrainHrs);
+    return routerHrs ?? terrainHrs ?? 0;
+  }
   if (leg.durationMin != null) return leg.durationMin / 60;
   if (leg.distanceKm != null) return leg.distanceKm / terrainSpeedKmh(ctx.roadQualityIndex, ctx.month);
   return 0;

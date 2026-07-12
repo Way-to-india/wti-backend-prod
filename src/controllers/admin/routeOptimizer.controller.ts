@@ -15,6 +15,7 @@ import { applyTPP } from '@/services/route-optimizer/tpp';
 import type { OrdealParty } from '@/services/route-optimizer/ordeal';
 import type { AnchorCandidate } from '@/services/route-optimizer/anchors';
 import { toPlannerPayload } from '@/services/route-optimizer/plannerPayload';
+import { loadElevations } from '@/services/route-optimizer/spineDb';
 
 /**
  * Route Optimizer — POST /api/admin/route-optimizer/optimize
@@ -198,8 +199,24 @@ export class RouteOptimizerController {
         }
       }
 
+      // ---- US-803c: THE LAST INCH OF THE WIRE --------------------------------
+      //
+      // The engine can now read terrain (terrain.ts -> roadQualityIndex -> terrainSpeedKmh
+      // -> THE BODY GATES). But an engine that CAN read terrain and is never HANDED any is
+      // a no-op in production -- and that is Lesson 1 of this project, paid for once
+      // already: "an engine test proves the engine; only the live payload proves the
+      // product." 570 assertions were green while a man who wrote "no trains" was put on a
+      // train.
+      //
+      // So the elevations are injected HERE, on the shared path, which means BOTH the CRM
+      // desk and the public planner get them. Absent-safe: {} means the engine keeps its
+      // existing safe default, and the plan is no worse than yesterday's.
+      const elevations = await loadElevations(nodes.map((n) => n.name));
+
       // ---- Stage C–F: run the engine ----------------------------------------
       const input: OptimizeInput = {
+        // city -> metres. Measured (Open-Meteo), never guessed. Feeds the body gates.
+        elevations,
         cities: cities.filter((c) => nodes.some((n) => n.name.toLowerCase() === String(c.name).trim().toLowerCase())),
         start: body.start ?? null,
         end: body.end ?? null,

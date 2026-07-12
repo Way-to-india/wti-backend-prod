@@ -13,7 +13,8 @@
  * plan is scored, and guardrails attach the verify list.
  */
 
-import type { CityNode, LegOption, OptimizeInput, OptimizeResult, Plan, Objective, MapRoute, MapRouteLeg, Mode } from './types';
+import type { CityNode, LegOption, OptimizeInput, OptimizeResult, Plan, PlanLeg, Objective, MapRoute, MapRouteLeg, Mode } from './types';
+import { rqiForLeg, type ElevationIndex } from './terrain';
 import type { PlanContract } from './intent';
 import { isTrueOvernight } from './constraints';
 import { sequence } from './sequence';
@@ -55,14 +56,40 @@ function sayForcedSubstitution(from: string, to: string, mode: Mode, identifier:
 // §4.5 airport-as-via-node hook that Sprint 2 fills in.
 const ACCESS = { RAIL: { from: 0.75, to: 0.75 }, AIR: { from: 1.5, to: 1.0 } } as const;
 const DEFAULT_TOL: Tolerance = toleranceForProfile(undefined);
-function legCtx(o: LegOption, tol: Tolerance, pax: number, month?: number, contract?: PlanContract): LegCtx {
+function legCtx(
+  o: LegOption, tol: Tolerance, pax: number, month?: number, contract?: PlanContract,
+  elevations?: ElevationIndex,
+): LegCtx {
   const a = o.mode === 'RAIL' ? ACCESS.RAIL : o.mode === 'AIR' ? ACCESS.AIR : { from: 0, to: 0 };
   // §4.6 rung 2: a rail+road hybrid folds its onward Band-A road transfer into
   // door-to-door access so the DDCV charges the extra hours + taxi honestly (a far
   // drop railhead loses to a nearer one, exactly like a far airport).
   const hyb = hybridAccessHours(o);
+
+  // ---- US-803c: THE WIRE THAT WAS NEVER CONNECTED ----------------------------------
+  //
+  // `roadQualityIndex` has been READ in ddcv.ts, fallback.ts and anchors.ts since Sprint 1
+  // -- and SET NOWHERE. It fell back to 4, so EVERY HILL ROAD IN INDIA WAS PLANNED AT
+  // PLAINS SPEED (55 km/h). Founder, 2026-07-12: "plains 55 km/h, hills 22 km/h."
+  //
+  // The engine's own speed table already said exactly that. It was simply never asked.
+  // Now it is: the terrain comes from the MEASURED ELEVATION of the two ends of the leg
+  // (Open-Meteo, all 214 StayNodes, receipts stored).
+  //
+  //   Guwahati (60 m) -> Shillong (1495 m)  = a road that CLIMBS = 30 km/h = 3.3 h
+  //   OSRM's opinion of that same road: 1h15. It is wrong, and a body gate believed it.
+  //
+  // If we hold no elevation for either end, this is NULL -- not a guess -- and the engine
+  // keeps its existing safe default. We never invent a terrain that a body gate rests on.
+  const rqi = rqiForLeg(elevations, o.from, o.to);
+
   // Sprint 7: his contract rides with every leg. It can only TIGHTEN this party's gates.
-  return { tol, pax, month, accessFromHrs: a.from, accessToHrs: a.to + hyb.hrs, accessCostPp: hyb.costPp, tighten: contract?.tighten };
+  return {
+    tol, pax, month,
+    roadQualityIndex: rqi,
+    accessFromHrs: a.from, accessToHrs: a.to + hyb.hrs, accessCostPp: hyb.costPp,
+    tighten: contract?.tighten,
+  };
 }
 
 /**
@@ -84,6 +111,9 @@ function legCtx(o: LegOption, tol: Tolerance, pax: number, month?: number, contr
  * one allowed to speak — with a finding, a reason, and a named alternative (Law 4).
  */
 export interface UsableOpts {
+  /** US-803c — city -> metres. Feeds roadQualityIndex -> terrainSpeedKmh -> THE BODY GATES.
+   *  Absent => the engine keeps its safe default. We never guess an altitude. */
+  elevations?: ElevationIndex;
   overnightTrains?: boolean;
   preferDaily?: boolean;
   dailyOnly?: boolean;
@@ -139,14 +169,14 @@ export function estCostPp(o: LegOption): number {
 /** scalarize one option to a comparable cost under the objective (lower = better).
  *  preferDaily: when the travel date is unknown, penalise non-daily services so the
  *  plan stays date-flexible unless nothing daily exists. */
-function optionCost(o: LegOption, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights, contract?: PlanContract): number {
+function optionCost(o: LegOption, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights, contract?: PlanContract, elevations?: ElevationIndex): number {
   // ALL mode comparisons now run on the Door-to-Door Cost Vector (spec §4.1): raw
   // durations never compete. A body-truth hard-blocked option (over hour cap,
   // chronotype breach, class-floor fail) is strongly deprioritised for LIVE
   // sequencing but still connects the graph — dayExpand surfaces the infeasibility.
   const nonDaily = preferDaily && o.operatingDays != null && o.operatingDays !== 127;
   const penalty = nonDaily ? 40 : 0;
-  const scalar = ddcvScalar(ddcv(o, legCtx(o, tol, pax, month, contract)), w ?? weightsForObjective(obj));
+  const scalar = ddcvScalar(ddcv(o, legCtx(o, tol, pax, month, contract, elevations)), w ?? weightsForObjective(obj));
   const base = Number.isFinite(scalar) ? scalar : 1e6;
   return base + penalty;
 }
@@ -154,7 +184,7 @@ function optionCost(o: LegOption, obj: Objective, pax: number, preferDaily = fal
 function bestOption(opts: LegOption[] | undefined, obj: Objective, pax: number, opts2?: UsableOpts, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights): LegOption | undefined {
   if (!opts || !opts.length) return undefined;
   const { usable } = usableOptions(opts, opts2);
-  const pick = (usable.length ? usable : opts).slice().sort((a, b) => optionCost(a, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract) - optionCost(b, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract));
+  const pick = (usable.length ? usable : opts).slice().sort((a, b) => optionCost(a, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract, opts2?.elevations) - optionCost(b, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract, opts2?.elevations));
   return pick[0];
 }
 
@@ -170,17 +200,17 @@ function rankLegOptions(opts: LegOption[] | undefined, obj: Objective, pax: numb
   // full pool so the graph still connects — and the graph is right to insist on that. But the
   // fallback must NEVER BE SILENT. The leg is marked here, and buildPlan says it out loud.
   const pool = usable.length ? usable : opts;
-  const ranked = pool.slice().sort((a, b) => optionCost(a, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract) - optionCost(b, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract));
+  const ranked = pool.slice().sort((a, b) => optionCost(a, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract, opts2?.elevations) - optionCost(b, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract, opts2?.elevations));
   return { ranked, refusedAll };
 }
 
-function buildMatrix(names: string[], deps: OptimizeDeps, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights, contract?: PlanContract): number[][] {
+function buildMatrix(names: string[], deps: OptimizeDeps, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights, contract?: PlanContract, elevations?: ElevationIndex): number[][] {
   const n = names.length;
   const m: number[][] = Array.from({ length: n }, () => new Array(n).fill(BIG));
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
     if (i === j) { m[i][j] = 0; continue; }
-    const best = bestOption(deps.pool.get(legKey(names[i], names[j])), obj, pax, { preferDaily, contract }, tol, month, w);
-    m[i][j] = best ? optionCost(best, obj, pax, preferDaily, tol, month, w, contract) : BIG;
+    const best = bestOption(deps.pool.get(legKey(names[i], names[j])), obj, pax, { preferDaily, contract, elevations }, tol, month, w);
+    m[i][j] = best ? optionCost(best, obj, pax, preferDaily, tol, month, w, contract, elevations) : BIG;
   }
   return m;
 }
@@ -242,7 +272,7 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
 
     if (input.contract) {
       const court = consultantChoose(
-        ranked.map((o) => ({ opt: o, ctx: legCtx(o, tol, pax, month, input.contract) })),
+        ranked.map((o) => ({ opt: o, ctx: legCtx(o, tol, pax, month, input.contract, input.elevations) })),
         { contract: input.contract, party, weights: w },
       );
       rejectedReasons = new Map(court.rejected.map((r) => [optionKey(r.opt), r.reason]));
@@ -262,7 +292,7 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
     chosen.set(key, opt); chosenList.push(opt);
     if (breached) refusedLegs.set(key, opt);
     explainByLeg.set(key, buildLegExplain(
-      order, (legOpt) => legCtx(legOpt, tol, pax, month, input.contract), w,
+      order, (legOpt) => legCtx(legOpt, tol, pax, month, input.contract, input.elevations), w,
       { praiseHotelNight: input.contract?.rewardSwitches.hotelNightSaving !== false, rejectedReasons },
     ));
   }
@@ -368,7 +398,7 @@ export function solveForObjective(input: OptimizeInput, deps: OptimizeDeps, obje
   const preferDaily = input.startWeekday == null;
   const solveTol = toleranceForProfile(input.profile);
   const solveW = applyTPP(weightsForObjective(objective), input.tpp);
-  const matrix = buildMatrix(names0, deps, objective, pax, preferDaily, solveTol, input.month, solveW, input.contract);
+  const matrix = buildMatrix(names0, deps, objective, pax, preferDaily, solveTol, input.month, solveW, input.contract, input.elevations);
   const { order } = sequence(matrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null });
   return buildPlan(order, names0, { ...input, objective }, deps, label);
 }
@@ -382,7 +412,7 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
   const preferDaily = input.startWeekday == null;
   const solveTol = toleranceForProfile(input.profile);
   const solveW = applyTPP(weightsForObjective(input.objective), input.tpp);
-  const matrix = buildMatrix(names0, deps, input.objective, pax, preferDaily, solveTol, input.month, solveW, input.contract);
+  const matrix = buildMatrix(names0, deps, input.objective, pax, preferDaily, solveTol, input.month, solveW, input.contract, input.elevations);
   const { order } = sequence(matrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null });
 
   const best = buildPlan(order, names0, input, deps, `Best (${input.objective})`);
@@ -398,7 +428,7 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
     nodes: deps.nodes,
     pool: new Map(Array.from(deps.pool.entries()).map(([k, v]) => [k, v.filter((o) => (o.operatingDays ?? 127) === 127)] as const)),
   };
-  const roadMatrix = buildMatrix(names0, roadOnlyDeps, input.objective, pax, true, solveTol, input.month, solveW, input.contract);
+  const roadMatrix = buildMatrix(names0, roadOnlyDeps, input.objective, pax, true, solveTol, input.month, solveW, input.contract, input.elevations);
   const alt2Order = sequence(roadMatrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null }).order;
   const alt2 = buildPlan(alt2Order, names0, input, { ...deps, pool: roadOnlyDeps.pool, dailyOnly: true }, 'Alternate (date-flexible, no weekday lock)');
   alt2.dateFlexible = true;
