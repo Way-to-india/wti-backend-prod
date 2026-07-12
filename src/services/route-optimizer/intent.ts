@@ -106,7 +106,12 @@ export interface TravellerIntent {
   interests: Reading<string>[];
   pace: Reading<Pace>;
   party: Reading<PartyFacts>;
-  timeInHand: Reading<{ nights?: number; month?: number }>;
+  /** TWO FACTS, TWO RECEIPTS. These were once a single Reading<{nights, month}> — and the echo
+   *  panel test caught exactly what that costs: he answers the MONTH, and the nights WE
+   *  invented get promoted to "you said" along with it. An inference wearing his words is the
+   *  one thing we said we would never do. A Reading may hold ONE fact, and only one. */
+  nights: Reading<number>;
+  month: Reading<number>;
   origin: Reading<string>;
   destinations: Reading<string>[];
 }
@@ -254,20 +259,17 @@ export function intentFromRaw(raw: RawIntent | null | undefined, text: string): 
         : weInferred({ pax: paxValue, composition: composition ?? 'friends', profile: profileForComposition(composition) }, 'read from your message'))
     : weNeedIt<PartyFacts>();
 
-  // ---- time in hand ---------------------------------------------------------------
-  const month = Number.isInteger(r.month) && (r.month as number) >= 1 && (r.month as number) <= 12 ? (r.month as number) : undefined;
-  const nightsFromCities = (r.cities ?? []).reduce((s, c) => s + (Number(c?.nights) || 0), 0) || undefined;
-  const nights = Number.isFinite(Number(r.nights)) && Number(r.nights) > 0 ? Number(r.nights) : nightsFromCities;
-  const monthQuote = verifyQuote(quotes.month, text);
-  const nightsQuote = verifyQuote(quotes.nights, text);
-  let timeInHand: Reading<{ nights?: number; month?: number }>;
-  if (month == null && nights == null) {
-    timeInHand = weNeedIt();
-  } else if (monthQuote || nightsQuote) {
-    timeInHand = heSaid({ nights, month }, (monthQuote || nightsQuote) as string);
-  } else {
-    timeInHand = weInferred({ nights, month }, 'we split your days across the places you named', CONF.WEAK);
-  }
+  // ---- time in hand: the month and the nights are DIFFERENT FACTS -------------------
+  const monthVal = Number.isInteger(r.month) && (r.month as number) >= 1 && (r.month as number) <= 12 ? (r.month as number) : null;
+  const nightsFromCities = (r.cities ?? []).reduce((s, c) => s + (Number(c?.nights) || 0), 0) || null;
+  const nightsVal = Number.isFinite(Number(r.nights)) && Number(r.nights) > 0 ? Number(r.nights) : nightsFromCities;
+
+  const month: Reading<number> = read<number>(monthVal, quotes.month, text, 'read from your message');
+  const nights: Reading<number> = nightsVal == null
+    ? weNeedIt<number>()
+    : (verifyQuote(quotes.nights, text)
+        ? heSaid(nightsVal, verifyQuote(quotes.nights, text) as string)
+        : weInferred(nightsVal, 'we split your days across the places you named', CONF.WEAK));
 
   // ---- origin + destinations -------------------------------------------------------
   // The origin the traveller TYPED is his word. The one we work out from where he is
@@ -282,7 +284,7 @@ export function intentFromRaw(raw: RawIntent | null | undefined, text: string): 
     .slice(0, 7)
     .map((c) => heSaid(c.name.trim(), c.name.trim()));
 
-  return { purpose, comfortTier, budgetStance, modeStances, interests, pace, party, timeInHand, origin, destinations };
+  return { purpose, comfortTier, budgetStance, modeStances, interests, pace, party, nights, month, origin, destinations };
 }
 
 /** The gateway step's one legal way to fill an origin we had to work out ourselves. */
@@ -291,10 +293,20 @@ export function withInferredOrigin(intent: TravellerIntent, city: string, basis:
   return { ...intent, origin: weInferred(city, basis, 0.6) };
 }
 
-/** The one legal way to fold an answer he gave to a counter-question back into intent. */
+/**
+ * The one legal way to fold an answer he gave to a counter-question back into intent.
+ *
+ * Note what it CANNOT do, now that the model is right: answering the month cannot promote the
+ * nights. Two facts, two receipts. He said December; he did not say six nights; and no amount
+ * of convenient bookkeeping may pretend otherwise.
+ */
 export function withAnsweredMonth(intent: TravellerIntent, month: number, quote: string): TravellerIntent {
-  const t = intent.timeInHand.value ?? {};
-  return { ...intent, timeInHand: heSaid({ ...t, month }, quote) };
+  return { ...intent, month: heSaid(month, quote) };
+}
+
+/** Likewise for the nights, when he answers that question. */
+export function withAnsweredNights(intent: TravellerIntent, nights: number, quote: string): TravellerIntent {
+  return { ...intent, nights: heSaid(nights, quote) };
 }
 
 // ==============================================================================
@@ -349,6 +361,99 @@ export function tightened<T extends Clampable>(base: T, t?: Tightening): T {
     latestArrivalMin: Math.min(base.latestArrivalMin, t.latestArrivalMin ?? Infinity),
     earliestStartMin: Math.max(base.earliestStartMin, t.earliestStartMin ?? -Infinity),
   };
+}
+
+// ==============================================================================
+// US-609 — THE COUNTER-QUESTION GATE.
+//
+// A seasoned consultant does not plan from one sentence. He asks one or two good questions
+// first. But he never interrogates, and he never hands you a form — the difference between a
+// consultant and a booking engine is that the consultant PROPOSES WHILE HE ASKS.
+//
+// The policy is value-of-information, kept brutally simple:
+//
+//      risk = (1 − confidence) × planImpact        ASK iff risk ≥ 0.45. At most TWO.
+//
+// And four rules that keep it human:
+//   1. NEVER ask what he already told us. A `he_said` field is exempt whatever its impact —
+//      asking a man to repeat himself is how you prove you were not listening.
+//   2. Never more than two. The third-most-risky field becomes an editable chip instead.
+//   3. Every question carries OUR PROVISIONAL ANSWER. A consultant proposes while he asks.
+//   4. A high-impact `we_need_it` field is always asked, because a plan resting on a fact we
+//      simply do not have is not a plan, it is a guess with a map.
+// ==============================================================================
+
+/** How much a wrong value here would damage the plan. Fixed table (spec 1.6). */
+export const PLAN_IMPACT: Record<string, number> = {
+  month: 0.9,
+  party: 0.9,
+  comfortTier: 0.8,
+  budgetStance: 0.8,
+  nights: 0.6,
+  origin: 0.5,
+  pace: 0.4,
+  interests: 0.3,
+};
+
+export const ASK_THRESHOLD = 0.45;
+
+export interface CounterQuestion {
+  key: string;
+  /** the question, and our provisional answer, in one line. */
+  text: string;
+  risk: number;
+  /** what we will assume if he does not answer — never hidden from him. */
+  provisional?: string;
+}
+
+/**
+ * The two best questions, or fewer, or none. Pure.
+ *
+ * On the canonical honeymoon sentence this asks EXACTLY ONE question — the month — because
+ * that is the only thing we genuinely do not have and cannot responsibly invent. His purpose,
+ * his comfort tier, his refusals, his party: he told us all of it, and we do not ask a man to
+ * say it twice.
+ */
+export function counterQuestions(intent: TravellerIntent): CounterQuestion[] {
+  const risk = (r: Reading<unknown>, key: string): number => {
+    if (r.provenance === 'he_said') return 0;                 // rule 1 — he told us. Never ask.
+    return (1 - (r.confidence ?? 0)) * (PLAN_IMPACT[key] ?? 0.3);
+  };
+
+  const candidates: CounterQuestion[] = [
+    {
+      key: 'month',
+      risk: risk(intent.month, 'month'),
+      // The provisional is grounded in what our OWN model actually knows: the engine slows
+      // hill roads in the monsoon (physiology.terrainSpeedKmh). We do not invent a "best
+      // season" for a place we have no season data for — we say the thing we can prove.
+      text: 'Which month are you travelling? It changes what we can promise: between June and September the hill roads are slower in the rain, and we plan shorter days.',
+      provisional: 'we will plan for a dry-season month',
+    },
+    {
+      key: 'party',
+      risk: risk(intent.party, 'party'),
+      text: 'How many of you are travelling, and is anyone elderly or a small child? We plan the day around whoever finds the journey hardest.',
+      provisional: 'we have assumed two of you',
+    },
+    {
+      key: 'comfortTier',
+      risk: risk(intent.comfortTier, 'comfortTier'),
+      text: 'What kind of stay do you have in mind — comfortable, or the best available? It decides the hotels and how we travel between them.',
+      provisional: 'we have assumed a comfortable, mid-range trip',
+    },
+    {
+      key: 'nights',
+      risk: risk(intent.nights, 'nights'),
+      text: 'How many nights do you have? Tell us, and we will fit the trip to your days rather than stretching your days to the trip.',
+      provisional: 'we have split your nights across the places you named',
+    },
+  ];
+
+  return candidates
+    .filter((q) => q.risk >= ASK_THRESHOLD)
+    .sort((a, b) => b.risk - a.risk)
+    .slice(0, 2);                                             // rule 2 — never a wall of questions
 }
 
 /** One row of the "what we understood" panel — the fact, and who supplied it. */
@@ -527,22 +632,6 @@ function row<T>(key: string, label: string, r: Reading<T>, fmt: (v: T) => string
   };
 }
 
-/**
- * `timeInHand` carries TWO facts in one reading — the month and the nights — and they do
- * not always share a provenance. He told us neither, we split his nights ourselves, and
- * the month we simply do not have. A row must not inherit "our suggestion" from its
- * sibling: a fact we DO NOT HOLD is `we_need_it`, and it must say so, or the panel is
- * quietly claiming to know something it does not.
- */
-function subRow<T, K>(key: string, label: string, r: Reading<T>, pick: (v: T) => K | null | undefined, fmt: (v: K) => string): EchoRow {
-  const sub = r.value != null ? pick(r.value) : null;
-  if (sub == null) return { key, label, value: '—', provenance: 'we_need_it' };
-  return {
-    key, label, value: fmt(sub), provenance: r.provenance,
-    ...(r.quote ? { quote: r.quote } : {}),
-    ...(r.basis ? { why: r.basis } : {}),
-  };
-}
 
 /**
  * The echo panel: every fact the plan rests on, and who supplied it. The chip text is
@@ -555,8 +644,8 @@ export function buildEcho(intent: TravellerIntent): EchoRow[] {
     row('comfortTier', 'Comfort', intent.comfortTier, (v) => v),
     row('party', 'Travellers', intent.party, (v) => `${v.pax}`),
     row('origin', 'Starting from', intent.origin, (v) => v),
-    subRow('month', 'Month', intent.timeInHand, (v) => v.month, (m) => MONTH_NAMES[m - 1]),
-    subRow('nights', 'Nights', intent.timeInHand, (v) => v.nights, (n) => String(n)),
+    row('month', 'Month', intent.month, (m) => MONTH_NAMES[m - 1]),
+    row('nights', 'Nights', intent.nights, (n) => String(n)),
   ];
   for (const s of intent.modeStances) {
     if (s.stance !== 'refuse' && s.stance !== 'avoid') continue;

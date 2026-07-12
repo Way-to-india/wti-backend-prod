@@ -27,7 +27,7 @@ import type { PlannerPayload } from '@/services/route-optimizer/plannerPayload';
 import { anthropic, enrichmentEnabled } from '@/services/enrichment/core';
 import { verifyCity } from '@/services/route-optimizer/cityVerify';
 import { inferGateway, type StartSource } from '@/services/route-optimizer/gateway';
-import { intentFromRaw, compileContract, type RawIntent, type TravellerIntent } from '@/services/route-optimizer/intent';
+import { intentFromRaw, compileContract, counterQuestions, buildEcho, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 
@@ -389,6 +389,22 @@ export class PublicPlannerController {
         },
       ];
 
+      // ---- US-609: WHAT WE UNDERSTOOD, AND WHAT WE STILL NEED TO ASK ----------
+      //
+      // The echo panel is the standing third round of the conversation: the free sentence was
+      // round one, the counter-questions are round two, and this panel — which he can correct
+      // at any time — is round three.
+      //
+      // THE IRON RULE, and the UI cannot break it because the chip text is DERIVED from the
+      // provenance enum, never hand-set: a value WE inferred may never render under a "you
+      // said" chip. An inference presented as his word is the worst outcome available to us.
+      //
+      // The counter-questions are surfaced in the payload rather than blocking the plan: he
+      // gets his itinerary AND the one question that would sharpen it. (Whether the UI asks
+      // before it renders is a front-end decision; the payload carries everything it needs.)
+      const echo: EchoRow[] = intent ? buildEcho(intent) : [];
+      const questions: CounterQuestion[] = intent ? counterQuestions(intent) : [];
+
       // THE PUBLIC GATE: only the scrubbed planner payload ever leaves.
       // plans[], enrichment PII, costBreakdown, warnings never reach the wire.
       const publicPayload = toPublicPayload(planner);
@@ -428,7 +444,7 @@ export class PublicPlannerController {
 
       return res.status(200).json({
         status: true,
-        payload: { planner: publicPayload, understanding, token },
+        payload: { planner: publicPayload, understanding, echo, questions, token },
       });
     } catch (e) {
       console.error('public planner failed:', e);
