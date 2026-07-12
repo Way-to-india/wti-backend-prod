@@ -103,7 +103,7 @@ export interface HoursCtx { roadQualityIndex?: number | null; month?: number | n
  * Comfort stops are deliberately NOT added here — see hardCapExceeded(): stops are a
  * COMFORT quantity, not a feasibility breach, so they must not tip the hard gate.
  */
-export function vehicleHours(leg: Pick<LegOption, 'mode' | 'durationMin' | 'distanceKm'>, ctx: HoursCtx = {}): number {
+export function vehicleHours(leg: Pick<LegOption, 'mode' | 'durationMin' | 'distanceKm' | 'durationSource'>, ctx: HoursCtx = {}): number {
   // ---- THE TIGHTENING (US-803c; founder ruling, 2026-07-12) -------------------------
   //
   // THE DEFECT THIS REPLACES. The old first line was:
@@ -136,6 +136,30 @@ export function vehicleHours(leg: Pick<LegOption, 'mode' | 'durationMin' | 'dist
     const terrainHrs = leg.distanceKm != null
       ? leg.distanceKm / terrainSpeedKmh(ctx.roadQualityIndex, ctx.month)
       : null;
+
+    // ---- US-800a — A MEASUREMENT IS NEVER FLOORED BY A GUESS -------------------------
+    //
+    // Everything written above is right for a GUESS and WRONG FOR A FACT.
+    //
+    // The climb-per-km model knows TERRAIN. IT DOES NOT KNOW ROAD CLASS. A national highway
+    // climbs and STAYS FAST; the model slows it down anyway. Measured against Google on
+    // 2026-07-12: NH66 Ratnagiri->Malvan, our model said 4h40 (37 km/h), the truth is 3h22
+    // (50 km/h) -- AN HOUR TOO SLOW. On the Guwahati->Shillong mountain road the same model
+    // is exactly right.
+    //
+    // IT CANNOT BE RE-TUNED OUT. Fit the coefficient to NH66 and the model then returns
+    // 47 km/h for Guwahati->Shillong, which is 31: WRONG, AND IN THE DANGEROUS DIRECTION.
+    // One coefficient cannot represent road class. The model is STRUCTURALLY INCAPABLE of
+    // this, and no ratio guard separates the cases either (2.42x is right, 1.83x is wrong).
+    //
+    // So there is exactly one way out, and this is it: WHEN A MEASUREMENT EXISTS, TRUST THE
+    // MEASUREMENT. Fit a model only for the roads nobody has driven -- and label it.
+    //
+    // THIS IS NOT A WEAKENING OF THE TIGHTENING. Every unmeasured road still gets the full
+    // floor below, and 'measured' can only be written by the Google Directions adapter.
+    // A road we have not measured is treated today exactly as it was yesterday.
+    if (leg.durationSource === 'measured' && routerHrs != null) return routerHrs;
+
     if (routerHrs != null && terrainHrs != null) return Math.max(routerHrs, terrainHrs);
     return routerHrs ?? terrainHrs ?? 0;
   }
@@ -156,7 +180,7 @@ export function comfortStopHours(baseHrs: number, tol: Tolerance): number {
  * cap stays legal (matches the Ramayana ground-truth 213 km / 5.0 h senior drive).
  */
 export function roadDayHardCapExceeded(
-  leg: Pick<LegOption, 'mode' | 'durationMin' | 'distanceKm'>, tol: Tolerance, ctx: HoursCtx = {},
+  leg: Pick<LegOption, 'mode' | 'durationMin' | 'distanceKm' | 'durationSource'>, tol: Tolerance, ctx: HoursCtx = {},
 ): { exceeded: boolean; hrs: number; capHrs: number } {
   const hrs = vehicleHours(leg, ctx);
   const exceeded = leg.mode === 'ROAD' && hrs > tol.hardCapHrs + 1e-9;

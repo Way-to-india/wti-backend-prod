@@ -218,7 +218,24 @@ export class RouteOptimizerController {
           try {
             const rt = await roadTerrainFor(nodes[i].name, nodes[j].name, nodes[i].coord, nodes[j].coord);
             if (rt && rt.minutes > 0) {
-              roadOpt.durationMin = Math.max(roadOpt.durationMin ?? 0, rt.minutes);
+              // ---- US-800a — TRUST A MEASUREMENT; FLOOR A GUESS -----------------------
+              //
+              // If a real routing service DROVE this road, its clock is a FACT, and
+              // Math.max against our fitted climb model would make the MODEL the authority
+              // over REALITY. The model is an hour too slow on a national highway (NH66:
+              // model 4h40, Google 3h22) because it knows terrain and not road class, and
+              // it CANNOT be re-tuned out without breaking the mountain roads it gets right.
+              //
+              // So a measured road is taken as measured, and an unmeasured one keeps the
+              // full conservative floor it had yesterday. The tightening is not weakened;
+              // it is confined to the guesses, which is the only place it was ever right.
+              if (rt.source === 'measured') {
+                roadOpt.durationMin = rt.minutes;
+                roadOpt.durationSource = 'measured';
+              } else {
+                roadOpt.durationMin = Math.max(roadOpt.durationMin ?? 0, rt.minutes);
+                roadOpt.durationSource = 'routed';
+              }
               (roadOpt as any).climbPerKm = Number(rt.climbPerKm.toFixed(1));
             }
           } catch (e) {

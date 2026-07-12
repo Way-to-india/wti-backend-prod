@@ -22,6 +22,59 @@ import type { LatLng } from './types';
 const SAMPLES = 60;          // enough to see a ghat; few enough for one elevation call
 const CACHE_TTL_DAYS = 3650; // a mountain does not move
 
+// ---- US-800a — THE MEASUREMENT ------------------------------------------------------
+//
+// OFF BY DEFAULT. Set GOOGLE_DIRECTIONS=on in .env once the Directions API is allowed on
+// GOOGLE_PLACES_API_KEY. While it is off, EVERY LEG BEHAVES EXACTLY AS IT DID YESTERDAY:
+// the climb model floors OSRM, and physiology.vehicleHours() keeps its full tightening.
+// Nothing about this file can loosen a body gate while the flag is off.
+const GOOGLE_DIRECTIONS_ON = String(process.env.GOOGLE_DIRECTIONS || '').toLowerCase() === 'on';
+
+/** Beyond this, the measurement and our model do not merely differ — they DISAGREE. We
+ *  trust the measurement (it drove the road) but we REFUSE TO DO SO SILENTLY: the leg is
+ *  flagged, because a model that is 40% out on a road is telling us something about the
+ *  model, and a model we stop listening to is a model we stop learning from. */
+const DISAGREE_FLAG = 0.40;
+
+/**
+ * GOOGLE DRIVING MINUTES — A ROAD SOMEBODY HAS ACTUALLY DRIVEN.
+ *
+ * WE NEVER SEND `departure_time`. That single parameter flips this call from Directions
+ * ESSENTIALS to Directions ADVANCED: double the price, half the free tier — and it buys us
+ * live traffic, which we do not want. A plan made today is travelled in three months. The
+ * page adds its own buffer, and ROAD_TIME_DISCLAIMER already says the day will vary.
+ *
+ * Free tier: 10,000 calls a month. Our entire backfill of every road on the site is 62
+ * calls, and each is cached forever, because a road does not move.
+ *
+ * ABSENT-SAFE. Any doubt at all -> null -> the caller keeps the climb model, exactly as it
+ * does today. A MISSING MEASUREMENT IS SAFE. AN INVENTED ONE IS A LIE WITH A BODY GATE
+ * BEHIND IT.
+ */
+async function googleDrivingMinutes(a: LatLng, b: LatLng): Promise<number | null> {
+  if (!GOOGLE_DIRECTIONS_ON) return null;
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const url = 'https://maps.googleapis.com/maps/api/directions/json'
+      + `?origin=${a[0]},${a[1]}&destination=${b[0]},${b[1]}`
+      + '&mode=driving&region=in'          // NO departure_time. DELIBERATE. See above.
+      + `&key=${apiKey}`;
+    const r = await fetch(url);
+    const j: any = await r.json();
+    if (j?.status !== 'OK') {
+      if (j?.status && j.status !== 'ZERO_RESULTS') {
+        console.warn(`[directions] ${j.status} — falling back to the climb model.`);
+      }
+      return null;
+    }
+    const secs = j?.routes?.[0]?.legs?.[0]?.duration?.value;
+    return Number.isFinite(+secs) && +secs > 0 ? Math.round(+secs / 60) : null;
+  } catch {
+    return null;   // the network did not answer. We say nothing rather than guess.
+  }
+}
+
 export async function ensureRoadTerrainTable(): Promise<void> {
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS road_leg_terrain (
@@ -36,6 +89,11 @@ export async function ensureRoadTerrainTable(): Promise<void> {
       computed_at  timestamptz NOT NULL DEFAULT now(),
       PRIMARY KEY (from_city, to_city)
     )`);
+  // US-800a — provenance. Additive, idempotent, and safe on the live table.
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE road_leg_terrain ADD COLUMN IF NOT EXISTS duration_source text NOT NULL DEFAULT 'routed'`);
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE road_leg_terrain ADD COLUMN IF NOT EXISTS model_min integer`);
 }
 
 const key = (s: string) => s.trim().toLowerCase();
@@ -66,7 +124,7 @@ async function elevationsOf(pts: LatLng[]): Promise<(number | null)[]> {
 async function cached(from: string, to: string): Promise<RoadTerrain | null> {
   try {
     const rows = await prisma.$queryRawUnsafe<any[]>(
-      `SELECT km, climb_per_km, minutes, router_min FROM road_leg_terrain
+      `SELECT km, climb_per_km, minutes, router_min, duration_source, model_min FROM road_leg_terrain
         WHERE from_city = $1 AND to_city = $2
           AND computed_at > now() - interval '${CACHE_TTL_DAYS} days'`, key(from), key(to));
     if (!rows.length) return null;
@@ -76,6 +134,8 @@ async function cached(from: string, to: string): Promise<RoadTerrain | null> {
       climbPerKm: Number(r.climb_per_km),
       minutes: Number(r.minutes),
       routerMinutes: r.router_min == null ? null : Number(r.router_min),
+      source: (r.duration_source === 'measured' ? 'measured' : 'routed'),
+      modelMinutes: r.model_min == null ? undefined : Number(r.model_min),
     };
   } catch { return null; }
 }
@@ -90,7 +150,9 @@ export async function roadTerrainFor(
   fromCity: string, toCity: string, a: LatLng, b: LatLng,
 ): Promise<RoadTerrain | null> {
   const hit = await cached(fromCity, toCity);
-  if (hit) return hit;
+  // A cached GUESS is not good enough once we can MEASURE. If Google is now switched on and
+  // this row was only ever routed, we go and drive it. (Once. Then it is cached as a fact.)
+  if (hit && !(GOOGLE_DIRECTIONS_ON && hit.source !== 'measured')) return hit;
 
   const geom = await osrmRouteGeometry(a, b);
   if (!geom || !geom.coords?.length || !(geom.km > 0)) return null;
@@ -111,17 +173,49 @@ export async function roadTerrainFor(
 
   const t = terrainFromProfile(geom.km, samples, geom.min);
 
+  // ---- US-800a — TRUST A MEASUREMENT; FLOOR A GUESS --------------------------------
+  //
+  // We keep the climb model EVEN WHEN GOOGLE ANSWERS. Two reasons, both load-bearing:
+  //   1. `climbPerKm` feeds roadQualityIndex -> terrainSpeedKmh -> the body gates, and it is
+  //      a real measurement of the earth. Google's clock does not replace it.
+  //   2. The model is our CROSS-CHECK. When it and the measurement disagree by more than
+  //      DISAGREE_FLAG we trust the measurement, but we FLAG the leg. We do not trust
+  //      either one silently.
+  const googleMin = await googleDrivingMinutes(a, b);
+  let out: RoadTerrain;
+  if (googleMin != null && googleMin > 0) {
+    const gap = t.minutes > 0 ? Math.abs(googleMin - t.minutes) / t.minutes : 0;
+    out = {
+      ...t,
+      minutes: googleMin,          // THE FACT. Not floored. Not averaged. Not second-guessed.
+      source: 'measured',
+      modelMinutes: t.minutes,
+      disagreementPct: t.minutes > 0 ? Number(gap.toFixed(3)) : null,
+      needsHuman: gap > DISAGREE_FLAG,
+    };
+    if (out.needsHuman) {
+      console.warn(
+        `[road_leg_terrain] MEASUREMENT vs MODEL DISAGREE by ${Math.round(gap * 100)}% on ` +
+        `${fromCity} -> ${toCity}: Google ${googleMin}m, our model ${t.minutes}m (climb/km ` +
+        `${t.climbPerKm.toFixed(1)}). Trusting the measurement. FLAGGED FOR A HUMAN.`);
+    }
+  } else {
+    out = { ...t, source: 'routed', modelMinutes: t.minutes };
+  }
+
   try {
     await ensureRoadTerrainTable();
     await prisma.$executeRawUnsafe(
-      `INSERT INTO road_leg_terrain (from_city, to_city, km, climb_per_km, minutes, router_min, samples)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
+      `INSERT INTO road_leg_terrain (from_city, to_city, km, climb_per_km, minutes, router_min, samples, duration_source, model_min)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
        ON CONFLICT (from_city, to_city) DO UPDATE
          SET km = EXCLUDED.km, climb_per_km = EXCLUDED.climb_per_km, minutes = EXCLUDED.minutes,
-             router_min = EXCLUDED.router_min, computed_at = now()`,
-      key(fromCity), key(toCity), t.km, Number(t.climbPerKm.toFixed(2)), t.minutes, t.routerMinutes, pts.length);
+             router_min = EXCLUDED.router_min, duration_source = EXCLUDED.duration_source,
+             model_min = EXCLUDED.model_min, computed_at = now()`,
+      key(fromCity), key(toCity), out.km, Number(out.climbPerKm.toFixed(2)), out.minutes,
+      out.routerMinutes, pts.length, out.source ?? 'routed', out.modelMinutes ?? null);
   } catch (e) {
     console.error('road_leg_terrain cache write failed (non-fatal):', e);
   }
-  return t;
+  return out;
 }

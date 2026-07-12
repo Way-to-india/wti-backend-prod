@@ -58,6 +58,7 @@
  */
 
 /** city name (lower-cased) -> metres above sea level. Injected; never read from a DB here. */
+import type { DurationSource } from './types';
 export type ElevationIndex = Record<string, number>;
 
 /** The bands. These are thresholds on the EARTH, not tuning knobs. */
@@ -226,10 +227,20 @@ export interface RoadTerrain {
   km: number;
   /** vertical metres gained + lost, per road km. The statistic that predicts speed. */
   climbPerKm: number;
-  /** the honest minutes, from roadMinutes(). */
+  /** THE MINUTES WE WILL USE. Google's, when Google has driven it; our model's otherwise. */
   minutes: number;
   /** what the router claimed, kept so we can always show our work. */
   routerMinutes: number | null;
+  /** US-800a — WHERE `minutes` CAME FROM. 'measured' = a real routing service drove this
+   *  road. 'routed' = our climb model over OSRM's geometry. Absent-safe: absent = 'routed'.
+   *  physiology.vehicleHours() will floor a 'routed' clock and TRUST a 'measured' one. */
+  source?: DurationSource;
+  /** WHAT OUR CLIMB MODEL SAID. Always kept, even when a measurement overrides it — it is
+   *  the CROSS-CHECK, and a model we stop looking at is a model we stop learning from. */
+  modelMinutes?: number;
+  /** |measured - model| / model. Beyond DISAGREE_FLAG we trust NEITHER silently: we flag. */
+  disagreementPct?: number | null;
+  needsHuman?: boolean;
 }
 
 /**
@@ -254,11 +265,16 @@ export function terrainFromProfile(
     prev = s.elevM;
   }
   const climbPerKm = totalKm > 0 ? climb / totalKm : 0;
+  const modelMinutes = roadMinutes(totalKm, climbPerKm);
   return {
     km: totalKm,
     climbPerKm,
-    minutes: roadMinutes(totalKm, climbPerKm),
+    minutes: modelMinutes,
     routerMinutes,
+    // THIS FUNCTION IS A MODEL, NOT A MEASUREMENT, AND IT SAYS SO. Only the Google adapter
+    // may promote a leg to 'measured'. A pure function cannot drive a road.
+    source: 'routed',
+    modelMinutes,
   };
 }
 

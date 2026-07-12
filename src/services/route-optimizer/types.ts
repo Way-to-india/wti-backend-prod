@@ -73,6 +73,26 @@ export type CityConstraint = GateWindow | DaylightOnly | PermitReq;
 
 // ---- transport options -------------------------------------------------------
 
+/**
+ * US-800a — WHERE A ROAD LEG'S CLOCK CAME FROM. LOAD-BEARING: physiology.vehicleHours()
+ * branches on this, and that branch decides whether a BODY GATE fires.
+ *
+ *   'measured' — a real routing service has DRIVEN this road (Google Directions). It is a
+ *                FACT. A fitted model may NEVER floor a fact.
+ *   'routed'   — a router's OPINION (OSRM). OSRM cannot tell a mountain from a motorway —
+ *                it claims 79 km/h on the Guwahati->Shillong road, which is 31. So we FLOOR
+ *                it with the climb model. Math.max. A TIGHTENING, never a loosening.
+ *   'derived'  — nobody drove it. Our climb model alone. An ESTIMATE, and we say so.
+ *
+ * ABSENT MEANS 'routed'. An unlabelled leg keeps the conservative floor, byte for byte, so
+ * this type can never loosen a gate that exists today.
+ *
+ * THE ONLY WRITER OF 'measured' IN THIS CODEBASE IS THE GOOGLE DIRECTIONS ADAPTER IN
+ * roadTerrainDb.ts, and __tests__/durationSource.test.ts enforces that by reading the
+ * source of every file in this directory. Made unrepresentable, not merely forbidden.
+ */
+export type DurationSource = 'measured' | 'routed' | 'derived';
+
 export interface LegOption {
   id?: number | string;
   from: string; // city name
@@ -97,6 +117,9 @@ export interface LegOption {
   reliability?: number;
   seasonal?: boolean;
   source?: string;
+  /** US-800a — WHERE `durationMin` CAME FROM. Absent = 'routed'. It decides whether
+   *  physiology.vehicleHours() floors this clock with the climb model. See DurationSource. */
+  durationSource?: DurationSource;
   verifiedAt?: string | null; // ISO
   /** rail+road hybrid (spec §4.6 rung 2): this RAIL option drops at a railhead
    *  `viaNode`, then an onward Band-A road transfer of `onwardRoadKm`/`onwardRoadMin`
