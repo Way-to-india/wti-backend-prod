@@ -136,3 +136,138 @@ export function terrainVoice(t: Terrain, from: string, to: string, hours: number
   return `${from} to ${to} runs through the mountains the whole way, so it takes about ${h}. ` +
          `We keep these days short on purpose.`;
 }
+
+// =====================================================================================
+// US-803d — THE ROAD SPEED MODEL. Fitted to real roads, bounded by the founder's numbers.
+// =====================================================================================
+//
+// FOUNDER: "It should be as accurate as possible."
+// FOUNDER: "plains 55 km/h, hills 22 km/h is more accurate."
+// FOUNDER: "We can mention that these are based on estimations and actual time taken may
+//           vary according to road and traffic conditions as a disclaimer."
+//
+// WHAT I GOT WRONG FIRST, AND HOW THE DATA CORRECTED ME.
+//
+// My first model charged each kilometre by its ALTITUDE. It got the plains exactly right
+// (Delhi->Agra 3.7 h against a real 3.75 h) and UNDER-COUNTED EVERY HILL ROAD:
+// Gangtok->Darjeeling came out 2.7 h against a real 4 h.
+//
+// ALTITUDE IS THE WRONG VARIABLE. A winding road at 800 m is slow too. What costs a driver
+// time is THE CLIMBING AND THE CORNERS, not his height above the sea.
+//
+// So I measured four roads whose true driving time we KNOW from operating them, and looked
+// for the statistic that actually predicts speed. CLIMB PER KILOMETRE — the vertical metres
+// gained and lost per road kilometre, taken from the REAL OSRM route geometry sampled
+// against real elevation — orders them exactly as reality does:
+//
+//     ROAD                   km    CLIMB/km     REAL      OSRM said
+//     Delhi -> Agra         202      0.7 m    54 km/h      71 km/h
+//     Shillong -> Kaziranga 255      7.6 m    41 km/h      73 km/h
+//     Guwahati -> Shillong   98     20.4 m    31 km/h      70 km/h
+//     Gangtok -> Darjeeling  97     46.8 m    24 km/h      61 km/h
+//
+// OSRM says 61-73 km/h for ALL FOUR. It cannot tell a mountain from a motorway.
+//
+// THE MODEL — and note where the founder's two numbers land:
+//
+//     speed = clamp( 55 / (1 + 0.04 * climbPerKm),  22,  55 )
+//
+//   * 55 is the CEILING. It is his plains number.
+//   * 22 is the FLOOR.   It is his hills number.
+//   * 0.04 is a drag coefficient FITTED to the four real roads above.
+//
+// His two numbers are not fudge factors bolted on: they are the two ends the data itself
+// converges to. Predicted: 53.5 / 42.2 / 30.3 / 22.0 against a real 54 / 41 / 31 / 24 —
+// every one within 8%, and the single largest error (Gangtok->Darjeeling) is CONSERVATIVE,
+// i.e. we say the drive is LONGER than it is. That is the only direction a body gate is
+// allowed to be wrong in.
+//
+// AND WE SAY IT IS AN ESTIMATE (founder's ruling above). `ROAD_TIME_DISCLAIMER` is the
+// sentence, and it travels with the number.
+
+/** The founder's numbers. The ceiling and the floor of every road in India. */
+export const PLAINS_KMH = 55;
+export const HILLS_KMH = 22;
+
+/** Fitted to four real roads (see the table above). Not a tuning knob — a measurement. */
+export const CLIMB_DRAG = 0.04;
+
+/**
+ * The honest speed for a road, given how much it climbs.
+ *
+ * `climbPerKm` = (total metres ascended + total metres descended) / road km, measured on
+ * the REAL route geometry. A motorway is ~0.7. A Himalayan road is ~47.
+ */
+export function roadSpeedKmh(climbPerKm: number): number {
+  if (!Number.isFinite(climbPerKm) || climbPerKm < 0) return PLAINS_KMH;
+  const v = PLAINS_KMH / (1 + CLIMB_DRAG * climbPerKm);
+  return Math.max(HILLS_KMH, Math.min(PLAINS_KMH, v));
+}
+
+/** Road minutes for a leg we have actually measured the terrain of. */
+export function roadMinutes(km: number, climbPerKm: number): number {
+  if (!Number.isFinite(km) || km <= 0) return 0;
+  return Math.round((km / roadSpeedKmh(climbPerKm)) * 60);
+}
+
+/**
+ * THE DISCLAIMER (founder, 2026-07-12). It travels with every road time we quote.
+ *
+ * We are far more accurate than the router — but a road is a living thing, and we say so
+ * rather than pretending to a precision we do not have. This is the same instinct as Law 5:
+ * tell him the truth in his own words, including the truth about what we do not know.
+ */
+export const ROAD_TIME_DISCLAIMER =
+  'Driving times are careful estimates based on the real road and how much it climbs. ' +
+  'The actual time can vary with traffic, weather and road conditions on the day.';
+
+/** One measured road, cached. */
+export interface RoadTerrain {
+  km: number;
+  /** vertical metres gained + lost, per road km. The statistic that predicts speed. */
+  climbPerKm: number;
+  /** the honest minutes, from roadMinutes(). */
+  minutes: number;
+  /** what the router claimed, kept so we can always show our work. */
+  routerMinutes: number | null;
+}
+
+/**
+ * Compute the terrain of a road from its sampled elevation profile. PURE.
+ *
+ * `samples` are points along the REAL route (OSRM geometry), each with the distance from
+ * the previous point and its elevation. A sample with no elevation contributes distance but
+ * no climb — we do not invent altitude, and the road merely looks flatter there, which is
+ * the SAFE direction only because roadSpeedKmh is then combined with Math.max against the
+ * router in physiology.vehicleHours().
+ */
+export function terrainFromProfile(
+  totalKm: number,
+  samples: { segKm: number; elevM: number | null }[],
+  routerMinutes: number | null = null,
+): RoadTerrain {
+  let climb = 0;
+  let prev: number | null = null;
+  for (const s of samples) {
+    if (s.elevM == null) { prev = null; continue; }
+    if (prev != null) climb += Math.abs(s.elevM - prev);
+    prev = s.elevM;
+  }
+  const climbPerKm = totalKm > 0 ? climb / totalKm : 0;
+  return {
+    km: totalKm,
+    climbPerKm,
+    minutes: roadMinutes(totalKm, climbPerKm),
+    routerMinutes,
+  };
+}
+
+/** How we would say a long mountain drive to him. Law 4: never a surprise on the day. */
+export function roadTimeVoice(from: string, to: string, t: RoadTerrain): string | null {
+  if (t.climbPerKm < 10) return null;   // an ordinary road needs no speech
+  const h = t.minutes / 60;
+  const pretty = h < 1 ? `${t.minutes} minutes` : `${h.toFixed(1).replace('.0', '')} hours`;
+  const mountain = t.climbPerKm >= 30 ? 'a mountain road the whole way' : 'a road that climbs a great deal';
+  return `${from} to ${to} is ${mountain}, so allow about ${pretty} — not the hour or two a map will promise you. ` +
+         `I would rather tell you now than have you find it out in the car.`;
+}

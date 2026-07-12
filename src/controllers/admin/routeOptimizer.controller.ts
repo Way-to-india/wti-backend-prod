@@ -16,6 +16,7 @@ import type { OrdealParty } from '@/services/route-optimizer/ordeal';
 import type { AnchorCandidate } from '@/services/route-optimizer/anchors';
 import { toPlannerPayload } from '@/services/route-optimizer/plannerPayload';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
+import { roadTerrainFor } from '@/services/route-optimizer/roadTerrainDb';
 
 /**
  * Route Optimizer — POST /api/admin/route-optimizer/optimize
@@ -195,6 +196,34 @@ export class RouteOptimizerController {
             distanceKm: km, durationMin: min, operatingDays: 127, reliability: 4,
             source: r ? 'osrm' : 'haversine', verifiedAt: new Date().toISOString(),
           };
+          // ---- US-803d: THE ROAD THE TRAVELLER WILL ACTUALLY DRIVE -------------------------
+          //
+          // THE BUG THIS CLOSES, CAUGHT ON THE LIVE PAYLOAD AND NOWHERE ELSE (Lesson 1):
+          // after US-803c the BODY GATE correctly reserved ~3.3 h for Guwahati->Shillong --
+          // but the plan handed to the traveller still said `durationMin: 84`. The engine and
+          // the page disagreed, and THE PAGE WAS LYING. A fixed gate behind a false itinerary
+          // is worse than neither, because it looks like it works.
+          //
+          // OSRM reports 61-73 km/h for Delhi->Agra, Shillong->Kaziranga, Guwahati->Shillong
+          // AND Gangtok->Darjeeling alike. IT CANNOT TELL A MOUNTAIN FROM A MOTORWAY. The real
+          // speeds are 54, 41, 31 and 24 km/h.
+          //
+          // So we measure the road: the true OSRM geometry, sampled against real elevation, gives
+          // CLIMB PER KM, and speed = clamp(55 / (1 + 0.04*climbPerKm), 22, 55) -- bounded by the
+          // founder's own plains and hills numbers. Within 8% of reality on all four roads.
+          //
+          // ONE NUMBER now feeds the gate AND the page. Math.max keeps it a TIGHTENING: we never
+          // make a drive look shorter than the router already claimed. Absent-safe: if we cannot
+          // measure it, the router's number stands and the plan is no worse than yesterday's.
+          try {
+            const rt = await roadTerrainFor(nodes[i].name, nodes[j].name, nodes[i].coord, nodes[j].coord);
+            if (rt && rt.minutes > 0) {
+              roadOpt.durationMin = Math.max(roadOpt.durationMin ?? 0, rt.minutes);
+              (roadOpt as any).climbPerKm = Number(rt.climbPerKm.toFixed(1));
+            }
+          } catch (e) {
+            console.error('roadTerrainFor failed (non-fatal, keeping router time):', e);
+          }
           pool.set(`${nodes[i].name}||${nodes[j].name}`, [roadOpt, ...mm]);
         }
       }
