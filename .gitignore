@@ -193,3 +193,9 @@ backups/*.gz
 backups/*.zip
 backups/*.log
 !backups/.gitkeep
+# secrets must never be committable again (AWS keys reached git history via .env.backup-* and a vim .swp)
+.env.*
+!.env.example
+!.env.demo
+*.swp
+*.swo
