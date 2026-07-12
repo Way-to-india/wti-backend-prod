@@ -116,10 +116,86 @@ const sane = (lat: unknown, lng: unknown): boolean =>
   Number.isFinite(lat) && Number.isFinite(lng) &&
   lat >= -60 && lat <= 75 && lng >= -180 && lng <= 180 && !(lat === 0 && lng === 0);
 
-async function dbExact(name: string) {
+/**
+ * THE STATE HE TYPED, TURNED INTO THE STATE OUR DATA SPEAKS.
+ *
+ * "Himachal Pradesh" / "himachal" / "HP" -> admin1Code '11'. Backed by `india_states`, in
+ * which every code was VERIFIED on production against a witness city (see US-801/US-802b).
+ * Returns null when we cannot map it — and then the caller must NOT pretend it had a region.
+ */
+async function regionToAdmin1(region: string | null): Promise<string | null> {
+  if (!region) return null;
+  const r = region.trim().toLowerCase();
+  if (!r) return null;
+  try {
+    const rows = await prisma.$queryRaw<{ admin1_code: string }[]>`
+      SELECT admin1_code FROM india_states
+       WHERE lower(name) = ${r}
+          OR lower(name) LIKE ${r + '%'}
+          OR ${r} LIKE lower(name) || '%'
+       ORDER BY length(name) ASC
+       LIMIT 1`;
+    return rows[0]?.admin1_code ?? null;
+  } catch {
+    return null;   // the table is absent => we simply have no region. We do not guess one.
+  }
+}
+
+/**
+ * OUR OWN WRITERS, DISAMBIGUATING FOR THE TRAVELLER.
+ *
+ * `travel_guide_cities` is 304 towns our staff have researched and published guides to, each
+ * filed under a state BY A HUMAN. When a traveller types a bare "Manali", this is the company
+ * answering "we mean the one in Himachal" — which is exactly what a consultant across a desk
+ * would say, and exactly what a population count cannot.
+ *
+ * Absent-safe: no guide, no opinion, and the ladder behaves as before.
+ */
+async function ourGuidesSayTheStateIs(place: string): Promise<string | null> {
+  try {
+    const rows = await prisma.$queryRaw<{ state: string }[]>`
+      SELECT "stateName" AS state FROM travel_guide_cities
+       WHERE lower(name) = ${place.trim().toLowerCase()} AND "stateName" IS NOT NULL
+       LIMIT 1`;
+    return rows[0]?.state ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * THE HOLE THIS CLOSES, AND IT IS THE ONE THE FILE'S OWN COMMENT WARNED ABOUT.
+ *
+ * This function used to take a NAME and nothing else:
+ *
+ *     WHERE lower(name) = 'manali' ORDER BY population DESC LIMIT 1
+ *
+ * There are TWO Manalis. The only one in `world_cities` is A SUBURB OF CHENNAI. So
+ * verifyCity('Manali, Himachal Pradesh') extracted "Himachal Pradesh", THREW IT AWAY here,
+ * and returned Chennai — 1,939 km from Himachal — with `ok: true` and `matched: 'db'`.
+ * FULL CONFIDENCE, COMPLETELY WRONG. It then short-circuited rung 2 (OSM), which is the one
+ * rung that WAS region-aware.
+ *
+ * Four lines above, this file says: "Throwing the state away is what sent the founder to
+ * Ladakh." Rung 1 was throwing it away.
+ *
+ * NOW: if he named a state, the row MUST BE IN THAT STATE. If our table holds no such row,
+ * WE RETURN NOTHING and let the ladder fall through to OSM — which is exactly what should
+ * have happened for Manali all along. A confident wrong answer is worse than no answer.
+ */
+async function dbExact(name: string, admin1?: string | null) {
+  const n = name.toLowerCase();
+  if (admin1) {
+    const rows = await prisma.$queryRaw<{ name: string; latitude: number; longitude: number }[]>`
+      SELECT name, latitude, longitude FROM world_cities
+      WHERE lower(name) = ${n} AND "countryCode" = 'IN' AND "admin1Code" = ${admin1}
+      ORDER BY population DESC NULLS LAST LIMIT 1`;
+    // NO FALLBACK. He told us the state. A row in the wrong state is not a match, it is a trap.
+    return rows[0] ?? null;
+  }
   const rows = await prisma.$queryRaw<{ name: string; latitude: number; longitude: number }[]>`
     SELECT name, latitude, longitude FROM world_cities
-    WHERE lower(name) = ${name.toLowerCase()}
+    WHERE lower(name) = ${n}
     ORDER BY ("countryCode" = 'IN') DESC, population DESC NULLS LAST LIMIT 1`;
   return rows[0] ?? null;
 }
@@ -166,7 +242,7 @@ interface OsmHit { name: string; lat: number; lng: number; country: string | nul
 
 /** FACTUAL lookup: OpenStreetMap Nominatim, India first then worldwide.
  *  Registers nothing itself — the caller registers. Fail-safe: null on error. */
-async function osmLookup(name: string): Promise<OsmHit | null> {
+async function osmLookup(name: string, indiaOnly = false): Promise<OsmHit | null> {
   const ask = async (extra: string): Promise<OsmHit | null> => {
     try {
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=jsonv2&limit=3&accept-language=en${extra}`;
@@ -198,7 +274,24 @@ async function osmLookup(name: string): Promise<OsmHit | null> {
       return null;
     } catch { return null; }
   };
-  // India-preferred, then worldwide (the planner is India-first but not India-only)
+  // ---- THE FOURTH HOLE, found by the complete sanity sweep -------------------------
+  //
+  // This line used to read:
+  //
+  //     return (await ask('&countrycodes=in')) ?? (await ask(''));
+  //
+  // India-preferred, then WORLDWIDE. And the worldwide fallback is a loaded gun.
+  //
+  // We spell it "Nasik". OpenStreetMap spells it "Nashik". So the India search found
+  // nothing, the fallback searched the whole planet — and returned -2.834, 107.417.
+  // THAT IS AN ISLAND IN INDONESIA, 4,462 km from Maharashtra. `registerPlace` would then
+  // have written it into our own gazetteer as a fact.
+  //
+  // WHEN WE KNOW THE PLACE IS IN INDIA, WE MAY NOT LEAVE INDIA. A miss is an honest answer;
+  // a confident answer from the wrong hemisphere is not. The planner is India-first but not
+  // India-only (Pokhara is a real stop), so the worldwide rung SURVIVES -- but only for a
+  // bare name we have no Indian claim about.
+  if (indiaOnly) return ask('&countrycodes=in');
   return (await ask('&countrycodes=in')) ?? (await ask(''));
 }
 
@@ -207,19 +300,62 @@ async function osmLookup(name: string): Promise<OsmHit | null> {
  *  informative form FIRST, then fall back to the bare name. */
 async function osmLookupWithRegion(place: string, region: string | null): Promise<OsmHit | null> {
   if (region) {
-    const hit = await osmLookup(`${place}, ${region}, India`);
+    // He (or our own travel guide) named an INDIAN STATE. So this place is in India, and we
+    // do not go looking for it anywhere else -- not even if the Indian search comes back
+    // empty. That is how "Nasik" became an island in Indonesia.
+    const hit = await osmLookup(`${place}, ${region}, India`, true);
     if (hit) return hit;
+    return osmLookup(place, true);
   }
   return osmLookup(place);
 }
 
+/**
+ * THE SECOND HOLE. This used to refuse to insert anything whose NAME already existed:
+ *
+ *     WHERE NOT EXISTS (SELECT 1 FROM world_cities WHERE lower(name) = lower(:name))
+ *
+ * So even once OSM had correctly found HIMACHAL'S Manali, IT COULD NEVER BE STORED —
+ * because Chennai's Manali already occupied the name. The gazetteer was structurally
+ * incapable of holding two towns that share a name, which is a thing India has rather a
+ * lot of. The bad row blocked the good one forever.
+ *
+ * NOW we de-duplicate on NAME **AND PLACE**: a row is a duplicate only if it carries the
+ * same name AND sits within 25 km. Two Manalis 1,900 km apart are two towns, and we say so.
+ *
+ * We also STAMP THE STATE (admin1Code) from the coordinates, so the row we add can never
+ * repeat the original sin of being un-placeable.
+ */
 async function registerPlace(name: string, lat: number, lng: number, country: string | null, source: string): Promise<boolean> {
   const isIndia = country ? /india/i.test(country) : (lat >= 6 && lat <= 37.5 && lng >= 68 && lng <= 97.5);
   try {
+    // which state does this point actually sit in? (nearest gazetteer row, <=60 km)
+    let admin1: string | null = null;
+    if (isIndia) {
+      const rows = await prisma.$queryRaw<{ a1: string; km: number }[]>`
+        SELECT "admin1Code" AS a1,
+               (6371*acos(LEAST(1,GREATEST(-1,
+                  cos(radians(${lat}::float))*cos(radians(latitude::float))
+                * cos(radians(longitude::float)-radians(${lng}::float))
+                + sin(radians(${lat}::float))*sin(radians(latitude::float)))))) AS km
+          FROM world_cities
+         WHERE "countryCode"='IN' AND "admin1Code" ~ '^[0-9]{2}$'
+           AND latitude BETWEEN ${lat}::float - 0.6 AND ${lat}::float + 0.6
+           AND longitude BETWEEN ${lng}::float - 0.6 AND ${lng}::float + 0.6
+         ORDER BY km ASC LIMIT 1`;
+      if (rows[0] && Number(rows[0].km) <= 60) admin1 = rows[0].a1;
+    }
+
     await prisma.$executeRaw`
-      INSERT INTO world_cities (name, "asciiName", latitude, longitude, "countryCode", "countryName", population, "searchRank", source)
-      SELECT ${name}, ${name}, ${lat}, ${lng}, ${isIndia ? 'IN' : null}, ${country ?? (isIndia ? 'India' : null)}, 0, 0, ${source}
-      WHERE NOT EXISTS (SELECT 1 FROM world_cities WHERE lower(name) = lower(${name}))`;
+      INSERT INTO world_cities (name, "asciiName", latitude, longitude, "countryCode", "countryName", "admin1Code", population, "searchRank", source)
+      SELECT ${name}, ${name}, ${lat}, ${lng}, ${isIndia ? 'IN' : null}, ${country ?? (isIndia ? 'India' : null)}, ${admin1}, 0, 0, ${source}
+      WHERE NOT EXISTS (
+        SELECT 1 FROM world_cities
+         WHERE lower(name) = lower(${name})
+           AND (6371*acos(LEAST(1,GREATEST(-1,
+                  cos(radians(${lat}::float))*cos(radians(latitude::float))
+                * cos(radians(longitude::float)-radians(${lng}::float))
+                + sin(radians(${lat}::float))*sin(radians(latitude::float)))))) <= 25)`;
     return true;
   } catch (e) { console.error('cityVerify register failed:', e); return false; }
 }
@@ -303,15 +439,37 @@ export async function verifyCity(rawName: string): Promise<CityVerifyResult> {
   // Throwing the state away is what sent the founder to Ladakh.
   const { place, region } = splitRegion(raw);
 
-  // 1 — our own table, exactly. (Try the full string too: some places are stored with
-  //     their region in the name.)
-  const exact = (await dbExact(place)) ?? (region ? await dbExact(raw) : null);
+  // 1 — our own table, exactly — AND IN THE STATE HE NAMED.
+  //
+  // This line used to read `dbExact(place)`, with the region discarded. There are two
+  // Manalis; the only one in our gazetteer is a suburb of CHENNAI. So "Manali, Himachal
+  // Pradesh" returned Chennai, 1,939 km away, with ok:true — and short-circuited rung 2,
+  // the one rung that knew about regions. A confident wrong answer, from the module whose
+  // entire job is to prevent confident wrong answers.
+  //
+  // Now: if he named a state, the row must be IN that state, or rung 1 stands aside.
+  //
+  // AND IF HE NAMED NO STATE, OUR OWN WRITERS NAME ONE FOR HIM.
+  //
+  // Almost nobody types "Manali, Himachal Pradesh". They type "Manali" — and they mean the
+  // hill station, not the suburb of Chennai. With no region, this used to fall back to
+  // "whichever namesake has the larger population", which is a coin toss decided by a census.
+  //
+  // But we are not short of an opinion about which Manali we mean: OUR OWN STAFF WROTE A
+  // TRAVEL GUIDE TO IT, and filed it under Himachal Pradesh. That is thirty years of this
+  // company saying "when a traveller says Manali, this is the one." It is a better
+  // disambiguator than population will ever be, and it costs us one query.
+  //
+  // (Only used when he did NOT name a state. If he names one, HE outranks us — always.)
+  const typedRegion = region ?? (await ourGuidesSayTheStateIs(place));
+  const admin1 = await regionToAdmin1(typedRegion);
+  const exact = (await dbExact(place, admin1)) ?? (region && !admin1 ? await dbExact(raw) : null);
   if (exact) {
     return { ok: true, name: exact.name, lat: Number(exact.latitude), lng: Number(exact.longitude), matched: 'db' };
   }
 
-  // 2 — the FACTUAL gazetteer, with the region he gave us
-  const osm = await osmLookupWithRegion(place, region);
+  // 2 — the FACTUAL gazetteer, with the region (his, or the one our own guides supply)
+  const osm = await osmLookupWithRegion(place, typedRegion);
   if (osm) {
     const registered = await registerPlace(osm.name, osm.lat, osm.lng, osm.country, 'OSM_VERIFIED');
     if (registered) {
@@ -324,12 +482,34 @@ export async function verifyCity(rawName: string): Promise<CityVerifyResult> {
 
   // 3 — the model. It may PROPOSE; the gates decide. If he named a region, the model's
   //     answer must be in that region — this alone would have stopped Ladakh.
-  const ai = await aiExistence(region ? `${place}, ${region}, India` : place);
+  const ai = await aiExistence(typedRegion ? `${place}, ${typedRegion}, India` : place);
   if (ai && ai.ok) {
-    if (region && ai.name) {
-      const known = `${ai.name} ${ai.note ?? ''}`.toLowerCase();
-      const coordsInRegion = true; // the model was ASKED for the region; trust but verify below
-      void coordsInRegion; void known;
+    // THE THIRD HOLE. This block used to read, in full:
+    //
+    //     const coordsInRegion = true;  // trust but verify below
+    //     void coordsInRegion;
+    //
+    // There was no "below". The comment above it promises "the model's answer must be in
+    // that region — this alone would have stopped Ladakh", and the code did NOTHING. The
+    // model was merely ASKED for the region and then believed.
+    //
+    // Now we CHECK. If he named a state, the model's coordinates must actually fall in it —
+    // proved by a gazetteer town of that state within 60 km. If they do not, the answer is
+    // discarded and the ladder falls through to the spelling question. A model may PROPOSE.
+    // It may never REGISTER. (Spec §3.4.)
+    if (admin1 && ai.lat != null && ai.lng != null) {
+      const rows = await prisma.$queryRaw<{ km: number }[]>`
+        SELECT MIN(6371*acos(LEAST(1,GREATEST(-1,
+            cos(radians(${ai.lat}::float))*cos(radians(latitude::float))
+          * cos(radians(longitude::float)-radians(${ai.lng}::float))
+          + sin(radians(${ai.lat}::float))*sin(radians(latitude::float)))))) AS km
+          FROM world_cities
+         WHERE "countryCode"='IN' AND "admin1Code" = ${admin1}`;
+      const km = rows[0]?.km == null ? null : Number(rows[0].km);
+      if (km == null || km > 60) {
+        console.error(`cityVerify: model put "${place}" outside ${typedRegion} (${km?.toFixed(0) ?? '?'} km from it). REJECTED.`);
+        return { ok: false, note: `We could not place ${place} in ${typedRegion}. Could you tell us the nearest large town?` };
+      }
     }
     return ai;
   }
