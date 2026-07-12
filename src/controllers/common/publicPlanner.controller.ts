@@ -27,6 +27,7 @@ import type { PlannerPayload } from '@/services/route-optimizer/plannerPayload';
 import { anthropic, enrichmentEnabled } from '@/services/enrichment/core';
 import { verifyCity } from '@/services/route-optimizer/cityVerify';
 import { inferGateway, type StartSource } from '@/services/route-optimizer/gateway';
+import { intentFromRaw, type RawIntent, type TravellerIntent } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 
@@ -57,31 +58,54 @@ interface ParsedTrip {
   month?: number;
 }
 
-/** Claude Haiku: free text → candidate trip structure. Candidates ONLY —
- *  every city name is validated against world_cities afterwards. */
-async function parseAsk(text: string): Promise<ParsedTrip | null> {
+/**
+ * US-601 — THE EAR. Claude Haiku: free text → candidate trip structure AND the
+ * traveller's INTENT. Candidates ONLY: every city name is validated against
+ * world_cities afterwards, and every QUOTE is checked against his own sentence by
+ * intentFromRaw() — a quote the model composed rather than read can never become
+ * "you said".
+ *
+ * The old schema asked for six fields (cities, nights, start, end, pax, profile,
+ * month) and had nowhere to put purpose, comfort tier, refusals or interests. That is
+ * why a man who asked for a luxury honeymoon with no trains was sold a nine-hour
+ * overnight train. The slot now exists.
+ */
+async function parseIntent(text: string): Promise<{ trip: ParsedTrip; raw: RawIntent } | null> {
   if (!enrichmentEnabled()) return null;
   try {
     const resp = await anthropic().messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
+      max_tokens: 900,
       system:
-        'You extract trip parameters from an Indian travel request. Reply with ONLY a JSON object, no prose: ' +
+        'You extract a trip brief from an Indian travel request. Reply with ONLY a JSON object, no prose: ' +
         '{"cities":[{"name":string,"nights":number}],"start":string|null,"end":string|null,' +
-        '"pax":number|null,"profile":"standard"|"family"|"senior"|null,"month":1-12|null}. ' +
+        '"pax":number|null,"profile":"standard"|"family"|"senior"|null,"month":1-12|null,' +
+        '"purpose":"honeymoon"|"pilgrimage"|"family_holiday"|"heritage"|"leisure"|"adventure"|"wildlife"|"wellness"|"business"|null,' +
+        '"comfortTier":"budget"|"standard"|"premium"|"luxury"|null,' +
+        '"pace":"savour"|"steady"|"packed"|null,' +
+        '"composition":"couple"|"family_kids"|"seniors"|"friends"|"solo"|null,' +
+        '"interests":[string],' +
+        '"modes":[{"mode":"road"|"rail"|"air"|"ferry","stance":"prefer"|"accept"|"avoid"|"refuse","qualifier":"any"|"long"|"overnight"|"night_arrival","strength":0-1}],' +
+        '"quotes":{"purpose":string,"comfortTier":string,"party":string,"interests":string,"month":string,"nights":string,"mode_road":string,"mode_rail":string,"mode_air":string,"mode_ferry":string}}. ' +
         'Rules: cities = real city/town names the traveller wants to visit, in the order mentioned; ' +
         'nights = your best reasonable split of their total days (default 1-2 per city); ' +
         'profile=senior if parents/elderly (age 60+) travel, family if children travel; ' +
         'month from any month or festival mentioned; pax = number of travellers. ' +
+        'modes: capture what he PREFERS and what he REFUSES. The qualifier matters: ' +
+        '"no trains" is stance=refuse qualifier=any, but "no LONG road journeys" is ' +
+        'stance=avoid qualifier=long (he refuses the ordeal, not the mode). ' +
+        'quotes: for every field you fill from his words, copy the EXACT substring of his ' +
+        'message that says it, character for character. Never paraphrase a quote and never ' +
+        'invent one; omit the quote if he did not actually say it. ' +
         'If the text names no real places, reply {"cities":[]}.',
       messages: [{ role: 'user', content: text.slice(0, 1000) }],
     });
-    const raw = resp.content?.[0]?.type === 'text' ? resp.content[0].text : '';
-    const m = raw.match(/\{[\s\S]*\}/);
+    const out = resp.content?.[0]?.type === 'text' ? resp.content[0].text : '';
+    const m = out.match(/\{[\s\S]*\}/);
     if (!m) return null;
     const j = JSON.parse(m[0]);
     if (!Array.isArray(j.cities)) return null;
-    return {
+    const trip: ParsedTrip = {
       cities: j.cities
         .filter((c: any) => c && typeof c.name === 'string' && c.name.trim())
         .slice(0, 7)
@@ -92,8 +116,9 @@ async function parseAsk(text: string): Promise<ParsedTrip | null> {
       profile: ['standard', 'family', 'senior'].includes(j.profile) ? j.profile : undefined,
       month: Number.isInteger(j.month) && j.month >= 1 && j.month <= 12 ? j.month : undefined,
     };
+    return { trip, raw: { ...j, cities: trip.cities } as RawIntent };
   } catch (e) {
-    console.error('planner parseAsk failed:', e);
+    console.error('planner parseIntent failed:', e);
     return null;
   }
 }
@@ -162,9 +187,15 @@ export class PublicPlannerController {
       const monthFromField = Number.isInteger(body.month) && body.month >= 1 && body.month <= 12;
       let paxFromText = false, monthFromText = false;
 
-      // Free-text ask → candidate structure (validated below)
+      // Free-text ask → candidate structure + the traveller's INTENT (validated below).
+      // `intent` is what the plan will be built to honour: his purpose, his comfort tier,
+      // his refusals, his interests — each carrying the receipt that says whether HE said
+      // it or WE worked it out. (US-601.)
+      let intent: TravellerIntent | null = null;
       if (cities.length < 2 && request) {
-        const parsed = await parseAsk(request);
+        const heard = await parseIntent(request);
+        const parsed = heard?.trip ?? null;
+        if (heard) intent = intentFromRaw(heard.raw, request);
         if (parsed) {
           if (parsed.cities.length) cities = parsed.cities;
           start = start || parsed.start || null;
