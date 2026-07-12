@@ -79,6 +79,11 @@ export function spokenDuration(min: number | null | undefined): string | null {
   return roundish ? `${NUM[hh] ?? String(hh)} hours` : `${word} hours`;
 }
 
+/** A stable key for one option, so a rejection reason can be matched back to its row. */
+export function optionKey(o: LegOption): string {
+  return `${o.mode}:${o.identifier ?? `${o.from}-${o.to}`}`;
+}
+
 /** What we call this service, out loud. */
 export function spokenLabel(o: LegOption): string {
   if (o.identifier) return o.identifier;
@@ -188,23 +193,41 @@ function farePpMid(o: LegOption): number {
   return indicativeFarePp(o);
 }
 
-function rowNote(o: LegOption, v: DDCV): string | undefined {
+/**
+ * US-608 — THE SENTENCE THAT STARTED ALL OF THIS.
+ *
+ *   "overnight — saves a hotel night."
+ *
+ * The engine wrote that to a man who had asked for a luxury honeymoon and no trains. It
+ * sold him thrift and CALLED IT A FEATURE. Every praise string below is now conditional on
+ * `praise` — which is false for any traveller whose contract switched the hotel-night reward
+ * off (rewardSwitches.hotelNightSaving === false).
+ *
+ * It is not enough to stop CHOOSING the overnight for him. We must stop CONGRATULATING
+ * ourselves to him about it. A saving he did not ask for is not a benefit; boasting of it is
+ * how he learns we were not listening.
+ *
+ * (For the budget family, every one of these sentences is TRUE and welcome, and they still
+ * see it. Same engine. Two minds.)
+ */
+function rowNote(o: LegOption, v: DDCV, praise = true): string | undefined {
   const bits: string[] = [];
-  if (isTrueOvernight(o)) bits.push('overnight — saves a hotel night');
+  if (isTrueOvernight(o)) bits.push(praise ? 'overnight — saves a hotel night' : 'travels overnight');
   if (o.viaNode) bits.push(`via ${o.viaNode}${o.onwardRoadKm ? ` + ${Math.round(o.onwardRoadKm)} km road` : ''}`);
   if ((o.reliability != null && o.reliability <= 2) || o.seasonal) bits.push('verify at booking');
   if (v.hardBlock) bits.push('not usable for this party');
   return bits.length ? bits.join('; ') : undefined;
 }
 
-function rowOf(o: LegOption, v: DDCV, chosen: boolean): LegOptionRow {
+function rowOf(o: LegOption, v: DDCV, chosen: boolean, praise = true, rejectedReason?: string): LegOptionRow {
   return {
     id: o.id ?? `${o.mode}:${o.identifier ?? `${o.from}-${o.to}`}`,
     dur: doorToDoorMin(v),
     fare: farePpMid(o),
     freq: o.mode !== 'ROAD' ? freqLabel(o.operatingDays) : 'daily',
     chosen,
-    note: rowNote(o, v),
+    // Law 5: a rejected option carries HIS reason, written at rejection time, not ours.
+    note: !chosen && rejectedReason ? rejectedReason : rowNote(o, v, praise),
   };
 }
 
@@ -228,10 +251,13 @@ function inr(n: number): string {
 function whyLine(
   winner: LegOption, runnerUp: LegOption,
   d: { dHours: number; dMoneyPp: number; dPhi: number },
+  praise = true,
 ): string {
   // overnight rail beats a daytime option → the clock-quality truth (§4.1 q-term)
   if (isTrueOvernight(winner) && !isTrueOvernight(runnerUp)) {
-    return 'The overnight train travels while you sleep, so no daylight is spent moving and you save a hotel night.';
+    return praise
+      ? 'The overnight train travels while you sleep, so no daylight is spent moving and you save a hotel night.'
+      : 'The overnight train travels while you sleep, so no daylight is spent moving.';
   }
   // a ground option beats a flight on door-to-door truth (§4.5 airport-as-via-node)
   if (runnerUp.mode === 'AIR' && winner.mode !== 'AIR' && d.dHours >= 0) {
@@ -247,8 +273,10 @@ function whyLine(
   return 'It is the best balance of time, cost and comfort on this leg.';
 }
 
-function soloWhy(o: LegOption): string {
-  if (isTrueOvernight(o)) return 'The overnight train is the one service that fits this leg — you travel by night and save a hotel night.';
+function soloWhy(o: LegOption, praise = true): string {
+  if (isTrueOvernight(o)) return praise
+    ? 'The overnight train is the one service that fits this leg — you travel by night and save a hotel night.'
+    : 'The overnight train is the one service that fits this leg.';
   if (o.mode === 'AIR') return 'Flying is the only practical way to cover this leg in a day.';
   if (o.mode === 'RAIL') return 'This train is the service that fits this leg.';
   if (o.mode === 'FERRY') return 'The ferry is the way across on this leg.';
@@ -258,11 +286,11 @@ function soloWhy(o: LegOption): string {
 function decisionRecordFor(
   winner: LegOption, wv: DDCV,
   runnerUp: LegOption | null, rv: DDCV | null,
-  pax: number,
+  pax: number, praise = true,
 ): DecisionRecord {
   const winLabel = optionLabel(winner);
   if (!runnerUp || !rv) {
-    return { winner: winLabel, runnerUp: null, marginText: 'Only viable service on this leg.', why: soloWhy(winner) };
+    return { winner: winLabel, runnerUp: null, marginText: 'Only viable service on this leg.', why: soloWhy(winner, praise) };
   }
   const ruLabel = optionLabel(runnerUp);
   const finite = Number.isFinite(wv.T) && Number.isFinite(rv.T);
@@ -279,7 +307,7 @@ function decisionRecordFor(
   else if (dMoneyPp <= -200) comparative.push(`${inr(-dMoneyPp)}/person more`);
 
   const trailing: string[] = [];
-  if (isTrueOvernight(winner) && !isTrueOvernight(runnerUp)) trailing.push('saves a hotel night');
+  if (praise && isTrueOvernight(winner) && !isTrueOvernight(runnerUp)) trailing.push('saves a hotel night');
   else if (dPhi >= 0.4) trailing.push('is the easier ride');
 
   let marginText: string;
@@ -293,7 +321,7 @@ function decisionRecordFor(
     marginText = `A close call with the ${ruLabel.toLowerCase()}; chosen on balance.`;
   }
 
-  return { winner: winLabel, runnerUp: ruLabel, marginText, why: whyLine(winner, runnerUp, { dHours, dMoneyPp, dPhi }) };
+  return { winner: winLabel, runnerUp: ruLabel, marginText, why: whyLine(winner, runnerUp, { dHours, dMoneyPp, dPhi }, praise) };
 }
 
 // ---- public entry ------------------------------------------------------------
@@ -312,17 +340,23 @@ function decisionRecordFor(
  */
 export function buildLegExplain(
   ranked: LegOption[], ctxOf: (o: LegOption) => LegCtx, w: Weights,
+  /** US-608 — his contract. When the hotel-night reward is switched off, the engine must
+   *  also stop BOASTING to him about it. `rejectedReasons` carries the human reason each
+   *  losing option earned at the moment it was rejected (Law 5). */
+  opts?: { praiseHotelNight?: boolean; rejectedReasons?: Map<string, string> },
 ): LegExplain {
   void w; // weights are already baked into `ranked`'s order; retained for signature stability
   if (!ranked.length) return { legOptions: [] };
+  const praise = opts?.praiseHotelNight !== false;
 
   const vecs = ranked.map((o) => ddcv(o, ctxOf(o)));
-  const legOptions = ranked.map((o, i) => rowOf(o, vecs[i], i === 0));
+  const legOptions = ranked.map((o, i) => rowOf(o, vecs[i], i === 0, praise, opts?.rejectedReasons?.get(optionKey(o))));
 
   const winner = ranked[0], wv = vecs[0];
+  void praise;
   const runnerUp = ranked.length > 1 ? ranked[1] : null;
   const rv = runnerUp ? vecs[1] : null;
   const pax = Math.max(1, ctxOf(winner).pax ?? 1);
 
-  return { decisionRecord: decisionRecordFor(winner, wv, runnerUp, rv, pax), legOptions };
+  return { decisionRecord: decisionRecordFor(winner, wv, runnerUp, rv, pax, praise), legOptions };
 }

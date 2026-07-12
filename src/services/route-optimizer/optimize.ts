@@ -206,14 +206,18 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
     if (ranked.length) {
       const opt = ranked[0];
       chosen.set(key, opt); chosenList.push(opt);
-      explainByLeg.set(key, buildLegExplain(ranked, (legOpt) => legCtx(legOpt, tol, pax, month, input.contract), w));
+      explainByLeg.set(key, buildLegExplain(
+        ranked, (legOpt) => legCtx(legOpt, tol, pax, month, input.contract), w,
+        { praiseHotelNight: input.contract?.rewardSwitches.hotelNightSaving !== false },
+      ));
     }
   }
 
   const nodesByName = new Map(deps.nodes.map((n) => [n.name, n] as const));
 
   // pass 1 — expand with no weekday to learn each constrained leg's day index
-  const pass1 = expandDays({ sequence: names, nights, nodes: nodesByName, chosen, profile: input.profile ?? 'standard', maxRoadKmDay: input.maxRoadKmDay, startWeekday: null, haltNames: deps.haltNames, anchorsByLeg: deps.anchorsByLeg, month: input.month });
+  const praiseHotelNight = input.contract?.rewardSwitches.hotelNightSaving !== false;
+  const pass1 = expandDays({ sequence: names, nights, nodes: nodesByName, chosen, profile: input.profile ?? 'standard', maxRoadKmDay: input.maxRoadKmDay, startWeekday: null, haltNames: deps.haltNames, anchorsByLeg: deps.anchorsByLeg, month: input.month, praiseHotelNight });
   const constrained: WeekdayConstrainedLeg[] = [];
   {
     let di = 0;
@@ -238,7 +242,7 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
       lock = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'][phase.startWeekday];
     }
   }
-  const exp = expandDays({ sequence: names, nights, nodes: nodesByName, chosen, profile: input.profile ?? 'standard', maxRoadKmDay: input.maxRoadKmDay, startWeekday: startWd, haltNames: deps.haltNames, anchorsByLeg: deps.anchorsByLeg, month: input.month });
+  const exp = expandDays({ sequence: names, nights, nodes: nodesByName, chosen, profile: input.profile ?? 'standard', maxRoadKmDay: input.maxRoadKmDay, startWeekday: startWd, haltNames: deps.haltNames, anchorsByLeg: deps.anchorsByLeg, month: input.month, praiseHotelNight });
 
   // §10 attach decision records + legOptions to the legs the plan actually took
   // (additive, absent-safe; matched by from||to on the main sequencing path).
@@ -258,7 +262,7 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
   const dayLoads = dayLoadsFromDays(exp.days, chosen, tol, month);
   const ledger = runFatigueLedger(dayLoads, tol);
   // §7 inc-2: project per-day comfort (fatigue/effort/comfortNote/marker) onto the days.
-  projectComfort(dayLoads, exp.days, tol).forEach((c, i) => { const d = exp.days[i]; if (!d) return; d.fatigue = c.fatigue; d.effort = c.effort; d.comfortNote = c.comfortNote; if (c.marker) d.marker = c.marker; });
+  projectComfort(dayLoads, exp.days, tol, praiseHotelNight).forEach((c, i) => { const d = exp.days[i]; if (!d) return; d.fatigue = c.fatigue; d.effort = c.effort; d.comfortNote = c.comfortNote; if (c.marker) d.marker = c.marker; });
   for (const v of ledger.violations) warnings.push(`Rhythm (${v.kind}): ${v.detail}`);
   if (exp.infeasible) warnings.unshift('Plan contains a hard-constraint violation (gate/daylight/permit) — a day was flagged infeasible and must be rerouted.');
   void nodeMap;

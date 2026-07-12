@@ -46,6 +46,10 @@ export interface ExpandInput {
   /** §4.4 candidate anchors per leg key (from||to), injected by the controller.
    *  Optional + graceful: absent = no pearl-split reasoning, behaviour unchanged. */
   anchorsByLeg?: Map<string, AnchorCandidate[]>;
+  /** US-608 — false when the traveller's contract switched the hotel-night reward off. We
+   *  then stop CONGRATULATING him on a saving he never asked for. The train, if he is on one
+   *  at all, is described; it is not praised. */
+  praiseHotelNight?: boolean;
 }
 
 export interface ExpandOutput {
@@ -195,7 +199,7 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     days.push({
       day: dayIdx + 1, weekday: stamp(dayIdx), city: to, halt: isHalt,
       activity: isHalt ? `En-route overnight halt at ${to} (break the ${from} drive; sightseeing + hotel)`
-        : overnight ? `Overnight train ${from} → ${to}${idTxt} (saves a hotel night)`
+        : overnight ? `Overnight train ${from} → ${to}${idTxt}${inp.praiseHotelNight === false ? '' : ' (saves a hotel night)'}`
         : `${verb} ${from} → ${to}${idTxt}${positioning ? ' (positioning)' : ''}`,
       transit: { from, to, mode: opt.mode, identifier: opt.identifier ?? null, dep: opt.depTime ?? null, arr: opt.arrTime ?? null },
       roadKm: opt.mode === 'ROAD' ? km : 0,

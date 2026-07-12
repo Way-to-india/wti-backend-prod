@@ -166,6 +166,8 @@ export function projectComfort(
   dayLoads: DayLoad[],
   days: { transit?: { from: string; to: string; mode?: string } | null; city?: string; halt?: boolean }[],
   tol: Tolerance,
+  /** US-608 — false for a traveller whose contract switched the hotel-night reward off. */
+  praiseHotelNight = true,
 ): DayComfort[] {
   const cap = dailyLoadCap(tol);
   let longestIdx = -1, longestVh = 0;
@@ -183,7 +185,12 @@ export function projectComfort(
       comfortNote = d.city ? `A full day in ${d.city} — no travelling.` : 'A full rest day — no travelling.';
       marker = 'Rest day';
     } else if (dl.overnight) {
-      comfortNote = `Overnight train${to ? ` to ${to}` : ''} — you travel while you sleep and save a hotel night.`;
+      // US-608: the saving is only a KINDNESS to the traveller who wanted it. To the man who
+      // asked for comfort it is the thing that was taken from him, and boasting of it is how
+      // he learns we were not listening.
+      comfortNote = praiseHotelNight
+        ? `Overnight train${to ? ` to ${to}` : ''} — you travel while you sleep and save a hotel night.`
+        : `Overnight train${to ? ` to ${to}` : ''} — you travel through the night.`;
       marker = 'Overnight train';
     } else if (heavy) {
       comfortNote = `A long travel day${to ? ` to ${to}` : ''} — about ${fmtHalfHrs(dl.vehicleHrs)} in the vehicle.`;
