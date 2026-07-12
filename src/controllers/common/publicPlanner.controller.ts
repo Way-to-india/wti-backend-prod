@@ -27,6 +27,9 @@ import type { PlannerPayload } from '@/services/route-optimizer/plannerPayload';
 import { anthropic, enrichmentEnabled } from '@/services/enrichment/core';
 import { verifyCity } from '@/services/route-optimizer/cityVerify';
 import { inferGateway, type StartSource } from '@/services/route-optimizer/gateway';
+import { resolveRegion, regionIsUsable, statesOf, stateNamesOf, type RegionMatch } from '@/services/route-optimizer/regions';
+import { stayNodesInStates } from '@/services/route-optimizer/spineDb';
+import { nodeTier, nodeVoice, type StayNode } from '@/services/route-optimizer/spine';
 import { intentFromRaw, compileContract, counterQuestions, buildEcho, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
@@ -251,6 +254,77 @@ export class PublicPlannerController {
         });
       }
       const totalNights = cities.reduce((s, c) => s + c.nights, 0);
+      // ---- US-800b — A REGION IS NOT A DEAD END --------------------------------------
+      //
+      // THE FAILURE THIS CLOSES, verified on production 2026-07-12. A traveller wrote:
+      //
+      //   "...a romantic comfortable trip somewhere in north east India ... we would
+      //    prefer trains ... up to 10 days ... we are vegetarians and do not eat even eggs"
+      //
+      // and we answered: "Tell us at least one place you would like to visit."
+      //
+      // Everything he told us -- his age, romance, comfort, trains over flights, ten days,
+      // three star, PURE VEGETARIAN -- was thrown away at a gate that sits IN FRONT of the
+      // Sprint-7 brain. The brain never ran. The page had just promised him "your 30-year
+      // tour designer is on the case", and then handed him a form error.
+      //
+      // THE MAN WHO SAYS "YOU ARE THE EXPERT, WHERE SHOULD WE GO?" IS THE ONE WHO MOST
+      // NEEDS US, AND HE IS THE ONE WE TURNED AWAY.
+      //
+      // `regions.ts` has been built and tested (40/40) since this morning AND CONNECTED TO
+      // NOTHING. This is the wire.
+      //
+      // THE GUARD (regions.regionIsUsable): a region may be acted on ONLY when he has given
+      // us no place at all. If he named somewhere we could resolve, THAT IS THE BRIEF
+      // (Law 1) -- and a region word elsewhere in his sentence ("a beach holiday, we love
+      // South India") is colour, not an instruction to survey five states. This is what
+      // keeps the shipped golden-honeymoon plan byte for byte as it is.
+      const regionMatch: RegionMatch | null = resolveRegion(request);
+
+      if (cities.length < 1 && regionIsUsable(regionMatch, cities.length)) {
+        const m = regionMatch as RegionMatch;
+        // THE TOWNS ARE REAL OR THERE ARE NONE. Every one of these is a StayNode we have
+        // either SOLD or WRITTEN ABOUT, read from the spine, with its state named and its
+        // tier declared. NOT ONE IS PROPOSED BY A MODEL. If the spine is empty for a
+        // region, we say we have nothing there -- we do not fill the silence.
+        let nodes: StayNode[] = [];
+        try {
+          nodes = await stayNodesInStates(statesOf(m));
+        } catch (e) {
+          console.error('stayNodesInStates failed (non-fatal):', e);
+        }
+        // Strongest first: a town our designers have sold outranks one we have only visited.
+        nodes.sort((a, b) => (b.tourCount - a.tourCount) || a.name.localeCompare(b.name));
+        const towns = nodes.slice(0, 12).map((n) => ({
+          name: n.name,
+          state: n.stateName,
+          tier: nodeTier(n),
+          // The traveller is ENTITLED to know which of the three is speaking: a town we have
+          // sold forty times is a DIFFERENT PROMISE from one we have merely written about.
+          // nodeVoice() carries the COUNT, because the count is the receipt.
+          why: nodeVoice(n),
+        }));
+
+        return res.status(200).json({
+          status: false,          // not a plan yet — a question, and a real one
+          need: 'destinations',
+          region: {
+            key: m.region.key,
+            label: m.region.label,
+            quote: m.quote,               // HIS words. We may only say "you said" if he did.
+            states: stateNamesOf(m),      // never a code. He is a person, not a database.
+          },
+          towns,
+          message: towns.length
+            ? `${m.region.label} is ${stateNamesOf(m).length} states, and they are a long way `
+              + 'apart. These are the towns we know there — tell me which of them appeals to '
+              + 'you, or say "you choose", and I will build the rest of the trip around it.'
+            : `You said ${m.quote}, and I have kept that. But I do not yet have towns I can `
+              + 'stand behind in that region, and I will not invent them. Name one place you '
+              + 'have in mind and I will build the trip around it.',
+        });
+      }
+
       // THE ONLY HARD FLOOR: somewhere to go. One place is enough — the starting city
       // is the second node. (Was: "at least two places", which dead-ended the single-
       // destination request, i.e. the commonest request in travel.)

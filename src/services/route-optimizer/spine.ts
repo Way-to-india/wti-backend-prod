@@ -93,6 +93,35 @@ export function nodeTier(n: StayNode): Tier {
   return n.tourCount > 0 ? 'designer_catalogue' : 'transport_poi';
 }
 
+/**
+ * US-800b — WHAT WE MAY HONESTLY SAY ABOUT ONE TOWN.
+ *
+ * TIER_VOICE speaks of a PAIRING ("our own designers have built this pairing before").
+ * That is the right sentence for TWO towns and THE WRONG ONE FOR A SINGLE TOWN, and a
+ * sentence that is nearly true is a lie with a good accent.
+ *
+ * And the tier alone is not enough. A town our designers have sold FORTY times is a
+ * DIFFERENT PROMISE from one they sold ONCE, and both are a different promise again from a
+ * town our writers merely visited. The traveller is entitled to know which of the three he
+ * is being offered — that is the whole tier doctrine — so THE COUNT IS THE RECEIPT. It is
+ * read off our own catalogue. It is never asserted, and never rounded up.
+ *
+ * PURE. Give it a node, get the sentence.
+ */
+export function nodeVoice(n: StayNode): string {
+  if (n.tourCount > 1) {
+    return `our own designers have put this town in ${n.tourCount} of our tours`;
+  }
+  if (n.tourCount === 1) {
+    return 'our own designers have built this town into one of our tours';
+  }
+  // Never sold. But if OUR OWN WRITERS went there, that is a human fact and we may say it.
+  if (n.source === 'own_guide' || n.source === 'own_guide_osm') {
+    return 'our own writers have been to this town and written the guide to it';
+  }
+  return 'chosen for how easily you can reach it and what there is to see';
+}
+
 // ---- the gateway ---------------------------------------------------------------
 
 export interface Gateway {
