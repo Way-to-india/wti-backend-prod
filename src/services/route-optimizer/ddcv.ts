@@ -74,6 +74,9 @@ export interface LegCtx {
    *  gate kinder: `tightened()` clamps in one direction, and the type cannot express a
    *  loosening. Absent ⇒ today's behaviour, exactly. */
   tighten?: Tightening;
+  /** US-606 — when false, the hotel-night reward below is NOT PAID AT ALL. Absent ⇒ paid,
+   *  which is the right answer for the budget family it was written for. */
+  rewardHotelNightSaving?: boolean;
 }
 
 const DAY_START = 6 * 60, DAY_END = 18 * 60, DAY_LEN = DAY_END - DAY_START; // useful daylight window
@@ -126,7 +129,18 @@ export function ddcv(o: LegOption, ctx: LegCtx): DDCV {
 
   // ---- q: arrival-quality bonus (clock-quality truth) ----
   let q = 0;
-  if (overnight) q += 1.0;                                   // manufactured day + hotel night saved
+  // F4 — THE MONEY REWARD WEARING A CONVENIENCE COSTUME.
+  //
+  // This line used to read `if (overnight) q += 1.0`, unconditionally. The hotel-night
+  // saving — a MONEY reward — was being paid into q, the ARRIVAL-QUALITY term. And q is
+  // exactly what a comfort-first TPP multiplies by 1.3. So the luxury dial, had we simply
+  // wired it up, would have made the engine love the overnight train MORE. Law 3's "money
+  // reward in a convenience costume" is not a metaphor; it was this line.
+  //
+  // For a comfort-first traveller it is now DELETED, not down-weighted. Down-weighting
+  // cannot fix a mislabelled reward: the costume still walks. Only removal does.
+  // (`ctx.rewardHotelNightSaving === false` ⇒ never paid. Absent ⇒ paid, as before.)
+  if (overnight && ctx.rewardHotelNightSaving !== false) q += 1.0;   // manufactured day + hotel night saved
   if (arrMin != null && arrMin >= 5 * 60 + 30 && arrMin <= 9 * 60) q += 0.3;
   if (departsTooEarly(effectiveDepMin, tol)) q -= 0.6;
   if (arrivesTooLate(arrMin, tol)) q -= 0.6;

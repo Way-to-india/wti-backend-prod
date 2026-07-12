@@ -19,15 +19,141 @@
  * record, so the UI's `WhyThisWay` renders nothing (Sprint-3-safe).
  */
 
-import type { LegOption, DecisionRecord, LegOptionRow } from './types';
-import { ddcv, type DDCV, type LegCtx, type Weights } from './ddcv';
+import type { LegOption, DecisionRecord, LegOptionRow, Mode } from './types';
+import { ddcv, spokenClock, type DDCV, type LegCtx, type Weights } from './ddcv';
 import { indicativeFarePp } from './ddcv';
-import { isTrueOvernight } from './constraints';
+import { isTrueOvernight, toMin } from './constraints';
 import { freqLabel } from './dayExpand';
 
 export interface LegExplain {
   decisionRecord?: DecisionRecord;
   legOptions: LegOptionRow[];
+}
+
+// =============================================================================
+// US-606/608 — LAW 5: A REJECTED OPTION MUST BE REJECTED FOR A HUMAN REASON.
+//
+//   "Today the engine tells him it rejected a train because another was cheaper. That
+//    is THE ENGINE'S reason. He needs HIS OWN reason:
+//        ✗ Netravathi Express — nine hours, and it puts you in Goa at 03:50 in the morning.
+//    Not:
+//        ✗ rejected — higher cost score."
+//
+// The rejected-options list is the most trust-building thing on the page. It must speak
+// like the consultant, or it is worse than nothing.
+//
+// These reasons are composed AT THE MOMENT OF REJECTION (consultant.ts), where the
+// knowledge lives — never reconstructed afterwards from a score.
+// =============================================================================
+
+/** Why an option left the running. The cause carries the FACTS; sayRejection says them. */
+export type RejectionCause =
+  | { kind: 'refused_mode'; mode: Mode; quote?: string }
+  | { kind: 'dead_hours' }
+  | { kind: 'ceiling'; ceiling: number; ordeal: number; qualified: 'long' | 'any'; quote?: string }
+  | { kind: 'body'; reasons: string[] }
+  | { kind: 'lost'; winner: string };
+
+const NUM = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+
+/**
+ * Minutes → the way a person actually says it. "nine hours". "about three and a half
+ * hours". Never "540 min", never "9.0h". A number a traveller has to decode is a number
+ * he does not feel.
+ */
+export function spokenDuration(min: number | null | undefined): string | null {
+  if (min == null || !Number.isFinite(min) || min <= 0) return null;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  const half = m >= 20 && m <= 40;
+  const roundish = m < 20 || m > 40;
+
+  if (h === 0) return `about ${Math.round(min / 5) * 5} minutes`;
+  if (h === 1 && half) return 'about an hour and a half';
+  if (h === 1) return 'about an hour';
+  const word = NUM[h] ?? String(h);
+  if (half) return `about ${word} and a half hours`;
+  // 5 h 50 m reads as "about six hours" — rounding UP is the honest direction here,
+  // because a journey never gets shorter than the timetable says.
+  const hh = m > 40 ? h + 1 : h;
+  return roundish ? `${NUM[hh] ?? String(hh)} hours` : `${word} hours`;
+}
+
+/** What we call this service, out loud. */
+export function spokenLabel(o: LegOption): string {
+  if (o.identifier) return o.identifier;
+  if (o.mode === 'ROAD') return `Driving straight to ${o.to}`;
+  if (o.mode === 'AIR') return `The flight to ${o.to}`;
+  if (o.mode === 'RAIL') return `The train to ${o.to}`;
+  if (o.mode === 'FERRY') return `The ferry to ${o.to}`;
+  return `The journey to ${o.to}`;
+}
+
+/** The clock problem, in human words — "it puts you in Goa at 3:50 in the morning". */
+export function clockProblem(o: LegOption): string | null {
+  const arr = toMin(o.arrTime ?? null);
+  if (arr == null) return null;
+  const m = ((arr % 1440) + 1440) % 1440;
+  if (m >= 23 * 60) return `it gets you in to ${o.to} at ${spokenClock(m)} at night`;
+  if (m < 7 * 60) return `it puts you in ${o.to} at ${spokenClock(m)} in the morning`;
+  return null;
+}
+
+/**
+ * THE TEMPLATE (spec 5.2):
+ *   "{name} — {duration in words}{, and it {clock problem}}{, which you asked us to avoid}."
+ *
+ * Composition rules, all of them load-bearing:
+ *   - the duration comes from the option's own honest door-to-door minutes;
+ *   - the clock problem comes from its own arrival time;
+ *   - the refusal clause appears ONLY when it was HIS word that did the rejecting, and it
+ *     is his word we cite;
+ *   - THE FARE NEVER APPEARS. No price on the public planner — that is the law, and a
+ *     rejection that says "it costs more" is the engine's reason, not the traveller's.
+ */
+export function sayRejection(o: LegOption, cause: RejectionCause, doorToDoorMin?: number | null): string {
+  const name = spokenLabel(o);
+  const dur = spokenDuration(doorToDoorMin ?? o.durationMin ?? null);
+  const clock = clockProblem(o);
+
+  switch (cause.kind) {
+    case 'body':
+      // The body's own refusal. It is not a preference and it is not negotiable, so we say
+      // it plainly and we do not dress it up.
+      return `${name} — this one is too hard on your party: ${cause.reasons[0] ?? 'it is beyond what this journey should ask of you'}.`;
+
+    case 'dead_hours': {
+      const bits = [dur, clock].filter(Boolean);
+      return `${name} — ${bits.join(', and ')}.`;
+    }
+
+    case 'refused_mode':
+      return `${name} — you asked us not to travel by ${modeSpoken(cause.mode)}, so we have kept it off your plan.`;
+
+    case 'ceiling': {
+      const bits: string[] = [];
+      if (dur) bits.push(o.mode === 'ROAD' ? `${dur} on the road` : dur);
+      if (clock) bits.push(`and it ${clock}`);
+      const tail = cause.qualified === 'long' ? ', which you asked us to avoid' : '';
+      return `${name} — ${bits.join(', ')}${tail}.`;
+    }
+
+    case 'lost':
+    default: {
+      const bits = [dur, clock].filter(Boolean);
+      return bits.length ? `${name} — ${bits.join(', and ')}.` : `${name}.`;
+    }
+  }
+}
+
+function modeSpoken(m: Mode): string {
+  switch (m) {
+    case 'RAIL': return 'train';
+    case 'ROAD': return 'road';
+    case 'AIR': return 'air';
+    case 'FERRY': return 'ferry';
+    default: return 'this way';
+  }
 }
 
 // ---- labels (facts only) -----------------------------------------------------
