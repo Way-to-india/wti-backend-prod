@@ -24,16 +24,31 @@ import { verifyList } from './guardrails';
 import { fmtDuration } from './geo';
 import { ddcv, ddcvScalar, weightsForObjective, type LegCtx, type Weights } from './ddcv';
 import { applyTPP } from './tpp';
-import { buildLegExplain } from './explain';
+import { buildLegExplain, optionKey } from './explain';
 import { toleranceForProfile, type Tolerance } from './physiology';
 import { hybridAccessHours } from './fallback';
 import type { AnchorCandidate } from './anchors';
 import { runFatigueLedger, dayLoadsFromDays, projectComfort, rhythmHeadline } from './fatigue';
+import { consultantChoose } from './consultant';
+import type { OrdealParty } from './ordeal';
 import { buildArchetypes } from './archetypes';
 import { negotiate, needsNegotiation } from './negotiate';
 
 const legKey = (a: string, b: string) => `${a}||${b}`;
 const BIG = 1e7;
+
+/**
+ * The sentence for the moment we could not honour him. Three parts, as Law 4 requires: what we
+ * looked for, what we found, and what we are therefore doing — plus an offer, because a
+ * consultant who can only apologise is not much of a consultant.
+ */
+function sayForcedSubstitution(from: string, to: string, mode: Mode, identifier: string | null, contract?: PlanContract): string {
+  const word = mode === 'RAIL' ? 'train' : mode === 'ROAD' ? 'road journey' : mode === 'AIR' ? 'flight' : 'service';
+  const named = identifier ? ` (${identifier})` : '';
+  const quote = contract?.voice.quotes[`mode_${mode.toLowerCase()}`];
+  const said = quote ? `You told us "${quote}".` : `You asked us to avoid travelling by ${word}.`;
+  return `${said} We checked every way to travel from ${from} to ${to}, and the only service we have on this leg is a ${word}${named}. We have used it so that your plan is complete, but we are telling you plainly rather than slipping it past you. If you would rather not take it, tell us and we will re-plan this part of the route.`;
+}
 
 // Default door-to-door access hours per mode when no city transport profile is
 // loaded (Sprint 1). Precise per-node access (airport/railhead transfer km) is the
@@ -148,11 +163,15 @@ function bestOption(opts: LegOption[] | undefined, obj: Objective, pax: number, 
  *  what lets the §10 decision record name a truthful winner + runner-up.
  *  (The two used to keep their own copies of the filter. One filter now — a rule that
  *  lives in two places is a rule that will one day disagree with itself.) */
-function rankLegOptions(opts: LegOption[] | undefined, obj: Objective, pax: number, opts2?: UsableOpts, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights): LegOption[] {
-  if (!opts || !opts.length) return [];
-  const { usable } = usableOptions(opts, opts2);
+function rankLegOptions(opts: LegOption[] | undefined, obj: Objective, pax: number, opts2?: UsableOpts, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights): { ranked: LegOption[]; refusedAll: boolean } {
+  if (!opts || !opts.length) return { ranked: [], refusedAll: false };
+  const { usable, refusedAll } = usableOptions(opts, opts2);
+  // THE HOLE THAT PRODUCTION FOUND. When his refusal empties a leg, this falls back to the
+  // full pool so the graph still connects — and the graph is right to insist on that. But the
+  // fallback must NEVER BE SILENT. The leg is marked here, and buildPlan says it out loud.
   const pool = usable.length ? usable : opts;
-  return pool.slice().sort((a, b) => optionCost(a, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract) - optionCost(b, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract));
+  const ranked = pool.slice().sort((a, b) => optionCost(a, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract) - optionCost(b, obj, pax, opts2?.preferDaily, tol, month, w, opts2?.contract));
+  return { ranked, refusedAll };
 }
 
 function buildMatrix(names: string[], deps: OptimizeDeps, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights, contract?: PlanContract): number[][] {
@@ -194,23 +213,58 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
   const preferDaily = input.startWeekday == null;
   const chosen = new Map<string, LegOption>();
   const chosenList: LegOption[] = [];
+  // Legs where HIS REFUSAL emptied the pool and we had to fall back to the very thing he
+  // refused. Never silent (Law 4): every one of these gets a paragraph.
+  const refusedLegs = new Map<string, LegOption | undefined>();
   // §10: rank each leg's options once (same objective ordering the sequencer uses),
   // keep ranked[0] as the chosen option, and retain the ranking for decision records.
   const explainByLeg = new Map<string, ReturnType<typeof buildLegExplain>>();
   // §14.5 the DDCV weight vector, rescaled by the traveller's psyche (w' = w ∘ M(TPP)).
   // Absent TPP = the objective weights unchanged (v1.0 behaviour). Hard gates untouched.
   const w = applyTPP(weightsForObjective(input.objective), input.tpp);
+  // Whose body is enduring this, and what money means to him. Both are needed before a single
+  // leg can be judged: the same overnight berth is a fair bargain to one mind and an ordeal
+  // to another.
+  const party: OrdealParty = { cls: tol.cls, budgetStance: input.contract?.budgetStance ?? null };
   for (let i = 1; i < names.length; i++) {
     const key = legKey(names[i - 1], names[i]);
-    const ranked = rankLegOptions(deps.pool.get(key), input.objective, pax, { overnightTrains: input.overnightTrains, preferDaily, dailyOnly: deps.dailyOnly, contract: input.contract }, tol, month, w);
-    if (ranked.length) {
-      const opt = ranked[0];
-      chosen.set(key, opt); chosenList.push(opt);
-      explainByLeg.set(key, buildLegExplain(
-        ranked, (legOpt) => legCtx(legOpt, tol, pax, month, input.contract), w,
-        { praiseHotelNight: input.contract?.rewardSwitches.hotelNightSaving !== false },
-      ));
+    const { ranked, refusedAll } = rankLegOptions(deps.pool.get(key), input.objective, pax, { overnightTrains: input.overnightTrains, preferDaily, dailyOnly: deps.dailyOnly, contract: input.contract }, tol, month, w);
+    if (!ranked.length) continue;
+
+    // ---- THE CONSULTANT'S COURT, WIRED (Sprint 7 fusion) --------------------------------
+    // The court was built, tested and PROVED — and the solve never called it. That is how a
+    // man who wrote "no trains" still got the 17315 Velankanni Express on production: the
+    // ordeal ceilings and the human refusals lived in consultantChoose, and buildPlan was
+    // still ranking on raw DDCV alone. The brain was connected to nothing. It is connected now.
+    let order = ranked;
+    let rejectedReasons: Map<string, string> | undefined;
+    let breached = refusedAll;
+
+    if (input.contract) {
+      const court = consultantChoose(
+        ranked.map((o) => ({ opt: o, ctx: legCtx(o, tol, pax, month, input.contract) })),
+        { contract: input.contract, party, weights: w },
+      );
+      rejectedReasons = new Map(court.rejected.map((r) => [optionKey(r.opt), r.reason]));
+      if (court.winner) {
+        // Honourable options exist: take the court's order, not the scalar's.
+        const won = court.ranked.map((r) => r.opt);
+        const alsoRan = ranked.filter((o) => !won.includes(o));
+        order = [...won, ...alsoRan];
+      } else {
+        // NOTHING here honours his brief. We still have to connect the graph — but we do NOT
+        // do it in silence. The least-bad option is used, and the paragraph is written.
+        breached = true;
+      }
     }
+
+    const opt = order[0];
+    chosen.set(key, opt); chosenList.push(opt);
+    if (breached) refusedLegs.set(key, opt);
+    explainByLeg.set(key, buildLegExplain(
+      order, (legOpt) => legCtx(legOpt, tol, pax, month, input.contract), w,
+      { praiseHotelNight: input.contract?.rewardSwitches.hotelNightSaving !== false, rejectedReasons },
+    ));
   }
 
   const nodesByName = new Map(deps.nodes.map((n) => [n.name, n] as const));
@@ -254,8 +308,22 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
     }
   }
 
+  // ---- LAW 4, ON THE LIVE PATH: never a silent substitution ------------------------
+  // Production handed a man who had written "no trains" a train — 17315 Velankanni Exp —
+  // because it was the only service on that leg, and the fallback said nothing. The engine
+  // was right that it had nothing else to offer. It was wrong to stay quiet about it.
+  const contractNotes: string[] = [];
+  for (const leg of exp.legs) {
+    const key = legKey(leg.from, leg.to);
+    if (!refusedLegs.has(key)) continue;
+    const line = sayForcedSubstitution(leg.from, leg.to, leg.mode, leg.identifier ?? null, input.contract);
+    leg.note = leg.note ? `${leg.note} ${line}` : line;
+    (leg as PlanLeg & { contractBreach?: boolean }).contractBreach = true;
+    contractNotes.push(line);
+  }
+
   const metrics = scorePlan(exp.legs, exp.days, pax, input.profile ?? 'standard');
-  const warnings = [...exp.warnings];
+  const warnings = [...exp.warnings, ...contractNotes];
   if (phase && (!phase.aligned || phase.shiftDays !== 0)) warnings.push(`Phase shift: ${phase.reason}`);
   // §3.3/§7 rhythm gates: accumulate the fatigue ledger over the scheduled days and
   // surface any two-consecutive-heavy / heavy→heavy-drive / 3-day-streak violation.
@@ -278,6 +346,9 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
     map: mapRoute(names, chosen, nodesByName),
     label,
     rhythm: { ok: ledger.ok, peakF: ledger.F.length ? Math.max(...ledger.F) : 0, headline: rhythmHeadline(ledger, tol), violations: ledger.violations },
+    // The traveller must SEE this, so it rides on the plan itself and not merely in an
+    // internal warning the public payload strips out.
+    ...(contractNotes.length ? { contractNotes } : {}),
     phaseShift: phase ? { aligned: phase.aligned, shiftDays: phase.shiftDays, startWeekday: phase.startWeekday != null ? ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'][phase.startWeekday] : null, reason: phase.reason } : undefined,
   };
 }

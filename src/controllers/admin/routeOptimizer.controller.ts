@@ -8,6 +8,11 @@ import { isTrueOvernight } from '@/services/route-optimizer/constraints';
 import { enrichPlan } from '@/services/enrichment/orchestrator';
 import { enrichmentEnabled } from '@/services/enrichment/core';
 import type { CityNode, LegOption, OptimizeInput, InputCity, LatLng, Plan, HaltSuggestion, PlanComparison, LegModeOption } from '@/services/route-optimizer/types';
+import { consultantChoose } from '@/services/route-optimizer/consultant';
+import { toleranceForProfile } from '@/services/route-optimizer/physiology';
+import { weightsForObjective, type LegCtx } from '@/services/route-optimizer/ddcv';
+import { applyTPP } from '@/services/route-optimizer/tpp';
+import type { OrdealParty } from '@/services/route-optimizer/ordeal';
 import type { AnchorCandidate } from '@/services/route-optimizer/anchors';
 import { toPlannerPayload } from '@/services/route-optimizer/plannerPayload';
 
@@ -436,7 +441,7 @@ export class RouteOptimizerController {
     const endFixed = (input.end || '').trim().toLowerCase();
     const openJaw = !!endFixed && endFixed !== originCity;
     if (input.tripType === 'roundtrip' && !openJaw) {
-      try { await RouteOptimizerController.appendReturnJourney(np, mmPool); }
+      try { await RouteOptimizerController.appendReturnJourney(np, mmPool, input); }
       catch (e) { console.error('appendReturnJourney failed (non-fatal):', e); }
     }
 
@@ -451,7 +456,20 @@ export class RouteOptimizerController {
    * legitimately recur. Adds return legs, one travel day, map geometry, and folds
    * the return into totals — reusing the existing multimodal pool (no re-optimise).
    */
-  static async appendReturnJourney(plan: Plan, mmPool: Map<string, LegOption[]>): Promise<void> {
+  /**
+   * SPRINT 7 FIX — THE SECOND THRIFT REFLEX, hiding in the controller.
+   *
+   * This builds the journey home. It used to choose that leg with
+   *     sort((a, b) => estCostPp(a) - estCostPp(b))[0]
+   * — THE CHEAPEST SERVICE, full stop. No contract, no body gates, no ordeal, no court. So a
+   * man who wrote "no trains" and asked for a luxury tour was sent home on the 17315
+   * Velankanni Express because it was the cheapest thing in the pool: the identical failure
+   * this whole sprint exists to abolish, living one layer ABOVE the engine, where not one of
+   * the engine's 570 tests could see it.
+   *
+   * The way home is part of his holiday. It is bound by his brief like every other leg.
+   */
+  static async appendReturnJourney(plan: Plan, mmPool: Map<string, LegOption[]>, input?: OptimizeInput): Promise<void> {
     const seq = plan.sequence;
     if (seq.length < 2) return;
     const origin = seq[0];
@@ -464,11 +482,47 @@ export class RouteOptimizerController {
     for (const l of plan.legs) if (l.mode === 'AIR' || l.mode === 'RAIL') { gateway = l.to; gatewayMode = l.mode; }
     if (gateway && (gateway.toLowerCase() === lastDest.toLowerCase() || gateway.toLowerCase() === origin.toLowerCase())) gateway = null;
 
+    const contract = input?.contract;
+    const tol = toleranceForProfile(input?.profile);
+    const pax = input?.pax ?? 2;
+    const party: OrdealParty = { cls: tol.cls, budgetStance: contract?.budgetStance ?? null };
+    const w = applyTPP(weightsForObjective(input?.objective ?? 'BALANCED'), input?.tpp);
+    const ctxOf = (o: LegOption): LegCtx => ({
+      tol, pax, month: input?.month,
+      accessFromHrs: o.mode === 'AIR' ? 1.5 : o.mode === 'RAIL' ? 0.75 : 0,
+      accessToHrs: o.mode === 'AIR' ? 1.0 : o.mode === 'RAIL' ? 0.75 : 0,
+      tighten: contract?.tighten,
+      rewardHotelNightSaving: contract?.rewardSwitches.hotelNightSaving,
+    });
+
+    /** Where we could not keep to his brief on the way home. Never silent (Law 4). */
+    const forced: string[] = [];
+
     const pick = (from: string, to: string, prefer?: 'ROAD' | 'AIR' | 'RAIL'): LegOption | null => {
       const opts = mmPool.get(`${from}||${to}`) || [];
       if (!opts.length) return null;
-      if (prefer) { const m = opts.find((o) => o.mode === prefer); if (m) return m; }
-      return opts.slice().sort((a, b) => estCostPp(a) - estCostPp(b))[0];
+
+      // No contract (the admin/CRM desk): behave exactly as before.
+      if (!contract) {
+        if (prefer) { const m = opts.find((o) => o.mode === prefer); if (m) return m; }
+        return opts.slice().sort((a, b) => estCostPp(a) - estCostPp(b))[0];
+      }
+
+      // With a contract, the way home goes through the SAME COURT as every other leg.
+      const court = consultantChoose(opts.map((o) => ({ opt: o, ctx: ctxOf(o) })), { contract, party, weights: w });
+      if (court.winner) {
+        if (prefer) {
+          const preferred = court.ranked.find((r) => r.opt.mode === prefer);
+          if (preferred) return preferred.opt;
+        }
+        return court.winner.opt;
+      }
+
+      // Nothing here honours his brief. We must still get him home — and we SAY SO.
+      const leastBad = opts.slice().sort((a, b) => estCostPp(a) - estCostPp(b))[0];
+      const why = court.rejected.find((r) => r.opt === leastBad)?.reason;
+      forced.push(`Getting you home from ${from} to ${to}: ${why ?? 'the only service we have is one you asked us to avoid.'} It is the only service on this leg, so we have used it to keep your plan complete — but we are telling you plainly rather than slipping it past you. Tell us if you would rather we re-planned this part.`);
+      return leastBad;
     };
 
     // build the return hop list
@@ -484,6 +538,7 @@ export class RouteOptimizerController {
       if (direct) hops.push({ from: lastDest, to: origin, opt: direct });
     }
     if (!hops.length) { plan.warnings.push(`Return to ${origin} could not be routed automatically — add the return leg manually.`); return; }
+    if (forced.length) plan.contractNotes = [...(plan.contractNotes ?? []), ...forced];
 
     // append plan legs (marked as return)
     let retRoadKm = 0, retMin = 0;

@@ -111,6 +111,10 @@ export interface PlannerPayload {
     phaseShift?: Plan['phaseShift']; rhythm?: Plan['rhythm']; totals: Plan['totals'];
     verifyBeforeBooking: string[]; warnings: string[];
     days: PlannerDay[];
+    /** Law 4 — every leg where we could NOT keep to his brief, said out loud. This must
+     *  survive the public gate (which strips `warnings`), because the traveller is precisely
+     *  the person who needs to read it. Never a silent substitution. */
+    contractNotes?: string[];
   } | null;
   legOptions: Record<string, PlannerLegOptionRow[]>;
   /** the honest, public price. null when enrichment did not run — and then we show
@@ -285,6 +289,7 @@ export function toPlannerPayload(
       totals: plan.totals,
       verifyBeforeBooking: plan.verifyBeforeBooking ?? [],
       warnings: plan.warnings ?? [],
+      ...(plan.contractNotes?.length ? { contractNotes: plan.contractNotes } : {}),
       days,
     },
     legOptions: buildLegOptions(legs),

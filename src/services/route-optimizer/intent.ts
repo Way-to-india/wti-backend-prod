@@ -485,6 +485,9 @@ export interface PlanContract {
    *  ordeal band — inside which comfort is equal by construction. So a saving can never
    *  buy discomfort. Not by a rupee. Not ever. */
   moneyRule: 'normal' | 'tiebreak_only';
+  /** what money MEANS to him — the ordeal function needs it, because the same berth is a
+   *  bargain to one mind and an ordeal to another. */
+  budgetStance: BudgetStance | null;
   // LEVEL 4 — the soft residual, and the human layer.
   tpp: TPP;
   voice: { purpose?: Purpose; partyWords?: string; quotes: Record<string, string> };
@@ -597,6 +600,7 @@ export function compileContract(intent: TravellerIntent): PlanContract {
     // luxury setting would have made the engine love the overnight train MORE (F4).
     rewardSwitches: { hotelNightSaving: !comfortFirst },
     moneyRule: comfortFirst ? 'tiebreak_only' : 'normal',
+    budgetStance: intent.budgetStance.value ?? (comfortFirst ? 'comfort_first' : null),
     tpp,
     voice: {
       purpose: intent.purpose.value ?? undefined,

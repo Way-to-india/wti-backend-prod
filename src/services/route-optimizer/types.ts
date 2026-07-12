@@ -247,6 +247,10 @@ export interface PlanLeg {
   decisionRecord?: DecisionRecord;
   /** §10 every service compared for this leg, ranked best→worst, chosen flagged. */
   legOptions?: LegOptionRow[];
+  /** Sprint 7 / Law 4 — we had to use a mode the traveller REFUSED, because it was the only
+   *  service on this leg. The plan is still complete, but it is never silent about it: the
+   *  leg carries the consultant's paragraph in `note`. */
+  contractBreach?: boolean;
 }
 
 export interface LegModeOption {
@@ -330,6 +334,10 @@ export interface Plan {
   rhythm?: { ok: boolean; peakF: number; headline?: string; violations: { day: number; kind: string; detail: string }[] };
   /** §6.1 whole-trip phase shift applied to align weekday-limited trains. */
   phaseShift?: { aligned: boolean; shiftDays: number; startWeekday: string | null; reason: string };
+  /** Sprint 7 / Law 4 — every leg where we could not keep to his brief, said out loud. These
+   *  ride on the PLAN (not in the internal warnings, which the public payload strips) because
+   *  the traveller is the person who most needs to read them. */
+  contractNotes?: string[];
   /** side-by-side comparison metrics. */
   comparison?: PlanComparison;
   /** AI enrichment layer output (fares, hotels, guides, city content, trip cost). */
