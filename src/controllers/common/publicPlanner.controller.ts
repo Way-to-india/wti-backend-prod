@@ -27,7 +27,7 @@ import type { PlannerPayload } from '@/services/route-optimizer/plannerPayload';
 import { anthropic, enrichmentEnabled } from '@/services/enrichment/core';
 import { verifyCity } from '@/services/route-optimizer/cityVerify';
 import { inferGateway, type StartSource } from '@/services/route-optimizer/gateway';
-import { intentFromRaw, type RawIntent, type TravellerIntent } from '@/services/route-optimizer/intent';
+import { intentFromRaw, compileContract, type RawIntent, type TravellerIntent } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 
@@ -301,6 +301,12 @@ export class PublicPlannerController {
         cities = [{ name: start, nights: 0 }, ...cities];
       }
 
+      // ---- THE BRIEF (US-604) ------------------------------------------------
+      // His words, compiled. Until now this line said `overnightTrains: true` — welded ON,
+      // for every traveller who ever used the planner, including the one who had just
+      // written "no trains". The switch existed; the ear did not. It is his now.
+      const contract = intent ? compileContract(intent) : undefined;
+
       // sanitized body for the SAME admin pipeline — planner on, enrichment
       // cache-first 'fast' (never deep), no pins/halts/custom coords
       const innerBody = {
@@ -309,7 +315,11 @@ export class PublicPlannerController {
         end: end || null,
         objective: OBJECTIVE_MAP[String(body.objective)] || 'BALANCED',
         pax, profile, month,
-        overnightTrains: true,
+        // no longer hardcoded: he decides, and where he said nothing we keep the old default.
+        overnightTrains: contract ? !contract.filters.banOvernightRail : true,
+        contract,
+        // the psyche dial that was built, tested, and wired to nothing. Wired.
+        tpp: contract?.tpp,
         planner: true,
         enrich: 'fast',
         request,

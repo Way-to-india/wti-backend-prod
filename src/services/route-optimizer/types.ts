@@ -11,6 +11,10 @@
  * consumes, so the CRM page reuses that renderer unchanged.
  */
 
+// Type-only import (erased at runtime, so no cycle): the compiled brief the engine is
+// bound by. Its home is intent.ts, which imports nothing from physiology.ts by design.
+import type { PlanContract } from './intent';
+
 // ---- geography ---------------------------------------------------------------
 
 export type LatLng = readonly [number, number]; // [lat, lng]
@@ -176,6 +180,14 @@ export interface OptimizeInput {
   /** §14 Traveler Psyche Profile — rescales the DDCV soft weights per mind. Absent =
    *  today's behaviour exactly; can never relax a body-truth hard gate. */
   tpp?: TPP;
+  /** Sprint 7 — THE BRIEF, compiled from the traveller's own sentence (intent.ts). His
+   *  refusals become candidate filters, his qualified refusals become ordeal ceilings, and
+   *  his comfort becomes a TIGHTENING of the body gates (one direction only — see
+   *  intent.ts). Absent ⇒ today's behaviour exactly.
+   *
+   *  Law 1: what he says he wants is not one more term to be outvoted by cost. It is the
+   *  brief, and it enters the engine HERE. */
+  contract?: PlanContract;
 }
 
 /** A suggested (opt-in) en-route overnight town on an over-long road leg. */

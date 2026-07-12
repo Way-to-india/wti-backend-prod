@@ -203,6 +203,11 @@ export class RouteOptimizerController {
         month: body.month, pax,
         profile: (['standard', 'family', 'senior'].includes(body.profile) ? body.profile : 'standard'),
         overnightTrains: body.overnightTrains !== false,
+        // Sprint 7 — the traveller brief, compiled by the public planner from his own
+        // sentence (route-optimizer/intent.ts). Absent on every admin/CRM call, so the
+        // desk pipeline behaves exactly as before.
+        contract: body.contract,
+        tpp: body.tpp,
         maxRoadKmDay: Number(body.maxRoadKmDay) || PROFILE_MAX_KM[body.profile] || 350,
         startWeekday: body.startWeekday ?? null,
         pins: Array.isArray(body.pins) ? body.pins : [],
