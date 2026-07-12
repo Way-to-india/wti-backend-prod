@@ -18,8 +18,9 @@ import type { LegOption, Objective } from './types';
 import { toMin, isTrueOvernight } from './constraints';
 import {
   type Tolerance, vehicleHours, comfortStopHours, legFatigue,
-  roadDayHardCapExceeded, departsTooEarly, arrivesTooLate, overnightClassOk,
+  roadDayHardCapExceeded, departsTooEarly, arrivesTooLate, arrivesInDeadHours, overnightClassOk,
 } from './physiology';
+import { tightened, type Tightening } from './intent';
 
 // ---- weight vector -----------------------------------------------------------
 
@@ -67,6 +68,12 @@ export interface LegCtx {
   accessCostPp?: number;
   /** indicative per-person fare when the option carries none. */
   fallbackFarePp?: number;
+  /** US-603 — the traveller's contract, compiled from HIS OWN WORDS (intent.ts). It may
+   *  only make this party's gates STRICTER (a comfort-first honeymooner refuses a 3:50
+   *  a.m. arrival; the body already refused a 9-hour senior drive). It cannot make any
+   *  gate kinder: `tightened()` clamps in one direction, and the type cannot express a
+   *  loosening. Absent ⇒ today's behaviour, exactly. */
+  tighten?: Tightening;
 }
 
 const DAY_START = 6 * 60, DAY_END = 18 * 60, DAY_LEN = DAY_END - DAY_START; // useful daylight window
@@ -77,7 +84,9 @@ function overlapMin(lo: number, hi: number, wLo: number, wHi: number): number {
 
 /** Build the DDCV for one concrete option under a party/leg context. */
 export function ddcv(o: LegOption, ctx: LegCtx): DDCV {
-  const { tol } = ctx;
+  // The party's body, made STRICTER by what the traveller himself asked for. One
+  // direction only: `tightened()` can lower a cap, never raise one (intent.ts).
+  const tol = tightened(ctx.tol, ctx.tighten);
   const overnight = isTrueOvernight(o);
   const inVeh = vehicleHours(o, { roadQualityIndex: ctx.roadQualityIndex, month: ctx.month });
   const accFrom = ctx.accessFromHrs ?? 0;
@@ -141,6 +150,18 @@ export function ddcv(o: LegOption, ctx: LegCtx): DDCV {
   // late civil arrival is a soft penalty already in q; a gross breach (>23:30) blocks for elderly/family
   if (!overnight && arrMin != null && arrMin > 23 * 60 + 30 && tol.noBackToBack) {
     blockReasons.push(`arrival ${fmtClock(arrMin)} past the civil ceiling for a ${tol.cls} party`);
+  }
+  // ---- US-603: THE DEAD HOURS (Law 5 — his reason, written at the moment of refusal) --
+  // The gate that did not exist. A 03:50 arrival is not "cheap", it is not "a manufactured
+  // day", and it is not a saving: it is a broken night and a ruined next day, which on a
+  // six-night holiday is about a sixth of the whole trip. Where the traveller's contract
+  // asks for it, this is INADMISSIBLE — not expensive. A price could be outvoted; a gate
+  // cannot.
+  //
+  // The reason is written HERE, where the knowledge lives, in HIS words and not ours. It
+  // must never be reconstructed downstream as "rejected — higher cost score".
+  if (ctx.tighten?.deadHoursArrival && arrivesInDeadHours(arrMin)) {
+    blockReasons.push(`it puts you in ${o.to} at ${spokenClock(arrMin!)} in the morning`);
   }
 
   return { T: round1(T), M, Phi, Delta: round2(Delta), rho: round2(rho), q: round2(q), hardBlock: blockReasons.length > 0, blockReasons };
@@ -211,4 +232,12 @@ const round2 = (x: number) => Math.round(x * 100) / 100;
 function fmtClock(min: number): string {
   const m = ((min % 1440) + 1440) % 1440;
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
+
+/** The clock as a person says it out loud: 230 → "3:50". Not "03:50", and never "230". */
+export function spokenClock(min: number): string {
+  const m = ((min % 1440) + 1440) % 1440;
+  const h24 = Math.floor(m / 60);
+  const h = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${h}:${String(m % 60).padStart(2, '0')}`;
 }

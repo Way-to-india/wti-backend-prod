@@ -142,6 +142,39 @@ export function arrivesTooLate(arrMin: number | null | undefined, tol: Tolerance
   return arrMin != null && arrMin > tol.latestArrivalMin;
 }
 
+// ---- US-603: the dead hours — the gate that was missing -----------------------
+
+/**
+ * THE HOLE, and why a nine-hour train was allowed to put a honeymooner in Goa at 03:50.
+ *
+ * `arrivesTooLate` asks `arrMin > latestArrivalMin`. Arrival is minutes since midnight
+ * OF THE ARRIVAL DAY. The Netravathi lands at 03:50, so arrMin = 230, and the ceiling is
+ * about 22:00 = 1320. **230 > 1320 is false.** The gate looked at a 3:50 a.m. arrival and
+ * read it as a pleasantly early one. `departsTooEarly` guards departures only. So the
+ * window [midnight → the earliest civil start) ON THE ARRIVAL CLOCK belonged to no gate
+ * at all, and every overnight service landing between 00:00 and ~07:00 sailed straight
+ * through it.
+ *
+ * This closes it. The window is TWO-SIDED and wraps midnight: 23:00 → 07:00.
+ *
+ * Note on `arrDayOffset`: it deliberately does NOT enter this predicate. 03:50 is 03:50
+ * whether the train left yesterday or this morning — the traveller's body is standing on
+ * a platform in the dark either way. The offset costs him a broken night, and THAT is
+ * priced in the ordeal function (E_break), not here.
+ *
+ * This is a PREDICATE, not a policy. It blocks nothing on its own: it becomes a hard gate
+ * only where the traveller's contract asks for it (PlanContract.tighten.deadHoursArrival),
+ * and for a mind that WANTS the cheap overnight train, it never fires at all.
+ */
+export const DEAD_HOURS_FROM = 23 * 60;  // 23:00
+export const DEAD_HOURS_TO = 7 * 60;     // 07:00
+
+export function arrivesInDeadHours(arrMin: number | null | undefined): boolean {
+  if (arrMin == null) return false;
+  const m = ((arrMin % 1440) + 1440) % 1440;   // normalise, whatever the caller hands us
+  return m >= DEAD_HOURS_FROM || m < DEAD_HOURS_TO;
+}
+
 /** Overnight rail class floor (§3.2): elderly/family/reduced need ≥ 2A; mid/young any (SL ok). */
 export function overnightClassOk(classes: string[] | undefined, tol: Tolerance): boolean {
   if (!tol.overnightClassFloor) return true;
