@@ -18,7 +18,19 @@ import { railJunctionOptions } from './railGraph';
 import { railRoadHybridOptions } from './fallback';
 
 const BOX_RAIL = 0.4;  // ~44 km around a city to find its railheads
-const BOX_AIR = 0.6;   // ~66 km around a city to find its airport
+// US-822. THIS BOX WAS 0.6 DEGREES (~66 km) AND IT PUT A PILGRIM ON AN 18-HOUR TRAIN.
+// Kanyakumari sits at 77.54E. Trivandrum airport is at 76.92E -- 0.62 degrees away, OUTSIDE
+// THE BOX BY 0.02 DEGREES, about two kilometres. So Kanyakumari "had no airport" and no flight
+// was ever offered on that leg, to a man who had asked to fly.
+//
+// Indians drive to airports. The founder's own published itinerary drives 135 km from Chennai
+// to Tirupati. The catchment is now a REAL DRIVE (AIRPORT_REACH_KM), measured properly by
+// haversine rather than by a lat/lng box -- and the drive is CHARGED, at both ends, into the
+// door-to-door clock. Widening the net without paying for the transfer would only be a newer,
+// prettier lie.
+const BOX_AIR = 1.6;              // the coarse SQL pre-filter (~175 km); the true test is below
+const AIRPORT_REACH_KM = 160;     // how far a traveller will genuinely drive to a flight
+const ACCESS_ROAD_KMH = 45;       // an honest average for an airport transfer
 
 export interface FindCtx { month?: number; pax: number }
 
@@ -78,24 +90,40 @@ function score(o: LegOption): number {
   return s;
 }
 
-/** Domestic flights between the cities' airports (DGCA schedule). */
+/** Domestic flights between the cities' airports (DGCA schedule), with the drive to and from
+ *  the airport measured and CHARGED. See the note on BOX_AIR above. */
 export async function airOptions(a: CityNode, b: CityNode, _ctx: FindCtx): Promise<LegOption[]> {
   const [aLat, aLng] = a.coord, [bLat, bLng] = b.coord;
   try {
     const rows = await prisma.$queryRawUnsafe<any[]>(`
-      WITH a_ap AS (SELECT city FROM airport_cities WHERE lat BETWEEN ${aLat - BOX_AIR} AND ${aLat + BOX_AIR} AND lng BETWEEN ${aLng - BOX_AIR} AND ${aLng + BOX_AIR}),
-           b_ap AS (SELECT city FROM airport_cities WHERE lat BETWEEN ${bLat - BOX_AIR} AND ${bLat + BOX_AIR} AND lng BETWEEN ${bLng - BOX_AIR} AND ${bLng + BOX_AIR})
-      SELECT origin_city, dest_city, flight_no, airline, dep_min, arr_min, dur_min, day_offset, operating_days, aircraft
-      FROM flight_sectors
-      WHERE origin_city IN (SELECT city FROM a_ap) AND dest_city IN (SELECT city FROM b_ap)
-      ORDER BY dur_min ASC NULLS LAST
-      LIMIT 40`);
+      WITH a_ap AS (SELECT city, lat, lng FROM airport_cities WHERE lat BETWEEN ${aLat - BOX_AIR} AND ${aLat + BOX_AIR} AND lng BETWEEN ${aLng - BOX_AIR} AND ${aLng + BOX_AIR}),
+           b_ap AS (SELECT city, lat, lng FROM airport_cities WHERE lat BETWEEN ${bLat - BOX_AIR} AND ${bLat + BOX_AIR} AND lng BETWEEN ${bLng - BOX_AIR} AND ${bLng + BOX_AIR})
+      SELECT f.origin_city, f.dest_city, f.flight_no, f.airline, f.dep_min, f.arr_min, f.dur_min,
+             f.day_offset, f.operating_days, f.aircraft,
+             oa.lat AS o_lat, oa.lng AS o_lng, da.lat AS d_lat, da.lng AS d_lng
+      FROM flight_sectors f
+      JOIN a_ap oa ON f.origin_city = oa.city
+      JOIN b_ap da ON f.dest_city  = da.city
+      ORDER BY f.dur_min ASC NULLS LAST
+      LIMIT 60`);
+
     const dist = haversineKm(a.coord, b.coord);
     const seen = new Set<string>();
     const opts: LegOption[] = [];
+
     for (const r of rows) {
+      // THE TRUE TEST, not the box. Would he actually drive this far to the plane?
+      const fromKm = haversineKm(a.coord, [Number(r.o_lat), Number(r.o_lng)]) * 1.25;
+      const toKm   = haversineKm([Number(r.d_lat), Number(r.d_lng)], b.coord) * 1.25;
+      if (fromKm > AIRPORT_REACH_KM || toKm > AIRPORT_REACH_KM) continue;
+
       const key = `${r.flight_no}|${r.dep_min}`;
       if (seen.has(key)) continue; seen.add(key);
+
+      const fromMin = Math.round((fromKm / ACCESS_ROAD_KMH) * 60);
+      const toMin   = Math.round((toKm   / ACCESS_ROAD_KMH) * 60);
+      const sameCityFrom = fromKm < 25, sameCityTo = toKm < 25;
+
       opts.push({
         from: a.name, to: b.name, mode: 'AIR',
         identifier: String(r.flight_no || '').trim() || `${r.airline}`,
@@ -106,6 +134,13 @@ export async function airOptions(a: CityNode, b: CityNode, _ctx: FindCtx): Promi
         arrDayOffset: Number(r.day_offset) || 0,
         operatingDays: Number(r.operating_days) || 127,
         classes: ['ECONOMY'], reliability: 4, source: 'dgca-schedule', verifiedAt: null,
+        // the drive to the plane, paid for in the door-to-door clock (optimize.legCtx)
+        accessFromKm: sameCityFrom ? 0 : Math.round(fromKm),
+        accessFromMin: sameCityFrom ? 0 : fromMin,
+        accessToKm: sameCityTo ? 0 : Math.round(toKm),
+        accessToMin: sameCityTo ? 0 : toMin,
+        fromAirportCity: sameCityFrom ? null : String(r.origin_city),
+        toAirportCity: sameCityTo ? null : String(r.dest_city),
       });
       if (opts.length >= 5) break;
     }

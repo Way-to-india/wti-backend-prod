@@ -128,6 +128,20 @@ export interface LegOption {
   onwardRoadKm?: number;
   onwardRoadMin?: number;
   viaNode?: string | null;
+
+  /** US-822 — THE AIRPORT IS NOT IN THE CITY. A flight from Kanyakumari is a 90 km drive to
+   *  Trivandrum first, and a plan that hides that is not a plan, it is a brochure. These are
+   *  the road transfers at each end, folded into door-to-door access by optimize.legCtx --
+   *  exactly as the rail+road hybrid above already does, and as its comment already promised
+   *  ("a far drop railhead loses to a nearer one, EXACTLY LIKE A FAR AIRPORT"). Additive and
+   *  optional: a flight whose airport is in the city carries 0 and behaves as before. */
+  accessFromKm?: number;
+  accessFromMin?: number;
+  accessToKm?: number;
+  accessToMin?: number;
+  /** the airport cities actually used, so Law 4 can NAME them to him. */
+  fromAirportCity?: string | null;
+  toAirportCity?: string | null;
 }
 
 // ---- input -------------------------------------------------------------------

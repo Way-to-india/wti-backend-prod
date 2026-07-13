@@ -587,6 +587,21 @@ export interface PlanContract {
     banModes: Mode[];          // unqualified refusals: the mode leaves the pool
     banOvernightRail: boolean; // the overnight, not all rail (the old flag lied — US-604)
   };
+  /** LEVEL 1b — HIS PREFERENCES. US-821.
+   *
+   *  "We would prefer flights wherever possible." He said it plainly, and it reached NOTHING:
+   *  compileContract handled `refuse` and `avoid`, and a `prefer` stance fell out of the bottom
+   *  of the loop with nowhere to go. A preference we record and never act on is worse than one
+   *  we never heard.
+   *
+   *  A REFUSAL is structural — the mode leaves the pool. A PREFERENCE is NOT a ban, and it must
+   *  not become one: the founder's own consultant still drives his client Bengaluru → Mysuru,
+   *  because on that leg THE ROAD IS THE COMFORTABLE WAY (Law 2). So a preference is a strong
+   *  tilt applied AFTER the ordeal has been measured honestly — it wins among options of
+   *  comparable comfort, and it never forces an absurd 200 km flight over a three-hour drive. */
+  preferences: {
+    preferModes: Mode[];
+  };
   // LEVEL 2 — tightenings. May only clamp down; loosening is not expressible (above).
   tighten: Tightening;
   // LEVEL 3 — objective surgery.
@@ -638,12 +653,20 @@ export function compileContract(intent: TravellerIntent): PlanContract {
   const comfortFirst = isComfortFirst(intent);
   const banModes: Mode[] = [];
   let banOvernightRail = false;
+  const preferModes: Mode[] = [];
   const perModeOrdealCeiling: Partial<Record<Mode, number>> = {};
   const quotes: Record<string, string> = {};
   let deadHours: true | undefined;
 
   for (const s of intent.modeStances) {
     if (s.reading.quote) quotes[`mode_${s.mode.toLowerCase()}`] = s.reading.quote;
+
+    if (s.stance === 'prefer') {
+      // THE LINE THAT DID NOT EXIST. Everything below handles a refusal; a PREFERENCE used to
+      // fall straight through this loop and out of the engine's life.
+      if (!preferModes.includes(s.mode)) preferModes.push(s.mode);
+      continue;
+    }
 
     if (s.stance === 'refuse' && s.qualifier === 'any') {
       // A category refusal. The mode leaves the pool wherever an alternative exists; where
@@ -709,6 +732,7 @@ export function compileContract(intent: TravellerIntent): PlanContract {
 
   return {
     filters: { banModes, banOvernightRail },
+    preferences: { preferModes },
     tighten,
     // Law 3, structurally: for a comfort-first party the hotel-night reward is DELETED.
     // Down-weighting it is not enough — the comfort dial multiplies q by 1.3, so the

@@ -55,6 +55,17 @@ function sayForcedSubstitution(from: string, to: string, mode: Mode, identifier:
 // loaded (Sprint 1). Precise per-node access (airport/railhead transfer km) is the
 // §4.5 airport-as-via-node hook that Sprint 2 fills in.
 const ACCESS = { RAIL: { from: 0.75, to: 0.75 }, AIR: { from: 1.5, to: 1.0 } } as const;
+
+/** US-821. What a stated preference is worth in the objective. A tilt, not a ban: enough to win
+ *  wherever comfort is comparable, never enough to force a flight onto a leg the road covers
+ *  better. Applied to the DDCV scalar AFTER the ordeal is measured. */
+const PREFER_TILT = 0.7;
+
+/** US-826. Every hard-blocked option sits above this, so a feasible option ALWAYS wins and the
+ *  body gates keep their meaning. But blocked options are ordered AMONG THEMSELVES by the very
+ *  ordeal that blocked them — so when no option can be made comfortable, we give him the least
+ *  bad one instead of the one that happens to run every day. */
+const BLOCKED_BASE = 1e6;
 const DEFAULT_TOL: Tolerance = toleranceForProfile(undefined);
 function legCtx(
   o: LegOption, tol: Tolerance, pax: number, month?: number, contract?: PlanContract,
@@ -87,7 +98,13 @@ function legCtx(
   return {
     tol, pax, month,
     roadQualityIndex: rqi,
-    accessFromHrs: a.from, accessToHrs: a.to + hyb.hrs, accessCostPp: hyb.costPp,
+    // US-822: the drive to the departure airport and from the arrival airport. Zero for a
+    // flight whose airport is in the city, so nothing that worked before changes. This is what
+    // makes an honest comparison possible: an 18h25 train against a flight that HONESTLY costs
+    // a 2 h drive + check-in + the air time + the drive out the other side.
+    accessFromHrs: a.from + (o.accessFromMin ?? 0) / 60,
+    accessToHrs: a.to + hyb.hrs + (o.accessToMin ?? 0) / 60,
+    accessCostPp: hyb.costPp,
     tighten: contract?.tighten,
   };
 }
@@ -176,9 +193,49 @@ function optionCost(o: LegOption, obj: Objective, pax: number, preferDaily = fal
   // sequencing but still connects the graph — dayExpand surfaces the infeasibility.
   const nonDaily = preferDaily && o.operatingDays != null && o.operatingDays !== 127;
   const penalty = nonDaily ? 40 : 0;
-  const scalar = ddcvScalar(ddcv(o, legCtx(o, tol, pax, month, contract, elevations)), w ?? weightsForObjective(obj));
-  const base = Number.isFinite(scalar) ? scalar : 1e6;
-  return base + penalty;
+  const wts = w ?? weightsForObjective(obj);
+  const v = ddcv(o, legCtx(o, tol, pax, month, contract, elevations));
+  const scalar = ddcvScalar(v, wts);
+
+  // ---- US-826: THE LEAST-BAD OPTION -------------------------------------------------------
+  //
+  // ddcvScalar returns +Infinity for a hard-blocked option, and this line used to flatten EVERY
+  // blocked option to the same 1e6. On a leg where nothing fits inside a comfortable day -- and
+  // Kanyakumari to Tirupati is 650 km, so nothing does -- ALL the options scored identically.
+  // The ordering was destroyed, and the decision fell through to the only tiebreak left: the +40
+  // penalty for a service that does not run daily.
+  //
+  // TRAINS RUN DAILY. FLIGHTS DO NOT. So the engine rejected an 11h48 flight and chose a 20h24
+  // train, for a man of 56 who had asked to fly. That is the thrift reflex of THE-CONSULTANTS-LAW
+  // for the third time: not cheaper in rupees this time, but cheaper in the engine's arithmetic,
+  // and it bought his discomfort just the same.
+  //
+  // A BLOCKED OPTION IS STILL BETTER OR WORSE THAN ANOTHER BLOCKED OPTION. BLOCKED_BASE keeps
+  // every blocked option strictly worse than every feasible one -- a gate is still a gate, and a
+  // comfortable option always wins -- while PRESERVING THE ORDER AMONG THEM, so that when his day
+  // cannot be saved we hand him the least bad of it rather than the most convenient for us.
+  const base = Number.isFinite(scalar)
+    ? scalar
+    : BLOCKED_BASE + ddcvScalar({ ...v, hardBlock: false }, wts);
+
+  // ---- US-821: LAW 1. A PREFERENCE MUST REACH THE OBJECTIVE. ------------------------------
+  //
+  // "We would prefer flights wherever possible." He said it, we parsed it, we stored it in
+  // modeStances -- and then NOTHING read it. He got an 18h25 train.
+  //
+  // A REFUSAL is structural: the mode leaves the pool, and no price can buy it back. A
+  // PREFERENCE is deliberately NOT that, and it must not become that. The founder's own
+  // consultant, in the ruling this project is built on, still drives his luxury client
+  // Bengaluru → Mysuru: "the destinations we have selected for you are BEST COVERED BY ROAD."
+  // On a three-hour scenic drive the road IS the comfort (Law 2). Forcing a flight there would
+  // obey the word and betray the man.
+  //
+  // So: a strong TILT, applied AFTER the DDCV has measured the ordeal honestly (door to door,
+  // now including the drive to the airport). It wins wherever comfort is comparable, and it
+  // cannot rescue an absurd option -- a 200 km flight still loses to the drive, because the
+  // check-in and the two transfers are in its clock.
+  const preferred = contract?.preferences?.preferModes?.includes(o.mode) ? PREFER_TILT : 1;
+  return (base + penalty) * preferred;
 }
 
 function bestOption(opts: LegOption[] | undefined, obj: Objective, pax: number, opts2?: UsableOpts, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights): LegOption | undefined {
