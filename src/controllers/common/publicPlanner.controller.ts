@@ -275,7 +275,20 @@ export class PublicPlannerController {
   static async plan(req: Request, res: Response) {
     try {
       const ip = (String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.ip || 'unknown';
-      const gate = allow(ip);
+
+      // ⚠️ RATE LIMIT — SWITCHED OFF FOR DEVELOPMENT. Founder, 2026-07-13.
+      //
+      // It was firing on our OWN testing and, worse, its honest message ("try again in five
+      // minutes") was being replaced by the frontend with "we could not build your plan" —
+      // so an ordinary throttle looked like a crash.
+      //
+      // ⚠️⚠️ THIS MUST GO BACK ON BEFORE THE PLANNER IS PUBLIC. The endpoint is ANONYMOUS and
+      // every call costs us a model parse and Google Directions requests. Without this gate a
+      // single script can run up our bill all night.
+      //
+      // TO RESTORE: remove PLANNER_RATE_LIMIT=off from .env and `pm2 restart 0`. Nothing else.
+      const rateLimitOn = process.env.PLANNER_RATE_LIMIT !== 'off';
+      const gate = rateLimitOn ? allow(ip) : { ok: true as const, retryMin: 0 };
       if (!gate.ok) {
         return res.status(429).json({
           status: false,
