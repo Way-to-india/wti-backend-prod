@@ -113,6 +113,69 @@ export async function gatewaysFor(stayNodeIds: string[]): Promise<Map<string, Ga
   return out;
 }
 
+/**
+ * US-805 — THE BORDER NEIGHBOUR. Founder ruling, 2026-07-13.
+ *
+ * Our designers do not respect state lines, and they are right not to. They build GANGTOK
+ * with DARJEELING -- and Darjeeling is West Bengal, which is not one of the eight sister
+ * states. So a strict region query would drop the very town our own catalogue says belongs
+ * in the trip.
+ *
+ * The ruling: PROPOSE the neighbour, NAME ITS STATE, and let him strike it out. The REGION
+ * itself stays strict -- a border town may be proposed, never anchored.
+ *
+ * A NAME IS NOT A KEY. There are two Manalis. If a name resolves to MORE THAN ONE StayNode
+ * we cannot know which one our designer meant, so WE DROP IT rather than pick the wrong
+ * twin. Today `stay_nodes` has no duplicate names at all -- this guard is here for the day
+ * it does, because that day will arrive quietly.
+ */
+export async function stayNodesByNames(names: string[]): Promise<StayNode[]> {
+  const wanted = names.map((n) => n.trim().toLowerCase()).filter(Boolean);
+  if (!wanted.length) return [];
+  try {
+    const rows = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT n.id, n.name, n.lat, n.lng, n.admin1_code, n.state_name, n.district,
+              n.tour_count, n.source_kind,
+              g.source_url AS guide_url, COALESCE(g.has_food, false) AS has_food
+         FROM stay_nodes n
+         LEFT JOIN stay_node_guides g ON g.stay_node_id = n.id
+        WHERE lower(n.name) = ANY($1::text[])`, wanted);
+
+    // THE TWIN GUARD. Two rows with one name is not a fact we may act on.
+    const byName = new Map<string, any[]>();
+    for (const r of rows) {
+      const k = String(r.name).trim().toLowerCase();
+      byName.set(k, [...(byName.get(k) ?? []), r]);
+    }
+    const out: StayNode[] = [];
+    for (const [k, group] of byName) {
+      if (group.length > 1) {
+        console.warn(`stayNodesByNames: "${k}" matches ${group.length} StayNodes - dropped. ` +
+                     'A name is not a key, and we will not guess which twin our designer meant.');
+        continue;
+      }
+      const r = group[0];
+      out.push({
+        id: String(r.id),
+        name: String(r.name),
+        lat: Number(r.lat),
+        lng: Number(r.lng),
+        admin1Code: r.admin1_code ?? null,
+        stateName: r.state_name ?? null,
+        district: r.district ?? null,
+        tourCount: Number(r.tour_count) || 0,
+        source: String(r.source_kind) as StayNode['source'],
+        guideUrl: r.guide_url ?? null,
+        hasOwnFoodNotes: r.has_food === true,
+      });
+    }
+    return out;
+  } catch (e) {
+    console.error('stayNodesByNames failed:', e);
+    return [];
+  }
+}
+
 /** Attractions hanging off a set of StayNodes. Unverified rows are NEVER returned. */
 export async function attractionsFor(stayNodeIds: string[]): Promise<Attraction[]> {
   if (!stayNodeIds.length) return [];

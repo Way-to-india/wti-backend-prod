@@ -28,9 +28,12 @@ import { anthropic, enrichmentEnabled } from '@/services/enrichment/core';
 import { verifyCity } from '@/services/route-optimizer/cityVerify';
 import { inferGateway, type StartSource } from '@/services/route-optimizer/gateway';
 import { resolveRegion, regionIsUsable, statesOf, stateNamesOf, type RegionMatch } from '@/services/route-optimizer/regions';
-import { stayNodesInStates } from '@/services/route-optimizer/spineDb';
+import { stayNodesInStates, stayNodesByNames, gatewaysFor, attractionsFor } from '@/services/route-optimizer/spineDb';
 import { nodeTier, nodeVoice, type StayNode } from '@/services/route-optimizer/spine';
-import { intentFromRaw, compileContract, counterQuestions, buildEcho, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
+import { design, type Candidate, type DesignerBrief, type Proposal } from '@/services/route-optimizer/designer';
+import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb';
+import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
+import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 
@@ -73,6 +76,102 @@ interface ParsedTrip {
  * why a man who asked for a luxury honeymoon with no trains was sold a nine-hour
  * overnight train. The slot now exists.
  */
+/**
+ * US-805 -- THE BRIEF, reduced to what the SELECTION turns on.
+ *
+ * The Sprint-7 parser already captured all of this and the region branch threw ALL of it
+ * away. This is the wire. Where the parser failed entirely (`intent` is null) we fall back
+ * to HIS OWN SENTENCE -- which is not an invention, it is a re-reading of what he wrote.
+ */
+function briefFrom(intent: TravellerIntent | null, request: string): DesignerBrief {
+  const said = (re: RegExp) => re.test(request);
+  const modes = intent?.modeStances ?? [];
+
+  // "we would prefer trains wherever possible" -- and equally, "not too much money on flights".
+  const railPreferred =
+    modes.some((m) => m.mode === 'RAIL' && m.stance === 'prefer')
+    || modes.some((m) => m.mode === 'AIR' && (m.stance === 'avoid' || m.stance === 'refuse'))
+    || (said(/\btrains?\b/i) && said(/prefer|rather|wherever possible|instead of/i));
+
+  // Romance is not in our Purpose enum unless it is a honeymoon -- but HE used the word,
+  // and his word is the brief (Law 1).
+  const romantic =
+    intent?.purpose.value === 'honeymoon'
+    || (intent?.interests ?? []).some((i) => /romanc|romantic/i.test(String(i.value)))
+    || said(/romantic|romance|honeymoon/i);
+
+  const comfortFirst =
+    intent?.budgetStance.value === 'comfort_first'
+    || intent?.budgetStance.value === 'money_no_object'
+    || intent?.comfortTier.value === 'premium'
+    || intent?.comfortTier.value === 'luxury';
+
+  // HIS CEILING, AND HIS FLOOR IF HE GAVE ONE. (Founder, 2026-07-13: a maximum is not a
+  // minimum.) `intent.nights` already holds the ceiling; the floor only exists when he
+  // stated a range, so we read it back off his own sentence.
+  const nights = intent?.nights.value;
+  const stated = nightsFromWords(request);
+  return {
+    nights: typeof nights === 'number' && nights > 0 ? Math.min(21, nights)
+          : stated ? stated.maxNights : 6,
+    minNights: stated?.minNights ?? null,
+    railPreferred,
+    romantic,
+    comfortFirst,
+    pace: intent?.pace.value ?? 'steady',
+  };
+}
+
+/**
+ * US-805 -- THE DESIGNER, WIRED.
+ *
+ * US-800b stopped the region being a dead end, but it handed him a LIST: eight states and
+ * twelve towns, choose one. A LIST IS NOT A DESIGNER. A seasoned consultant does not ask a
+ * man to pick from a menu of towns he has never heard of. HE PROPOSES.
+ *
+ * Non-fatal by construction: if anything here fails he still gets the towns, exactly as he
+ * did yesterday. A thinner answer, never a wrong one.
+ */
+async function proposeForRegion(
+  nodes: StayNode[], intent: TravellerIntent | null, request: string,
+): Promise<Proposal | null> {
+  if (!nodes.length) return null;
+  const memory = await loadDesignerMemory();
+
+  // THE BORDER NEIGHBOUR (founder ruling). Our designers build Gangtok with Darjeeling, and
+  // Darjeeling is West Bengal. A strict region filter would drop the very town our own
+  // catalogue says belongs in the trip. So we go and fetch the neighbours our designers
+  // themselves reached for -- BY NAME, and the twin guard in stayNodesByNames does the rest.
+  const inRegion = new Set(nodes.map((n) => n.name.trim().toLowerCase()));
+  const neighbourNames = new Set<string>();
+  for (const n of nodes) {
+    for (const p of coDesignedWith(memory, n.name)) {
+      if (!inRegion.has(p.pairsWith.trim().toLowerCase())) neighbourNames.add(p.pairsWith);
+    }
+  }
+  const neighbours = neighbourNames.size ? await stayNodesByNames([...neighbourNames]) : [];
+
+  const all = [...nodes, ...neighbours];
+  const ids = all.map((n) => n.id);
+  const [gwMap, attractions] = await Promise.all([gatewaysFor(ids), attractionsFor(ids)]);
+
+  // A zero here means WE HAVE NOT SURVEYED IT -- not that there is nothing to see. designer.ts
+  // knows that and never reads a zero as an absence.
+  const attrCount = new Map<string, number>();
+  for (const a of attractions) {
+    if (a.stayNodeId) attrCount.set(a.stayNodeId, (attrCount.get(a.stayNodeId) ?? 0) + 1);
+  }
+
+  const candidates: Candidate[] = all.map((n) => ({
+    node: n,
+    gateways: gwMap.get(n.id) ?? [],
+    attractions: attrCount.get(n.id) ?? 0,
+    outOfRegion: !inRegion.has(n.name.trim().toLowerCase()),
+  }));
+
+  return design(candidates, memory, briefFrom(intent, request));
+}
+
 async function parseIntent(text: string): Promise<{ trip: ParsedTrip; raw: RawIntent } | null> {
   if (!enrichmentEnabled()) return null;
   try {
@@ -305,6 +404,23 @@ export class PublicPlannerController {
           why: nodeVoice(n),
         }));
 
+        // ---- US-805 -- WE PROPOSE. WE DO NOT HAND HIM A MENU. -------------------------
+        //
+        // The towns above are still there, and he may still overrule us with any of them.
+        // But a consultant LEADS. He says "I would give you Guwahati, Shillong and Kaziranga",
+        // and then he says exactly how sure he is, and exactly what he left out and why.
+        let proposal: Proposal | null = null;
+        try {
+          proposal = await proposeForRegion(nodes, intent, request);
+        } catch (e) {
+          // He still gets the towns. A thinner answer, never a wrong one.
+          console.error('designer failed (non-fatal):', e);
+        }
+        const stopWords = proposal
+          ? proposal.stops.map((s) => s.name).reduce((acc, n, i, a) =>
+              i === 0 ? n : i === a.length - 1 ? `${acc} and ${n}` : `${acc}, ${n}`, '')
+          : '';
+
         return res.status(200).json({
           status: false,          // not a plan yet — a question, and a real one
           need: 'destinations',
@@ -315,7 +431,22 @@ export class PublicPlannerController {
             states: stateNamesOf(m),      // never a code. He is a person, not a database.
           },
           towns,
-          message: towns.length
+          // THE PROPOSAL. Every stop carries its state, its tier, its night count and the
+          // grade of the evidence behind it. Every rejection carries a HUMAN reason.
+          proposal,
+          message: proposal
+            ? `You said ${m.quote}, and I have kept everything else you told me too. `
+              + `With trains rather than flights, I would give you ${stopWords} — `
+              + `${proposal.totalNights} nights of stay, well inside the `
+              + `${briefFrom(intent, request).nights} you allowed, and the journey either side. `
+              + `${proposal.signalVoice}`
+              // HE ASKED FOR A FLOOR WE COULD NOT REACH. HE HEARS IT FROM US, FIRST, AND
+              // WITH A WAY OUT — never as a number he has to count for himself.
+              + (proposal.shortfall
+                  ? ` ${proposal.shortfall.finding} ${proposal.shortfall.reason} `
+                    + proposal.shortfall.options[0]
+                  : ' Change any of it and I will rebuild around you.')
+            : towns.length
             ? `${m.region.label} is ${stateNamesOf(m).length} states, and they are a long way `
               + 'apart. These are the towns we know there — tell me which of them appeals to '
               + 'you, or say "you choose", and I will build the rest of the trip around it.'

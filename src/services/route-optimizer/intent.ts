@@ -190,6 +190,114 @@ export function profileForComposition(c: Composition | null): GroupProfileName {
  * DB, no clock. The Haiku call lives in the controller; everything that decides what we
  * BELIEVE lives here, where it can be tested against his actual words.
  */
+/**
+ * US-805 — HIS TRIP LENGTH, IN HIS OWN WORDS. AND A CEILING IS NOT A TARGET.
+ *
+ * THE DEFECT THIS CLOSES. Found on the LIVE PAYLOAD, 2026-07-13 — never by a unit test.
+ *
+ *   He wrote: "Up to 10 days maximum."
+ *   We recorded: nights = null, provenance = 'we_need_it'.
+ *
+ * So the echo panel would have told a man we did not know how long his trip was, in the
+ * same breath as he told us. And the Designer, finding nothing, fell back to a default of
+ * six — WE INVENTED HIS TRIP LENGTH WHILE HE WAS LOOKING AT US.
+ *
+ * ---------------------------------------------------------------------------------
+ * FOUNDER, 2026-07-13, AND HE IS RIGHT:
+ *
+ *   "Up to 10 days maximum does not mean 10 days is minimum too."
+ *   "Between 8 to 10 days does signify that minimum 8 days and maximum 10 days."
+ *
+ * A CEILING IS NOT A TARGET. A man who says "no more than ten days" has not asked for a
+ * ten-day trip — he has told us where his patience ends. If we read that as a target we
+ * will pad his holiday with a town he never wanted, to fill a number he never asked for.
+ *
+ * A RANGE IS TWO FACTS. "Between 8 and 10 days" is a FLOOR as well as a ceiling, and a man
+ * who says it and is handed four nights has been ignored just as surely.
+ *
+ * So this returns BOTH bounds, and it says which of them he actually gave us.
+ *
+ * ---------------------------------------------------------------------------------
+ * WHY IT STAYS SILENT ON TWO LOOSE QUANTITIES.
+ *
+ * "3 days in Delhi and 4 days in Agra" holds two numbers and NEITHER is the trip length.
+ * A rule that grabbed the largest would say "you said 4 nights" — a lie wearing his own
+ * words, which is worse than the honest "we need it" we say today. WHERE WE CANNOT READ
+ * HIM, WE ASK.
+ *
+ * AND DAYS ARE NOT NIGHTS. A ten-day trip is NINE nights. Getting that off by one is how a
+ * traveller ends up with a hotel booked for a night he is sitting on a train.
+ *
+ * PURE. Give it his sentence, get a reading or an honest null.
+ */
+const WORD_NUMBERS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
+  eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14,
+  fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20,
+};
+
+const NUM = '\\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty';
+
+const toNum = (w: string): number | null => {
+  const n = /^\d+$/.test(w) ? parseInt(w, 10) : WORD_NUMBERS[w.toLowerCase()];
+  return Number.isFinite(n) && n >= 1 && n <= 30 ? n : null;
+};
+
+/** Days are not nights. Ten days is nine nights. */
+const toNights = (n: number, unit: string): number => (/^day/i.test(unit) ? n - 1 : n);
+
+export interface StatedLength {
+  /** The most nights he will accept. Always present — it is the binding constraint. */
+  maxNights: number;
+  /** The fewest he wants. ONLY when he gave a range. Null means he set no floor. */
+  minNights: number | null;
+  /** 'ceiling' = "up to 10 days". 'range' = "8 to 10 days". 'exact' = "10 days". */
+  bound: 'ceiling' | 'range' | 'exact';
+  /** HIS words, recovered from his sentence. A quote we composed is not a quote. */
+  quote: string;
+}
+
+export function nightsFromWords(text: string | null | undefined): StatedLength | null {
+  if (!text) return null;
+
+  // A RANGE FIRST — "between 8 and 10 days", "8 to 10 days", "8-10 nights".
+  // It must win, because a range also contains something that looks like a bare number.
+  const rangeRe = new RegExp(
+    `\\b(?:between\\s+)?(${NUM})\\s*(?:-|–|to|and|or)\\s*(${NUM})\\s*(days?|nights?)\\b`, 'i');
+  const rm = text.match(rangeRe);
+  if (rm) {
+    const lo = toNum(rm[1]), hi = toNum(rm[2]);
+    if (lo && hi && hi > lo) {
+      const minNights = toNights(lo, rm[3]);
+      const maxNights = toNights(hi, rm[3]);
+      if (maxNights >= 1) {
+        return { maxNights, minNights: minNights >= 1 ? minNights : null, bound: 'range', quote: rm[0] };
+      }
+    }
+  }
+
+  // Otherwise exactly ONE quantity, or we do not claim to know.
+  const one = [...text.matchAll(new RegExp(`\\b(${NUM})\\s*(days?|nights?)\\b`, 'gi'))];
+  if (one.length !== 1) return null;
+
+  const [quote, num, unit] = one[0];
+  const n = toNum(num);
+  if (!n) return null;
+  const maxNights = toNights(n, unit);
+  if (maxNights < 1) return null;
+
+  // IS IT A CEILING OR A TARGET? His own qualifier decides — never us.
+  // "up to 10 days", "10 days maximum", "max 10 days", "no more than 10 days", "within 10 days"
+  const i = text.toLowerCase().indexOf(quote.toLowerCase());
+  const before = text.slice(Math.max(0, i - 24), i).toLowerCase();
+  const after = text.slice(i + quote.length, i + quote.length + 14).toLowerCase();
+  const isCeiling =
+    /\b(up\s*to|upto|max|maximum|at\s*most|no\s*more\s*than|within|under|less\s*than|not\s*more\s*than)\b[^a-z]*$/.test(before)
+    || /^[^a-z]*\b(max|maximum|at\s*most|or\s*less|or\s*fewer)\b/.test(after);
+
+  return { maxNights, minNights: null, bound: isCeiling ? 'ceiling' : 'exact', quote };
+}
+
 export function intentFromRaw(raw: RawIntent | null | undefined, text: string): TravellerIntent {
   const r: RawIntent = raw ?? {};
   const quotes = r.quotes ?? {};
@@ -265,8 +373,15 @@ export function intentFromRaw(raw: RawIntent | null | undefined, text: string): 
   const nightsVal = Number.isFinite(Number(r.nights)) && Number(r.nights) > 0 ? Number(r.nights) : nightsFromCities;
 
   const month: Reading<number> = read<number>(monthVal, quotes.month, text, 'read from your message');
+  // US-805 — WHEN THE MODEL DROPPED HIS TRIP LENGTH, READ IT BACK OUT OF HIS OWN SENTENCE.
+  // "Up to 10 days maximum" was being thrown away, and the default that replaced it was OURS.
+  const statedNights = nightsVal == null ? nightsFromWords(text) : null;
+
+  // The value we plan to is his CEILING — the most he will accept. It is never a target to
+  // be filled: nothing downstream pads a trip to reach it. The quote is HIS, so the echo
+  // chip shows him "up to 10 days maximum" in his own words, not a number we made up.
   const nights: Reading<number> = nightsVal == null
-    ? weNeedIt<number>()
+    ? (statedNights ? heSaid(statedNights.maxNights, statedNights.quote) : weNeedIt<number>())
     : (verifyQuote(quotes.nights, text)
         ? heSaid(nightsVal, verifyQuote(quotes.nights, text) as string)
         : weInferred(nightsVal, 'we split your days across the places you named', CONF.WEAK));
