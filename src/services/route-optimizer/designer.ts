@@ -51,6 +51,8 @@ import type { StayNode, Gateway } from './spine';
 import { nodeTier, nodeVoice, railReachable, gatewayDriveHours } from './spine';
 import type { DesignerMemory, Tier, Confidence } from './designerMemory';
 import { coDesignStrength, coDesignedWith, pairConfidence, nightsWeCanStandBehind } from './designerMemory';
+import type { FoodFact, FoodNeed, FoodStatus } from './food';
+import { foodStatus, foodVoiceFor, foodParagraph, foodRank } from './food';
 
 // ---- what he told us -----------------------------------------------------------
 
@@ -80,6 +82,13 @@ export interface DesignerBrief {
   /** comfort-first / premium / luxury. The drive from the railhead is held to a shorter rule. */
   comfortFirst: boolean;
   pace: 'savour' | 'steady' | 'packed';
+  /**
+   * US-806 — "we do not consume even eggs". A CONSTRAINT, NOT A PREFERENCE.
+   * It can outrank a hotel star, and it decides the lunch halt on a five-hour drive.
+   */
+  foodNeed?: FoodNeed;
+  /** HIS words for it, so we may quote him back rather than paraphrase him. */
+  foodQuote?: string | null;
 }
 
 /** One town we could offer him, with everything the choice turns on. */
@@ -92,6 +101,8 @@ export interface Candidate {
   /** TRUE only for a town OUTSIDE the region he named — a neighbour our designers cross to.
    *  Founder ruling 2026-07-13: propose it, NAME ITS STATE, and let him strike it out. */
   outOfRegion: boolean;
+  /** US-806. ABSENT means WE HAVE NOT CHECKED — never "there is no vegetarian food here". */
+  food?: FoodFact | null;
 }
 
 // ---- what we propose -----------------------------------------------------------
@@ -110,6 +121,9 @@ export interface ProposedStop {
   railheadNote: string | null;
   /** He may strike this out. It is a chip, not a decree. */
   outOfRegion: boolean;
+  /** US-806. 'unknown' is the honest answer today, and it is SPOKEN, never swallowed. */
+  foodStatus: FoodStatus;
+  foodNote: string | null;
 }
 
 /** A town we looked at and did not offer — AND THE HUMAN REASON WHY NOT. */
@@ -150,6 +164,8 @@ export interface Proposal {
   totalNights: number;
   /** Null when his floor was met, or when he set none. NEVER null after a silent shortfall. */
   shortfall: Shortfall | null;
+  /** US-806. The food paragraph he will actually read. Null only when he asked for nothing. */
+  foodParagraph: string | null;
   /** The railhead the whole circuit hangs off. He said trains; this is the answer to that. */
   gateway: { name: string; code: string | null; services: number; kind: 'rail' | 'air' } | null;
   /** The strongest tier that chose this set. */
@@ -436,13 +452,29 @@ export function design(
   const reject = (c: Candidate, reason: string) =>
     rejected.push({ name: c.node.name, state: c.node.stateName, reason });
 
-  // ---- STEP 4a — THE GATE HE HIMSELF SET. He said trains. -----------------------
+  const need: FoodNeed = brief.foodNeed ?? 'none';
+
+  // ---- STEP 4a — THE GATES HE HIMSELF SET. Trains, and the food. ----------------
+  //
+  // THE FOOD GATE ONLY BITES WHERE WE KNOW. A town we have VERIFIED we cannot feed him in is
+  // removed — I would rather lose the town than sit him down to a plate he cannot eat. But a
+  // town we have NOT CHECKED is NOT removed, because an empty row is a fact about OUR SURVEY,
+  // not about the town. Dropping Shillong because we have never eaten there would be LYING
+  // WITH A NULL, and it is the same sin as inventing a restaurant, wearing a modest coat.
   const passed: Candidate[] = [];
   for (const c of candidates) {
     const g = railGate(c, brief);
-    if (g.pass) passed.push(c);
-    else if (!c.outOfRegion) reject(c, g.reason!);   // an out-of-region town we never offered
-  }                                                  // is not a town he needs a reason for.
+    if (!g.pass) {
+      if (!c.outOfRegion) reject(c, g.reason!);      // an out-of-region town we never offered
+      continue;                                      // is not a town he needs a reason for.
+    }
+    if (foodRank(c.food, need) === -1) {
+      reject(c, `We looked in ${c.node.name} and we could not find a kitchen we would put you in `
+        + 'front of. I would rather lose the town than sit you down to a plate you cannot eat.');
+      continue;
+    }
+    passed.push(c);
+  }
   if (!passed.length) return null;
 
   // ---- STEP 4b — THE ANCHOR. Where he steps off the train. ----------------------
@@ -494,7 +526,10 @@ export function design(
       .filter((c) => !seen.has(c.node.name.trim().toLowerCase()) && !c.outOfRegion)
       .filter((c) => !isGatewayOf(c, selected))
       .sort((a, b) =>
-        (b.attractions - a.attractions)
+        // A town we have CHECKED and can feed him in wins a tie. A TIE-BREAK, never an
+        // override: our designers' thirty years outrank our restaurant list, and always will.
+        (foodRank(b.food, need) - foodRank(a.food, need))
+        || (b.attractions - a.attractions)
         || (driveBand(a, brief) - driveBand(b, brief))
         || (b.node.tourCount - a.node.tourCount)
         || a.node.name.localeCompare(b.node.name));
@@ -519,6 +554,9 @@ export function design(
       why: nodeVoice(c.node),
       railheadNote: g.note ?? null,
       outOfRegion: c.outOfRegion,
+      // 'unknown' today, for every North-East town. WE SAY SO. We do not reassure him.
+      foodStatus: foodStatus(c.food, need),
+      foodNote: foodVoiceFor(c.node.name, c.food, need),
     };
   });
 
@@ -623,6 +661,8 @@ export function design(
     stops,
     totalNights: stops.reduce((s, x) => s + x.nights, 0),
     shortfall,
+    foodParagraph: foodParagraph(need, brief.foodQuote ?? null,
+      stops.map((st) => ({ name: st.name, status: st.foodStatus }))),
     gateway,
     tier,
     signal: voice.signal,

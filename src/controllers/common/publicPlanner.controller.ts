@@ -32,6 +32,8 @@ import { stayNodesInStates, stayNodesByNames, gatewaysFor, attractionsFor } from
 import { nodeTier, nodeVoice, type StayNode } from '@/services/route-optimizer/spine';
 import { design, type Candidate, type DesignerBrief, type Proposal } from '@/services/route-optimizer/designer';
 import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb';
+import { foodFor } from '@/services/route-optimizer/foodDb';
+import { foodNeedFromWords } from '@/services/route-optimizer/food';
 import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
 import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
@@ -111,6 +113,12 @@ function briefFrom(intent: TravellerIntent | null, request: string): DesignerBri
   // stated a range, so we read it back off his own sentence.
   const nights = intent?.nights.value;
   const stated = nightsFromWords(request);
+
+  // US-806 — "we do not consume even eggs". The word EVEN is doing real work: he is
+  // pre-empting the answer he has been given before, by people who thought an omelette was
+  // vegetarian. He has met us before. We do not do it to him again.
+  const food = foodNeedFromWords(request);
+
   return {
     nights: typeof nights === 'number' && nights > 0 ? Math.min(21, nights)
           : stated ? stated.maxNights : 6,
@@ -119,6 +127,8 @@ function briefFrom(intent: TravellerIntent | null, request: string): DesignerBri
     romantic,
     comfortFirst,
     pace: intent?.pace.value ?? 'steady',
+    foodNeed: food?.need ?? 'none',
+    foodQuote: food?.quote ?? null,
   };
 }
 
@@ -153,7 +163,9 @@ async function proposeForRegion(
 
   const all = [...nodes, ...neighbours];
   const ids = all.map((n) => n.id);
-  const [gwMap, attractions] = await Promise.all([gatewaysFor(ids), attractionsFor(ids)]);
+  const [gwMap, attractions, foodMap] = await Promise.all([
+    gatewaysFor(ids), attractionsFor(ids), foodFor(ids),
+  ]);
 
   // A zero here means WE HAVE NOT SURVEYED IT -- not that there is nothing to see. designer.ts
   // knows that and never reads a zero as an absence.
@@ -167,6 +179,8 @@ async function proposeForRegion(
     gateways: gwMap.get(n.id) ?? [],
     attractions: attrCount.get(n.id) ?? 0,
     outOfRegion: !inRegion.has(n.name.trim().toLowerCase()),
+    // ABSENT means WE HAVE NOT CHECKED. food.ts says so out loud; it never guesses.
+    food: foodMap.get(n.id) ?? null,
   }));
 
   return design(candidates, memory, briefFrom(intent, request));
@@ -445,7 +459,11 @@ export class PublicPlannerController {
               + (proposal.shortfall
                   ? ` ${proposal.shortfall.finding} ${proposal.shortfall.reason} `
                     + proposal.shortfall.options[0]
-                  : ' Change any of it and I will rebuild around you.')
+                  : '')
+              // US-806 — HE TOLD US HE DOES NOT EAT EGGS. He hears what we know and what we
+              // do not, before he pays us anything.
+              + (proposal.foodParagraph ? ` ${proposal.foodParagraph}` : '')
+              + ' Change any of it and I will rebuild around you.'
             : towns.length
             ? `${m.region.label} is ${stateNamesOf(m).length} states, and they are a long way `
               + 'apart. These are the towns we know there — tell me which of them appeals to '
