@@ -449,6 +449,12 @@ export class PublicPlannerController {
             states: stateNamesOf(m),      // never a code. He is a person, not a database.
           },
           towns,
+          // US-811 — THE CHIPS. He is entitled to see what we heard, BEFORE we build on it,
+          // and each chip must say whether HE said it, WE guessed it, or we still need it.
+          // The echo has existed since Sprint 7 and the region branch never sent it. A
+          // Designer that guesses in silence is worse than the dead end it replaced.
+          echo: intent ? buildEcho(intent) : [],
+          questions: intent ? counterQuestions(intent) : [],
           // THE PROPOSALS. Every stop carries its state, its tier, its night count and the
           // grade of the evidence behind it. Every rejection carries a HUMAN reason.
           // `proposal` is proposals[0] and is kept so nothing downstream breaks.
