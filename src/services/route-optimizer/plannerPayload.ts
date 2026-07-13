@@ -201,6 +201,20 @@ function spokenMode(id: string | number): string {
   }
 }
 
+/**
+ * The note was written to stand alone. The head now names the service. Remove the ONE
+ * redundant mention — the leading "<service> — " — and change nothing else.
+ */
+function dedupeService(note: string, id: string | number): string {
+  const service = String(id || '').split(':').slice(1).join(':').trim();
+  if (!service) return note;
+  const esc = service.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // only when it is the very FIRST thing the note says, and only that one occurrence
+  const stripped = note.replace(new RegExp(`^\\s*${esc}\\s*[—\\-:]\\s*`, 'i'), '');
+  if (stripped === note || !stripped) return note;
+  return stripped.charAt(0).toUpperCase() + stripped.slice(1);
+}
+
 export function buildReasoning(legs: PlanLeg[]): PlannerReasoningLine[] {
   const lines: PlannerReasoningLine[] = [];
   for (const leg of legs) {
@@ -214,7 +228,19 @@ export function buildReasoning(legs: PlanLeg[]): PlannerReasoningLine[] {
       // internal row id printed onto a page that had just promised him a tour designer.
       const head = `${leg.from} → ${leg.to} — ${spokenMode(r.id)}`
         + (dur ? `, ${dur}` : '');
-      lines.push({ text: r.note ? `${head}. ${r.note}` : head, ok: r.chosen === true });
+      // AND WE SAY THE TRAIN'S NAME ONCE. (Founder, on the live site, 2026-07-13.)
+      //
+      //   "16127 MS GURUVAYUR EX — four hours" is a note the ENGINE wrote for the rejected-
+      //   options list, where it stands alone and must name its own service. Pasted after a
+      //   head that ALREADY names it, it stutters:
+      //
+      //     by train 16127 MS GURUVAYUR EX, 4 h 18. 16127 MS GURUVAYUR EX — four hours.
+      //
+      // The note is right and the head is right; only the JOIN was wrong. So we strip the
+      // service name off the FRONT of the note when the head has already said it. We never
+      // touch the note's own words — a machine that edits a human sentence will one day edit
+      // the meaning out of it.
+      lines.push({ text: r.note ? `${head}. ${dedupeService(r.note, r.id)}` : head, ok: r.chosen === true });
     }
   }
   return lines;
