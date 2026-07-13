@@ -79,7 +79,12 @@ check('party = 2, couple — and he SAID it ("I along with my wife")', it.party.
 check('a couple maps to the standard physiology profile', it.party.value?.profile === 'standard');
 
 // ---- 6. the month: the one thing we genuinely need ---------------------------------
-check('month is we_need_it (not silently guessed)', it.timeInHand.provenance === 'we_need_it' || it.timeInHand.value?.month == null);
+check('month is we_need_it (not silently guessed)', it.month.provenance === 'we_need_it' && it.month.value == null, JSON.stringify(it.month));
+// TWO FACTS, TWO RECEIPTS. `timeInHand` was one Reading<{nights,month}> and it let the nights WE
+// invented ride into the echo panel on the receipt he gave us for the month. It was split for that
+// reason. This pins the split: neither may ever be able to speak for the other.
+check('nights carries its OWN receipt, separate from the month', it.nights.provenance !== 'he_said' || !!it.nights.quote, JSON.stringify(it.nights));
+check('the two are separate Readings — neither can vouch for the other', it.month !== (it.nights as unknown));
 check('origin is we_need_it before the gateway step', it.origin.provenance === 'we_need_it');
 const withOrigin = withInferredOrigin(it, 'Bengaluru', 'the gateway for Coorg and Goa');
 check('the gateway origin comes back as we_inferred — never as his word', withOrigin.origin.value === 'Bengaluru' && withOrigin.origin.provenance === 'we_inferred');
