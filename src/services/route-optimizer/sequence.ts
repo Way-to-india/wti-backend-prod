@@ -22,6 +22,47 @@ export interface SequenceOptions {
   end?: number | null;
 }
 
+/**
+ * THE NO-REPEAT INVARIANT -- founder ruling, 2026-07-13.
+ *
+ *   "It started from Madurai and wanted to bring the traveller BACK to Madurai. That is
+ *    not how it should be unless asked for. There was no need to bring the user back."
+ *
+ * A tour that visits a city twice is not a suboptimal tour. IT IS A BROKEN ONE, and it must
+ * never reach a page.
+ *
+ * The sequencer below CANNOT produce one -- Held-Karp walks a bitmask, so every node is
+ * visited exactly once, by construction. So when production served a real pilgrim
+ *
+ *     Madurai -> Kanyakumari -> Tirupati -> Rameswaram -> TIRUPATI -> Madurai
+ *
+ * the repeat did not come from the solver. It was appended ABOVE it, by a return-journey
+ * builder that pushed its hops onto the sequence without ever asking whether the city was
+ * already in the tour. That is why this invariant is exported: the thing that breaks it does
+ * not live in this file, and the thing that can prove it never happens does.
+ *
+ * THE ONE LEGAL REPEAT is the origin, as the closing node of a round trip the traveller
+ * ACTUALLY ASKED FOR. Not a gateway. Not an access city. The old code carried the comment
+ * "the gateway may legitimately recur." It may not.
+ */
+export function repeatedCities(seq: string[], opts: { closingOrigin?: boolean } = {}): string[] {
+  const key = (s: string) => s.trim().toLowerCase();
+  // A round trip he asked for closes on its origin. That last node is not a repeat; it is
+  // the point. Everything BEFORE it still has to be unique -- which is exactly the case the
+  // live defect proved: even as a closed loop, Tirupati twice was still a bug.
+  const closes = !!opts.closingOrigin && seq.length > 1 && key(seq[0]) === key(seq[seq.length - 1]);
+  const body = closes ? seq.slice(0, -1) : seq;
+
+  const seen = new Set<string>();
+  const dupes: string[] = [];
+  for (const n of body) {
+    const k = key(n);
+    if (seen.has(k) && !dupes.some((d) => key(d) === k)) dupes.push(n);
+    seen.add(k);
+  }
+  return dupes;
+}
+
 export function pathCost(order: number[], cost: number[][]): number {
   let s = 0;
   for (let i = 1; i < order.length; i++) s += cost[order[i - 1]][order[i]] ?? INF;

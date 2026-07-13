@@ -14,6 +14,7 @@ import { weightsForObjective, type LegCtx } from '@/services/route-optimizer/ddc
 import { applyTPP } from '@/services/route-optimizer/tpp';
 import type { OrdealParty } from '@/services/route-optimizer/ordeal';
 import type { AnchorCandidate } from '@/services/route-optimizer/anchors';
+import { repeatedCities } from '@/services/route-optimizer/sequence';
 import { toPlannerPayload } from '@/services/route-optimizer/plannerPayload';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
 import { roadTerrainFor } from '@/services/route-optimizer/roadTerrainDb';
@@ -543,7 +544,14 @@ export class RouteOptimizerController {
     let gateway: string | null = null;
     let gatewayMode: 'AIR' | 'RAIL' | null = null;
     for (const l of plan.legs) if (l.mode === 'AIR' || l.mode === 'RAIL') { gateway = l.to; gatewayMode = l.mode; }
-    if (gateway && (gateway.toLowerCase() === lastDest.toLowerCase() || gateway.toLowerCase() === origin.toLowerCase())) gateway = null;
+    // THE GATEWAY MAY NOT RECUR. It used to be rejected only when it happened to BE the last
+    // destination or the origin -- so a gateway sitting anywhere ELSE in the tour was waved
+    // through and appended a second time. That is precisely how Tirupati was visited twice.
+    //
+    // A gateway is an ACCESS POINT: somewhere he passes through to reach somewhere he sleeps.
+    // If he is already sleeping in it, it is not an access point. It is a city he has seen,
+    // and routing him back through it is not "access", it is a 600 km detour.
+    if (gateway && seq.some((n) => n.toLowerCase() === gateway!.toLowerCase())) gateway = null;
 
     const contract = input?.contract;
     const tol = toleranceForProfile(input?.profile);
@@ -659,7 +667,20 @@ export class RouteOptimizerController {
     plan.map.roadTotalKm = Math.round(plan.map.legs.filter((l) => l.mode === 'road' && l.km).reduce((a, l) => a + (l.km || 0), 0));
     const overnights = plan.legs.filter((l) => l.overnight).length;
     plan.totals.hotelNights = Math.max(0, retDay - 1 - overnights);
-    plan.sequence = [...plan.sequence, ...hops.map((h) => h.to)];
+    // THE APPEND THAT NEVER LOOKED. `[...plan.sequence, ...hops.map(h => h.to)]` pushed every
+    // hop target onto the tour with no idea whether it was already there. The origin closing a
+    // round trip is the ONE legal repeat (see repeatedCities). Anything else already in the
+    // tour is a bug, and we drop it here rather than draw it on a map for a traveller.
+    const inTour = new Set(plan.sequence.map((n) => n.toLowerCase()));
+    const homeward = hops
+      .map((h) => h.to)
+      .filter((n, i, arr) => (i === arr.length - 1 ? true : !inTour.has(n.toLowerCase())));
+    plan.sequence = [...plan.sequence, ...homeward];
+
+    // TRIPWIRE. Correct-by-construction above; this is the thing that would have SCREAMED
+    // instead of shipping. 724 tests were green while this exact line served a broken tour.
+    const dupes = repeatedCities(plan.sequence, { closingOrigin: true });
+    if (dupes.length) console.error('[ROUTE-MIND] INVARIANT BREACH -- city visited twice:', dupes.join(', '), '| sequence:', plan.sequence.join(' -> '));
   }
 
   /** A physically different road corridor for the plan's longest leg (OSRM alternatives). */

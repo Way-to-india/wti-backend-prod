@@ -560,10 +560,31 @@ export class PublicPlannerController {
 
       // sanitized body for the SAME admin pipeline — planner on, enrichment
       // cache-first 'fast' (never deep), no pins/halts/custom coords
+      // ---- THE FOUNDER'S LAW, 2026-07-13 -----------------------------------
+      //
+      //   "It started from Madurai and wanted to bring the traveller BACK to Madurai. That is
+      //    not how it should be unless asked for. There was no need to bring the user back."
+      //
+      // `tripType` has never been sent by this controller, and the engine's default is
+      //     body.tripType === 'oneway' ? 'oneway' : 'roundtrip'
+      // -- so EVERY traveller who has ever used the public planner was silently sent home.
+      // A 56-year-old pilgrim was driven 600 km back up the peninsula to the town he started
+      // in, and the only reason was a default nobody had ever typed.
+      //
+      // THE TRIP DOES NOT HAVE TO COME BACK. Open-jaw is the CORRECT answer; the round trip is
+      // the SPECIAL CASE. He asks for it by naming an end city -- and if that end city is the
+      // one he started from, then and only then do we take him home.
+      //
+      // (The CRM desk keeps its own default: an operator pricing a package may need the return
+      //  leg costed, and silently deleting it would mis-price live quotes. That default now
+      //  applies ONLY to direct CRM calls, because this call site is explicit.)
+      const askedToReturn = !!(end && start && end.trim().toLowerCase() === start.trim().toLowerCase());
+
       const innerBody = {
         cities,
         start: start || cities[0].name,
         end: end || null,
+        tripType: askedToReturn ? ('roundtrip' as const) : ('oneway' as const),
         objective: OBJECTIVE_MAP[String(body.objective)] || 'BALANCED',
         pax, profile, month,
         // no longer hardcoded: he decides, and where he said nothing we keep the old default.
