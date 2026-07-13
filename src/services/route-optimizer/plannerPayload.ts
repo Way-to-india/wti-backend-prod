@@ -186,7 +186,7 @@ function hydrateTransit(transit: NonNullable<DayItem['transit']>, leg: PlanLeg |
  *
  * The FACTS do not change by one digit. Only the words do.
  */
-function spokenMode(id: string): string {
+function spokenMode(id: string | number): string {
   const [mode, ...rest] = String(id || '').split(':');
   const service = rest.join(':').trim();
   switch ((mode || '').toUpperCase()) {
