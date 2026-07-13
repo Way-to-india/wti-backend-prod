@@ -63,7 +63,12 @@ function overall(d: Record<Dim, DimStatus>, decision: string): CityStatus {
 }
 
 function noteFromDims(name: string, d: Record<Dim, DimStatus>): string {
-  const order: Dim[] = ['hotels', 'guides', 'content'];
+  // GUIDES ARE NO LONGER FETCHED. Founder rule, 2026-07-13: we do not name travel companies
+  // on our own itinerary — they are our competition. The section is gone from the card, so
+  // paying a model to go and find them would be paying to fill a hole we have closed.
+  // (guideFinder.ts is kept, with its competitor filter, in case we ever list INDIVIDUAL
+  //  licensed guides. It is simply not called.)
+  const order: Dim[] = ['hotels', 'content'];
   const parts = order.map((k) => {
     const s = d[k];
     if (s === 'ready') return `${k} ✓`;
