@@ -10,7 +10,7 @@
  */
 import { describe, it, expect } from 'bun:test';
 import {
-  design, maxStops, railGate, pickAnchor, isGatewayOf, circuitVoice, RAILHEAD_DRIVE_HOURS,
+  design, designAll, maxStops, railGate, pickAnchor, isGatewayOf, circuitVoice, RAILHEAD_DRIVE_HOURS,
   type Candidate, type DesignerBrief,
 } from '../designer';
 import type { StayNode, Gateway } from '../spine';
@@ -266,21 +266,78 @@ describe('US-805 — THE PROPOSAL: the catalogue answers the North-East travelle
     expect(p.signalVoice).toContain('a handful of times');
   });
 
-  it('tells him about the OTHER real circuit instead of quietly burying it', () => {
-    const other = p.alsoConsidered[0];
-    expect(other.stops).toContain('Gangtok');
-    expect(other.stops).toContain('Darjeeling');
-    expect(other.why).toContain('New Jalpaiguri');    // a different railhead — the honest reason
+  it('refuses Tawang by name even though it belongs to NO circuit — silence is forbidden', () => {
+    // This was a real regression the moment circuits arrived: Tawang is in no cluster, so with
+    // rejections computed per-circuit, NOBODY reported it and it vanished.
+    expect(p.rejected.some((r) => r.name === 'Tawang')).toBe(true);
+  });
+});
+
+// ================================================================================
+// FOUNDER, 2026-07-13: "Why only one tour plan? There could have been 3 plans."
+//
+// HE IS RIGHT. The first cut found the circuits, picked the best, and demoted the rest to a
+// sentence. A consultant who found two good answers and showed you one is not saving you
+// effort — he is making your decision for you and calling it service.
+// ================================================================================
+describe('US-805b — every real trip in the region, not one and a footnote', () => {
+  const trips = designAll(POOL, MEMORY, HIM);
+
+  it('returns BOTH North-East circuits, not one', () => {
+    expect(trips.length).toBe(2);
+  });
+
+  it('the first is the Assam circuit, in through Guwahati', () => {
+    expect(trips[0].stops.map((s) => s.name).sort()).toEqual(['Guwahati', 'Kaziranga', 'Shillong']);
+    expect(trips[0].gateway?.code).toBe('GHY');
+  });
+
+  it('the second is the Sikkim circuit, in through a DIFFERENT railhead', () => {
+    const names = trips[1].stops.map((s) => s.name);
+    expect(names).toContain('Gangtok');
+    expect(names).toContain('Darjeeling');
+    expect(trips[1].gateway?.code).toBe('NJP');       // New Jalpaiguri — a different corner
+  });
+
+  it('does NOT split Gangtok and Darjeeling into two trips — our designers built them TOGETHER', () => {
+    // The founder asked for three. Our own catalogue pairs Gangtok with Darjeeling twice, so
+    // splitting them would be US inventing a division our designers do not make.
+    expect(trips.length).not.toBe(3);
+    const sikkim = trips[1].stops.map((s) => s.name);
+    expect(sikkim).toContain('Gangtok');
+    expect(sikkim).toContain('Darjeeling');
+  });
+
+  it('still refuses Bagdogra in the Sikkim trip — it is the airport, not a night', () => {
+    expect(trips[1].stops.map((s) => s.name)).not.toContain('Bagdogra');
+  });
+
+  it('carries the region-wide refusals into EVERY trip — he sees what we ruled out either way', () => {
+    for (const t of trips) expect(t.rejected.some((r) => r.name === 'Tawang')).toBe(true);
+  });
+
+  it('never goes silent where our designers said nothing — it falls to Tier 2 and says so', () => {
+    // A region we have written about but never sold in: no co-design clusters at all.
+    const unsold = designAll([AIZAWL, ZUNHEBOTO], { pairs: [], nights: [] },
+      { ...HIM, romantic: false, comfortFirst: false });
+    expect(unsold.length).toBe(1);
+    expect(unsold[0].stops.length).toBeGreaterThanOrEqual(1);
+    expect(unsold[0].tier).toBe('transport_poi');     // and it DECLARES the weaker tier
+  });
+
+  it('returns nothing at all — and invents nothing — when the region truly has nothing', () => {
+    expect(designAll([TAWANG], MEMORY, HIM)).toEqual([]);
   });
 
   it('does NOT pad a romantic couple\'s ten days with a town nobody has ever sold', () => {
-    expect(p.stops.map((s) => s.name)).not.toContain('Aizawl');
+    expect(trips[0].stops.map((s) => s.name)).not.toContain('Aizawl');
   });
 
-  it('refuses Tawang by name, and in his own words', () => {
-    const t = p.rejected.find((r) => r.name === 'Tawang');
-    expect(t).toBeTruthy();
-    expect(t!.reason).toContain('no railway station');
+  it('refuses Tawang IN HIS OWN WORDS, never in the engine\'s', () => {
+    const t = trips[0].rejected.find((r) => r.name === 'Tawang')!;
+    expect(t.reason).toContain('no railway station');
+    expect(t.reason).toContain('flight');       // Law 4: an alternative, never a silent drop
+    expect(t.reason).not.toContain('score');
   });
 });
 

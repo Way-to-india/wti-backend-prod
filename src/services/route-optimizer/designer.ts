@@ -446,6 +446,193 @@ export function design(
   memory: DesignerMemory,
   brief: DesignerBrief,
 ): Proposal | null {
+  return designAll(candidates, memory, brief)[0] ?? null;
+}
+
+/**
+ * US-805b — EVERY REAL TRIP IN THE REGION, NOT ONE AND A FOOTNOTE.
+ *
+ * FOUNDER, 2026-07-13: "Why only one tour plan? There could have been 3 plans."
+ *
+ * HE IS RIGHT, AND THE FIRST CUT OF THIS FILE WAS WRONG. It found the circuits, chose the
+ * best, and demoted the rest to a sentence. But the North East is not one trip — it is TWO,
+ * and they are genuinely different holidays:
+ *
+ *   GUWAHATI + KAZIRANGA + SHILLONG   in through Guwahati (GHY, 146 trains, no drive)
+ *   GANGTOK + DARJEELING              in through New Jalpaiguri, a different corner entirely
+ *
+ * A consultant who found two good answers and showed you one is not saving you effort. He is
+ * making your decision for you and calling it service.
+ *
+ * ONE HONEST CORRECTION TO THE FOUNDER'S THREE, AND IT COMES FROM OUR OWN DATA:
+ * GANGTOK AND DARJEELING ARE NOT TWO TRIPS. Our designers put them in the SAME tour, twice.
+ * Bagdogra is the gateway to both, not a fork between them. Splitting them would be US
+ * inventing a division our own catalogue does not make — and inventing a division is the
+ * same sin as inventing a town, wearing a tidier coat.
+ *
+ * Returns the trips STRONGEST FIRST. Empty when the region gives us nothing we can stand
+ * behind — and then the caller must SAY we have nothing, not fill the silence.
+ */
+export function designAll(
+  candidates: Candidate[],
+  memory: DesignerMemory,
+  brief: DesignerBrief,
+): Proposal[] {
+  if (!candidates.length) return [];
+
+  // Which towns pass the gates HE set. Computed once; every circuit draws from this pool.
+  //
+  // AND EVERY TOWN THAT FAILS IS REFUSED BY NAME, HERE, ONCE — for the whole region.
+  // (This was a real regression when circuits arrived: Tawang belongs to NO circuit, so with
+  // the rejections computed per-circuit, NOBODY reported it and it vanished in silence. A town
+  // that fails HIS OWN gate must be named and explained. Silence is the one thing forbidden.)
+  const need0: FoodNeed = brief.foodNeed ?? 'none';
+  const eligible: Candidate[] = [];
+  const regionRejections: Rejection[] = [];
+
+  for (const c of candidates) {
+    const g = railGate(c, brief);
+    if (!g.pass) {
+      // An out-of-region town we never offered is not a town he needs a reason for.
+      if (!c.outOfRegion) {
+        regionRejections.push({ name: c.node.name, state: c.node.stateName, reason: g.reason! });
+      }
+      continue;
+    }
+    if (foodRank(c.food, need0) === -1) {
+      regionRejections.push({
+        name: c.node.name, state: c.node.stateName,
+        reason: `We looked in ${c.node.name} and we could not find a kitchen we would put you in `
+          + 'front of. I would rather lose the town than sit you down to a plate you cannot eat.',
+      });
+      continue;
+    }
+    eligible.push(c);
+  }
+  if (!eligible.length) return [];
+
+  // THE CIRCUITS ARE OUR DESIGNERS' OWN CLUSTERS, recovered from the co-design graph.
+  // A town they never paired with anything is its own circuit of one — and a circuit of one
+  // is still a trip, if we have sold the town.
+  const seen = new Set<string>();
+  const circuits: Candidate[][] = [];
+
+  const anchors = [...eligible]
+    .filter((c) => !c.outOfRegion)
+    .sort((a, b) =>
+      (driveBand(a, brief) - driveBand(b, brief))
+      || (b.node.tourCount - a.node.tourCount)
+      || a.node.name.localeCompare(b.node.name));
+
+  for (const head of anchors) {
+    const hk = head.node.name.trim().toLowerCase();
+    if (seen.has(hk)) continue;
+
+    // Breadth-first through our designers' own pairings, crossing the border where THEY did.
+    const group: Candidate[] = [head];
+    const local = new Set([hk]);
+    const queue = [head.node.name];
+    while (queue.length) {
+      const from = queue.shift()!;
+      for (const pair of coDesignedWith(memory, from)) {
+        const k = pair.pairsWith.trim().toLowerCase();
+        if (local.has(k)) continue;
+        const c = eligible.find((x) => x.node.name.trim().toLowerCase() === k);
+        if (!c) continue;                       // a town they know and our spine does not.
+        local.add(k);                           // We do not conjure it from the pairing.
+        group.push(c);
+        queue.push(c.node.name);
+      }
+    }
+    for (const k of local) seen.add(k);
+
+    // A lone town we have NEVER sold is not a trip we would propose on its own.
+    if (group.length === 1 && head.node.tourCount === 0) continue;
+    circuits.push(group);
+  }
+
+  // ---- RANK THE CIRCUITS BEFORE WE CUT THEM ------------------------------------
+  //
+  // THE DEFECT THE LIVE PAYLOAD FOUND (2026-07-13, minutes after the first cut shipped):
+  // it returned THREE trips — Guwahati/Kaziranga/Shillong, then GOLAGHAT ALONE, then JORHAT
+  // ALONE — and the real GANGTOK + DARJEELING circuit was cut off by the cap of three.
+  //
+  // Because I had ranked circuits by how easily you reach the ANCHOR. Golaghat and Jorhat sit
+  // beside a railway line, so they won — and they are not trips. They are single towns our
+  // designers never paired with anything.
+  //
+  // A CIRCUIT IS A THING OUR DESIGNERS BUILT. A lone town is a fallback, not a holiday, and it
+  // may never elbow a real circuit off the page. So: rank FIRST, cut SECOND.
+  const strengthOf = (g: Candidate[]): number => {
+    let t = 0;
+    for (let i = 0; i < g.length; i++) {
+      for (let j = i + 1; j < g.length; j++) {
+        t += coDesignStrength(memory, g[i].node.name, g[j].node.name);
+      }
+    }
+    return t;
+  };
+  /** The best arrival in a circuit: can he step off the train and BE there? */
+  const bestBand = (g: Candidate[]): number =>
+    Math.min(...g.filter((c) => !c.outOfRegion).map((c) => driveBand(c, brief)));
+
+  circuits.sort((a, b) =>
+    // 1. A REAL CIRCUIT ALWAYS BEATS A LONE TOWN. A lone town is a fallback, not a holiday.
+    ((b.length > 1 ? 1 : 0) - (a.length > 1 ? 1 : 0))
+    // 2. HIS BRIEF DECIDES THE ORDER, NOT OUR ARITHMETIC. He said trains. So the circuit he can
+    //    step off a train INTO leads. Guwahati's railhead is in the town; Gangtok's is 94 minutes
+    //    of road away. Both are real trips — but only one of them is the trip he ASKED for.
+    //    (Live payload, 2026-07-13: ranking on catalogue weight alone put Gangtok first and
+    //    quietly demoted the train-first answer. The engine had forgotten what he said.)
+    || (bestBand(a) - bestBand(b))
+    // 3. Then what our designers actually built, and how often.
+    || (strengthOf(b) - strengthOf(a))
+    || (b.reduce((t, c) => t + c.node.tourCount, 0) - a.reduce((t, c) => t + c.node.tourCount, 0))
+    || (b.length - a.length));
+
+  // WHERE OUR DESIGNERS SAID NOTHING, WE STILL HAVE TOWNS — AND WE DO NOT GO QUIET.
+  //
+  // A region we have never sold in (our writers went; our designers never built) yields NO
+  // co-design clusters at all. Returning nothing there would tell the traveller we have nothing,
+  // WHICH IS FALSE. So we fall to Tier 2 — transport and what there is to see — and we SAY that
+  // is what we did. An honest thinner answer, never a silence.
+  if (!circuits.length) {
+    const tier2 = eligible.filter((c) => !c.outOfRegion).slice(0, maxStops(brief));
+    if (tier2.length) circuits.push(tier2);
+  }
+
+  // A LONE TOWN IS A FALLBACK, NOT A THIRD OPTION.
+  //
+  // The live payload offered "Golaghat, 2 nights" as a trip beside two proper circuits. It is a
+  // real town and we have sold it twice — but no consultant lays a single town on the table next
+  // to two built circuits and calls it a choice. It pads the page and it flatters us.
+  // So: lone towns appear ONLY when we have fewer than two real circuits to give him.
+  const realCircuits = circuits.filter((g) => g.length > 1);
+  const offer = realCircuits.length >= 2 ? realCircuits : circuits;
+
+  const out: Proposal[] = [];
+  for (const circuit of offer) {
+    const p = designOne(circuit, eligible, memory, brief);
+    if (!p) continue;
+    // The region-wide refusals travel WITH every trip. He sees what we ruled out, and why,
+    // whichever trip he is looking at.
+    p.rejected = [...regionRejections, ...p.rejected];
+    out.push(p);
+    if (out.length >= 3) break;                 // three trips is a choice. Six is a list again.
+  }
+
+  // The circuits were already ranked before we cut them. `out` preserves that order, and a
+  // second sort here would quietly undo the very fix above.
+  return out;
+}
+
+/** One circuit, worked up into a full proposal. The body of the old `design()`. */
+function designOne(
+  candidates: Candidate[],
+  wholePool: Candidate[],
+  memory: DesignerMemory,
+  brief: DesignerBrief,
+): Proposal | null {
   if (!candidates.length) return null;
 
   const rejected: Rejection[] = [];
@@ -612,7 +799,9 @@ export function design(
 
     // AND IF IT STILL WILL NOT STRETCH — WE SAY SO. WE DO NOT PAD, AND WE DO NOT GO QUIET.
     if (total() < floor) {
-      const spare = passed
+      // THE WHOLE REGION, not just this circuit — if we cannot reach his floor here, the
+      // honest options include towns from anywhere he could actually get to.
+      const spare = wholePool
         .filter((c) => !seen.has(c.node.name.trim().toLowerCase()))
         .filter((c) => !c.outOfRegion && !isGatewayOf(c, selected))
         .sort((a, b) => b.node.tourCount - a.node.tourCount)
@@ -669,7 +858,10 @@ export function design(
     signalVoice: voice.text,
     cohesion: voice.cohesion,
     rejected,
-    alsoConsidered: otherCircuits(passed, memory, brief, new Set(names.map((n) => n.trim().toLowerCase()))),
+    // EMPTY BY DESIGN NOW. The other circuits are no longer a footnote at the bottom of one
+    // proposal — they are PROPOSALS OF THEIR OWN, returned alongside this one by designAll().
+    // (Founder, 2026-07-13: "Why only one tour plan? There could have been 3 plans.")
+    alsoConsidered: [],
   };
 }
 

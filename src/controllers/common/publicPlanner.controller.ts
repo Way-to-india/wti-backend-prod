@@ -30,7 +30,7 @@ import { inferGateway, type StartSource } from '@/services/route-optimizer/gatew
 import { resolveRegion, regionIsUsable, statesOf, stateNamesOf, type RegionMatch } from '@/services/route-optimizer/regions';
 import { stayNodesInStates, stayNodesByNames, gatewaysFor, attractionsFor } from '@/services/route-optimizer/spineDb';
 import { nodeTier, nodeVoice, type StayNode } from '@/services/route-optimizer/spine';
-import { design, type Candidate, type DesignerBrief, type Proposal } from '@/services/route-optimizer/designer';
+import { design, designAll, type Candidate, type DesignerBrief, type Proposal } from '@/services/route-optimizer/designer';
 import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb';
 import { foodFor } from '@/services/route-optimizer/foodDb';
 import { foodNeedFromWords } from '@/services/route-optimizer/food';
@@ -144,8 +144,8 @@ function briefFrom(intent: TravellerIntent | null, request: string): DesignerBri
  */
 async function proposeForRegion(
   nodes: StayNode[], intent: TravellerIntent | null, request: string,
-): Promise<Proposal | null> {
-  if (!nodes.length) return null;
+): Promise<Proposal[]> {
+  if (!nodes.length) return [];
   const memory = await loadDesignerMemory();
 
   // THE BORDER NEIGHBOUR (founder ruling). Our designers build Gangtok with Darjeeling, and
@@ -183,7 +183,7 @@ async function proposeForRegion(
     food: foodMap.get(n.id) ?? null,
   }));
 
-  return design(candidates, memory, briefFrom(intent, request));
+  return designAll(candidates, memory, briefFrom(intent, request));
 }
 
 async function parseIntent(text: string): Promise<{ trip: ParsedTrip; raw: RawIntent } | null> {
@@ -423,13 +423,17 @@ export class PublicPlannerController {
         // The towns above are still there, and he may still overrule us with any of them.
         // But a consultant LEADS. He says "I would give you Guwahati, Shillong and Kaziranga",
         // and then he says exactly how sure he is, and exactly what he left out and why.
-        let proposal: Proposal | null = null;
+        // EVERY REAL TRIP IN THE REGION, strongest first — not one and a footnote.
+        // (Founder, 2026-07-13.) The North East is TWO trips: Guwahati/Kaziranga/Shillong in
+        // through GHY, and Gangtok/Darjeeling in through New Jalpaiguri. He chooses.
+        let proposals: Proposal[] = [];
         try {
-          proposal = await proposeForRegion(nodes, intent, request);
+          proposals = await proposeForRegion(nodes, intent, request);
         } catch (e) {
           // He still gets the towns. A thinner answer, never a wrong one.
           console.error('designer failed (non-fatal):', e);
         }
+        const proposal: Proposal | null = proposals[0] ?? null;
         const stopWords = proposal
           ? proposal.stops.map((s) => s.name).reduce((acc, n, i, a) =>
               i === 0 ? n : i === a.length - 1 ? `${acc} and ${n}` : `${acc}, ${n}`, '')
@@ -445,9 +449,11 @@ export class PublicPlannerController {
             states: stateNamesOf(m),      // never a code. He is a person, not a database.
           },
           towns,
-          // THE PROPOSAL. Every stop carries its state, its tier, its night count and the
+          // THE PROPOSALS. Every stop carries its state, its tier, its night count and the
           // grade of the evidence behind it. Every rejection carries a HUMAN reason.
+          // `proposal` is proposals[0] and is kept so nothing downstream breaks.
           proposal,
+          proposals,
           message: proposal
             ? `You said ${m.quote}, and I have kept everything else you told me too. `
               + `With trains rather than flights, I would give you ${stopWords} — `
@@ -463,6 +469,11 @@ export class PublicPlannerController {
               // US-806 — HE TOLD US HE DOES NOT EAT EGGS. He hears what we know and what we
               // do not, before he pays us anything.
               + (proposal.foodParagraph ? ` ${proposal.foodParagraph}` : '')
+              + (proposals.length > 1
+                  ? ` And this is not the only trip here: I have laid out `
+                    + `${proposals.length} of them, each a real circuit our designers have built. `
+                    + 'Look at them side by side and tell me which one is yours.'
+                  : '')
               + ' Change any of it and I will rebuild around you.'
             : towns.length
             ? `${m.region.label} is ${stateNamesOf(m).length} states, and they are a long way `
