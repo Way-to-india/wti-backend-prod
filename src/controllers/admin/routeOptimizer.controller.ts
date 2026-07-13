@@ -138,15 +138,47 @@ export class RouteOptimizerController {
          WHERE lower(w.name) = ANY(${names.map((n) => n.toLowerCase())})
          ORDER BY lower(w.name),
                   (w."countryCode" = 'IN') DESC,                      -- 1. India, always
-                  (EXISTS (SELECT 1 FROM airport_cities a            -- 2. a place he can reach
+                  (EXISTS (SELECT 1 FROM stay_nodes s                -- 2. OUR OWN CATALOGUE
+                            WHERE abs(s.lat - w.latitude) < 0.25
+                              AND abs(s.lng - w.longitude) < 0.25
+                              AND similarity(lower(s.name), lower(w.name)) > 0.45)) DESC,
+                  (EXISTS (SELECT 1 FROM airport_cities a            -- 3. a place he can reach
                             WHERE abs(a.lat - w.latitude) < 0.8
                               AND abs(a.lng - w.longitude) < 0.8)) DESC,
                   (EXISTS (SELECT 1 FROM train_stations t
                             WHERE abs(t.lat - w.latitude) < 0.5
                               AND abs(t.lng - w.longitude) < 0.5)) DESC,
-                  w.population DESC NULLS LAST`;   // 3. size, last of all — population lies here
+                  w.population DESC NULLS LAST`;   // 5. size, last of all — population lies here
       const gaz = new Map<string, LatLng>();
       for (const r of gazRows) gaz.set(r.name.toLowerCase(), [Number(r.latitude), Number(r.longitude)]);
+
+      // ---- US-823: OUR OWN CATALOGUE IS THE PRIMARY GAZETTEER ----------------------
+      //
+      // world_cities is a 33,000-row world gazetteer. It holds namesakes, corrupt populations,
+      // and rows OUR OWN verify ladder wrote badly. It sent every traveller who typed "Manali"
+      // to a SUBURB OF CHENNAI, 2,138 km from the mountains, across 17 of our tours -- because
+      // the real Manali is a curated row with population 0, and population was the last rung.
+      // It sent a pilgrim asking for RAMESWARAM to a village in Andhra Pradesh, because the
+      // village is near an airport and the temple island is not.
+      //
+      // stay_nodes holds 251 towns our designers have PHYSICALLY SENT TRAVELLERS TO, with
+      // verified coordinates and a tour count. NOTHING OUTRANKS HAVING ACTUALLY TAKEN SOMEONE
+      // THERE. The catalogue answers first; world_cities is the fallback for towns we have
+      // never sold. Ranking alone could never have fixed Sultanpur, Khandala or Nakhtrana --
+      // for those the ONLY row in world_cities is the wrong one, and you cannot promote a row
+      // that does not exist.
+      //
+      // The match is on NAME SIMILARITY and the COORDINATE COMES FROM US -- which is why it
+      // works when our catalogue spells it "Rameshwaram" and he types "Rameswaram" (0.615).
+      // Threshold 0.6 is safe: of our 251 towns, ZERO pairs score above 0.6 while sitting more
+      // than 50 km apart, so it cannot confuse two of our own places.
+      const lowered = names.map((n) => n.toLowerCase());
+      const catRows = await prisma.$queryRaw<{ asked: string; latitude: number; longitude: number }[]>`
+        SELECT DISTINCT ON (q.n) q.n AS asked, s.lat AS latitude, s.lng AS longitude
+          FROM unnest(${lowered}::text[]) AS q(n)
+          JOIN stay_nodes s ON similarity(lower(s.name), q.n) > 0.6
+         ORDER BY q.n, similarity(lower(s.name), q.n) DESC, s.tour_count DESC NULLS LAST`;
+      for (const r of catRows) gaz.set(String(r.asked).toLowerCase(), [Number(r.latitude), Number(r.longitude)]);
 
       const nodes: CityNode[] = [];
       const missing: string[] = [];

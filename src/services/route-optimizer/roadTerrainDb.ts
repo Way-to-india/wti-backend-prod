@@ -120,8 +120,35 @@ async function elevationsOf(pts: LatLng[]): Promise<(number | null)[]> {
   }
 }
 
-/** Read the cache. A mountain does not move, so a hit is as good as a fresh measurement. */
-async function cached(from: string, to: string): Promise<RoadTerrain | null> {
+/**
+ * THE GEOGRAPHY GATE. A cached leg is only a measurement of THIS leg if it could physically be
+ * the road between THESE two points.
+ *
+ * A ROAD CANNOT BE SHORTER THAN THE CROW FLIES. And a road 2.2x longer than the straight line is
+ * not a detour, it is a different journey. Across our 63 genuinely-cached legs the detour factor
+ * has a median of 1.41 and healthy legs sit inside [1.0, 2.2]. The rows that had been silently
+ * poisoned by a gazetteer correction sat at 0.40 and 4.34, and both were stamped `measured`.
+ *
+ * Returns true when the cached distance is impossible for these endpoints -- in which case the
+ * row is about somewhere else, and we throw it away and go and drive it again.
+ */
+export function geographyDisagrees(cachedKm: number, a: LatLng, b: LatLng): boolean {
+  const crow = haversineKm(a, b);
+  if (!(crow > 20)) return false;          // too short to reason about; leave it alone
+  if (!(cachedKm > 0)) return true;
+  const detour = cachedKm / crow;
+  return detour < 0.95 || detour > 2.2;
+}
+
+/**
+ * Read the cache.
+ *
+ * The comment here used to read: "A mountain does not move, so a hit is as good as a fresh
+ * measurement." The mountain does not move. THE MEANING OF THE NAME DOES -- and the primary key
+ * of this table is a pair of NAMES. When the gazetteer was corrected, "Rameswaram" moved 600 km
+ * and every row here kept the old geography, stamped `measured`.
+ */
+async function cached(from: string, to: string, a?: LatLng, b?: LatLng): Promise<RoadTerrain | null> {
   try {
     const rows = await prisma.$queryRawUnsafe<any[]>(
       `SELECT km, climb_per_km, minutes, router_min, duration_source, model_min FROM road_leg_terrain
@@ -129,6 +156,18 @@ async function cached(from: string, to: string): Promise<RoadTerrain | null> {
           AND computed_at > now() - interval '${CACHE_TTL_DAYS} days'`, key(from), key(to));
     if (!rows.length) return null;
     const r = rows[0];
+
+    // THE GEOGRAPHY GATE. If the row cannot be the road between these two points, it is not
+    // this leg's row. Discard it -- a stale MEASUREMENT is more dangerous than no measurement,
+    // because `measured` is exactly what the engine has been taught to trust without question.
+    if (a && b && geographyDisagrees(Number(r.km), a, b)) {
+      console.error(
+        `[ROUTE-MIND] STALE LEG DISCARDED — ${key(from)} -> ${key(to)}: cached ${Number(r.km)} km, ` +
+        `but the crow flies ${Math.round(haversineKm(a, b))} km. The name now means somewhere else.`,
+      );
+      return null;
+    }
+
     return {
       km: Number(r.km),
       climbPerKm: Number(r.climb_per_km),
@@ -149,7 +188,7 @@ async function cached(from: string, to: string): Promise<RoadTerrain | null> {
 export async function roadTerrainFor(
   fromCity: string, toCity: string, a: LatLng, b: LatLng,
 ): Promise<RoadTerrain | null> {
-  const hit = await cached(fromCity, toCity);
+  const hit = await cached(fromCity, toCity, a, b);
   // A cached GUESS is not good enough once we can MEASURE. If Google is now switched on and
   // this row was only ever routed, we go and drive it. (Once. Then it is cached as a fact.)
   if (hit && !(GOOGLE_DIRECTIONS_ON && hit.source !== 'measured')) return hit;

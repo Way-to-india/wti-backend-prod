@@ -527,10 +527,34 @@ export class PublicPlannerController {
       } else {
         // fetch the coordinates of the destinations so the gateway is inferred from
         // WHERE HE IS ACTUALLY GOING, not from a guess about who he is.
+        // THIS QUERY HAD NO ORDER BY AT ALL. With two rows of the same name it took whichever
+        // Postgres handed back first -- and it is the query that picks his STARTING CITY. Same
+        // ladder as the engine now, catalogue first. (US-823)
         const destRows = await prisma.$queryRaw<{ name: string; latitude: number; longitude: number }[]>`
-          SELECT name, latitude, longitude FROM world_cities
-           WHERE lower(name) = ANY(${cities.map((c) => c.name.toLowerCase())})`;
+          SELECT DISTINCT ON (lower(w.name)) w.name, w.latitude, w.longitude
+            FROM world_cities w
+           WHERE lower(w.name) = ANY(${cities.map((c) => c.name.toLowerCase())})
+           ORDER BY lower(w.name),
+                    (w."countryCode" = 'IN') DESC,
+                    (EXISTS (SELECT 1 FROM stay_nodes s
+                              WHERE abs(s.lat - w.latitude) < 0.25
+                                AND abs(s.lng - w.longitude) < 0.25
+                                AND similarity(lower(s.name), lower(w.name)) > 0.45)) DESC,
+                    (EXISTS (SELECT 1 FROM airport_cities a
+                              WHERE abs(a.lat - w.latitude) < 0.8
+                                AND abs(a.lng - w.longitude) < 0.8)) DESC,
+                    w.population DESC NULLS LAST`;
         const byName = new Map(destRows.map((r) => [r.name.toLowerCase(), [Number(r.latitude), Number(r.longitude)] as [number, number]]));
+
+        // US-823: and OUR OWN CATALOGUE overrides it, for the same reason it does in the
+        // engine. This query chooses the city he STARTS from -- inferring that gateway from a
+        // Chennai suburb because he said "Manali" is how a Himachal trip begins in Tamil Nadu.
+        const catStart = await prisma.$queryRaw<{ asked: string; latitude: number; longitude: number }[]>`
+          SELECT DISTINCT ON (q.n) q.n AS asked, s.lat AS latitude, s.lng AS longitude
+            FROM unnest(${cities.map((c) => c.name.toLowerCase())}::text[]) AS q(n)
+            JOIN stay_nodes s ON similarity(lower(s.name), q.n) > 0.6
+           ORDER BY q.n, similarity(lower(s.name), q.n) DESC, s.tour_count DESC NULLS LAST`;
+        for (const r of catStart) byName.set(String(r.asked).toLowerCase(), [Number(r.latitude), Number(r.longitude)]);
         const dests = cities
           .map((c) => ({ name: c.name, coord: byName.get(c.name.toLowerCase()) }))
           .filter((d): d is { name: string; coord: [number, number] } => !!d.coord);
@@ -580,9 +604,30 @@ export class PublicPlannerController {
       //  applies ONLY to direct CRM calls, because this call site is explicit.)
       const askedToReturn = !!(end && start && end.trim().toLowerCase() === start.trim().toLowerCase());
 
+      // ---- US-824: A GUESS MAY NOT BECOME A CONSTRAINT -----------------------
+      //
+      // `start` is forced on the sequencer as a fixed first node. That is RIGHT when he told us
+      // where he begins, and right when the gateway is a city he must genuinely pass through to
+      // reach his trip (fly into Bengaluru for Coorg and Goa -- he sleeps 0 nights there, it is
+      // an entry point, and the path really does start at it).
+      //
+      // IT IS WRONG when we GUESSED a gateway and the guess happens to be one of the places he
+      // is actually staying. Then our guess stops being a suggestion and becomes a hard corner
+      // the whole route must bend around. That is how a South India pilgrimage came out as
+      //     Madurai -> Kanyakumari -> Tirupati -> Rameswaram
+      // running 600 km north and 600 km back south, because WE had decided he starts at Madurai.
+      //
+      // What he SAID is the brief (Law 1). What WE INFERRED is a suggestion. So: free the
+      // endpoints and let the route take its natural shape, then arrive him at whichever city
+      // it truly begins with.
+      const startIsHisOwnStop = !!start && cities.some(
+        (c) => c.name.toLowerCase() === start!.toLowerCase() && (c.nights ?? 0) > 0,
+      );
+      const forceStart = startWasStated || (!!start && !startIsHisOwnStop);
+
       const innerBody = {
         cities,
-        start: start || cities[0].name,
+        start: forceStart ? (start || cities[0].name) : null,
         end: end || null,
         tripType: askedToReturn ? ('roundtrip' as const) : ('oneway' as const),
         objective: OBJECTIVE_MAP[String(body.objective)] || 'BALANCED',

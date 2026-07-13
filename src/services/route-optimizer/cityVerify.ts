@@ -185,6 +185,18 @@ async function ourGuidesSayTheStateIs(place: string): Promise<string | null> {
  */
 async function dbExact(name: string, admin1?: string | null) {
   const n = name.toLowerCase();
+
+  // US-823 — OUR OWN CATALOGUE ANSWERS FIRST. 251 towns our designers have physically taken
+  // travellers to, with verified coordinates. If he named a state, the catalogue row must be
+  // IN that state -- the state rule below is not weakened by this, only served earlier.
+  const cat = await prisma.$queryRaw<{ name: string; latitude: number; longitude: number }[]>`
+    SELECT s.name, s.lat AS latitude, s.lng AS longitude
+      FROM stay_nodes s
+     WHERE similarity(lower(s.name), ${n}) > 0.6
+       AND (${admin1 ?? null}::text IS NULL OR s.admin1_code = ${admin1 ?? null})
+     ORDER BY similarity(lower(s.name), ${n}) DESC, s.tour_count DESC NULLS LAST
+     LIMIT 1`;
+  if (cat[0]) return cat[0];
   if (admin1) {
     const rows = await prisma.$queryRaw<{ name: string; latitude: number; longitude: number }[]>`
       SELECT name, latitude, longitude FROM world_cities
@@ -193,10 +205,26 @@ async function dbExact(name: string, admin1?: string | null) {
     // NO FALLBACK. He told us the state. A row in the wrong state is not a match, it is a trap.
     return rows[0] ?? null;
   }
+  // HE DID NOT NAME A STATE. Population used to decide -- and population is exactly what
+  // sent every "Manali" to a SUBURB OF CHENNAI (pop 35,248) instead of the Himachal town our
+  // designers have built SEVENTEEN tours to (pop 0 in our gazetteer, because it is a curated
+  // row). The comment above this function already said this "is exactly what should have
+  // happened for Manali all along" -- it was fixed only for the path where he names the state.
+  //
+  // OUR OWN CATALOGUE ANSWERS FIRST. If our designers have taken travellers to a town within
+  // 25 km of this row, that IS the town he means. The join is on COORDINATE, not on name --
+  // which is why it still works when the catalogue spells it "Rameshwaram" and he types
+  // "Rameswaram". A name is not a key. A coordinate is a fact. (US-823)
   const rows = await prisma.$queryRaw<{ name: string; latitude: number; longitude: number }[]>`
-    SELECT name, latitude, longitude FROM world_cities
-    WHERE lower(name) = ${n}
-    ORDER BY ("countryCode" = 'IN') DESC, population DESC NULLS LAST LIMIT 1`;
+    SELECT w.name, w.latitude, w.longitude FROM world_cities w
+    WHERE lower(w.name) = ${n}
+    ORDER BY (w."countryCode" = 'IN') DESC,
+             (EXISTS (SELECT 1 FROM stay_nodes s
+                       WHERE abs(s.lat - w.latitude) < 0.25
+                         AND abs(s.lng - w.longitude) < 0.25
+                         AND similarity(lower(s.name), lower(w.name)) > 0.45)) DESC,
+             w.population DESC NULLS LAST
+    LIMIT 1`;
   return rows[0] ?? null;
 }
 
