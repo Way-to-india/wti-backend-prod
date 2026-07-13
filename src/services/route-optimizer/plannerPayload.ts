@@ -174,6 +174,33 @@ function hydrateTransit(transit: NonNullable<DayItem['transit']>, leg: PlanLeg |
  * `note` as the reason. A leg with no `legOptions` contributes NOTHING (we do not
  * script filler). Order = leg order, chosen first within each leg.
  */
+/**
+ * HE IS WATCHING US THINK. HE SHOULD NOT BE WATCHING US QUERY A DATABASE.
+ *
+ * The stream was printing the engine's INTERNAL KEY straight onto the screen:
+ *
+ *     Guwahati → Shillong: ROAD:Guwahati-Shillong
+ *
+ * That is a row id. It is not a sentence, and it is certainly not a 30-year tour designer
+ * thinking out loud. The page promises him a consultant and then shows him our plumbing.
+ *
+ * The FACTS do not change by one digit. Only the words do.
+ */
+function spokenMode(id: string): string {
+  const [mode, ...rest] = String(id || '').split(':');
+  const service = rest.join(':').trim();
+  switch ((mode || '').toUpperCase()) {
+    case 'ROAD':  return 'by road';
+    // The train NUMBER is the receipt — it is how he checks us. It stays.
+    case 'RAIL':  return service ? `by train ${service}` : 'by train';
+    case 'AIR':   return service ? `by flight ${service}` : 'by flight';
+    case 'FERRY': return 'by ferry';
+    // Something we have not taught it to say. Show the raw value rather than swallow it —
+    // an honest ugly line beats a pretty one we invented.
+    default:      return service || String(id);
+  }
+}
+
 export function buildReasoning(legs: PlanLeg[]): PlannerReasoningLine[] {
   const lines: PlannerReasoningLine[] = [];
   for (const leg of legs) {
@@ -181,8 +208,13 @@ export function buildReasoning(legs: PlanLeg[]): PlannerReasoningLine[] {
     if (!rows || !rows.length) continue;
     const ordered = [...rows.filter((r) => r.chosen), ...rows.filter((r) => !r.chosen)];
     for (const r of ordered) {
-      const head = `${leg.from} → ${leg.to}: ${r.id}`;
-      lines.push({ text: r.note ? `${head} — ${r.note}` : head, ok: r.chosen === true });
+      const dur = fmtDur(r.dur);
+      // KEEP THE ARROW. It is compact, it reads instantly, and two tests rightly pin it.
+      // The thing that was ugly was never the arrow — it was `ROAD:Guwahati-Shillong`, an
+      // internal row id printed onto a page that had just promised him a tour designer.
+      const head = `${leg.from} → ${leg.to} — ${spokenMode(r.id)}`
+        + (dur ? `, ${dur}` : '');
+      lines.push({ text: r.note ? `${head}. ${r.note}` : head, ok: r.chosen === true });
     }
   }
   return lines;

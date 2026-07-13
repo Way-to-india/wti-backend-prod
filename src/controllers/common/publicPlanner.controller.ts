@@ -473,27 +473,25 @@ export class PublicPlannerController {
           // `proposal` is proposals[0] and is kept so nothing downstream breaks.
           proposal,
           proposals,
+          // THE OPENING SENTENCE, AND NOTHING ELSE.
+          //
+          // It used to carry the food paragraph, the shortfall AND the signal voice inline —
+          // all of which the page ALSO renders in their own places. So the traveller read the
+          // same food warning twice, in one centred wall of text, and it looked like a machine
+          // repeating itself. A consultant says a thing ONCE, in the right place.
+          //
+          // Each part now lives where it belongs: signalVoice under its own trip card, the
+          // food warning in the food box, the shortfall in the shortfall box.
           message: proposal
             ? `You said ${m.quote}, and I have kept everything else you told me too. `
               + `With trains rather than flights, I would give you ${stopWords} — `
               + `${proposal.totalNights} nights of stay, well inside the `
-              + `${briefFrom(intent, request).nights} you allowed, and the journey either side. `
-              + `${proposal.signalVoice}`
-              // HE ASKED FOR A FLOOR WE COULD NOT REACH. HE HEARS IT FROM US, FIRST, AND
-              // WITH A WAY OUT — never as a number he has to count for himself.
-              + (proposal.shortfall
-                  ? ` ${proposal.shortfall.finding} ${proposal.shortfall.reason} `
-                    + proposal.shortfall.options[0]
-                  : '')
-              // US-806 — HE TOLD US HE DOES NOT EAT EGGS. He hears what we know and what we
-              // do not, before he pays us anything.
-              + (proposal.foodParagraph ? ` ${proposal.foodParagraph}` : '')
+              + `${briefFrom(intent, request).nights} you allowed, and the journey either side.`
               + (proposals.length > 1
-                  ? ` And this is not the only trip here: I have laid out `
-                    + `${proposals.length} of them, each a real circuit our designers have built. `
-                    + 'Look at them side by side and tell me which one is yours.'
+                  ? ` And this is not the only way to do it. I have laid out `
+                    + `${proposals.length} real circuits our designers have built. Look at them `
+                    + 'side by side and tell me which one is yours.'
                   : '')
-              + ' Change any of it and I will rebuild around you.'
             : towns.length
             ? `${m.region.label} is ${stateNamesOf(m).length} states, and they are a long way `
               + 'apart. These are the towns we know there — tell me which of them appeals to '
