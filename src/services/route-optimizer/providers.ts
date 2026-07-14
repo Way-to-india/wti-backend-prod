@@ -205,27 +205,44 @@ export async function airOptions(a: CityNode, b: CityNode, _ctx: FindCtx): Promi
                f1.flight_no AS fno1, f2.flight_no AS fno2, f1.airline,
                f1.dep_min, f1.dur_min AS dur1, f2.dur_min AS dur2,
                f1.operating_days AS days1, f2.operating_days AS days2,
-               oa.lat AS o_lat, oa.lng AS o_lng, da.lat AS d_lat, da.lng AS d_lng
+               oa.lat AS o_lat, oa.lng AS o_lng, da.lat AS d_lat, da.lng AS d_lng,
+               h.lat AS h_lat, h.lng AS h_lng
         FROM flight_sectors f1
         JOIN flight_sectors f2 ON lower(f2.origin_city) = lower(f1.dest_city)
         JOIN a_ap oa ON f1.origin_city = oa.city
         JOIN b_ap da ON f2.dest_city  = da.city
+        JOIN airport_cities h ON h.city = f1.dest_city
         WHERE lower(f1.origin_city) <> lower(f2.dest_city)
           AND f1.dur_min IS NOT NULL AND f2.dur_min IS NOT NULL
         ORDER BY (f1.dur_min + f2.dur_min) ASC
-        LIMIT 60`);
-      const byHub = new Map<string, any>();
+        LIMIT 120`);
+      // ---- THE FIRST LIVE RUN OF THIS CODE FOUND TWO LANDMINES, BOTH PAID FOR HERE. -------
+      // (1) flight_sectors carries rows like "Mumbai → Thiruvananthapuram, 15 minutes" —
+      //     ~1,150 km at 4,600 km/h. L6 in miniature: A DURATION MUST BE POSSIBLE, and it
+      //     must be possible PER HOP — a lie averaged into a plausible total is still a lie.
+      // (2) deduping by HUB ALONE let that bogus 15-minute row (smallest total) shadow the
+      //     REAL Mumbai → Kochi sector under the same hub — and its far airport then failed
+      //     the reach test, so the traveller got NO flight at all. The key is hub + both
+      //     endpoints; the CHOICE among survivors prefers the airport nearest his door.
+      const hopIsPossible = (km: number, min: number) =>
+        min >= 30 && (km / (min / 60)) <= 950;
+      const cands: any[] = [];
+      const seenVia = new Set<string>();
       for (const r of oneStop) {
-        // both hops must be able to run on the SAME day of the week, or the "connection"
-        // is a fiction with a hotel bill in the middle.
         const days = (Number(r.days1) || 0) & (Number(r.days2) || 0);
-        if (!days) continue;
-        const prev = byHub.get(String(r.hub).toLowerCase());
-        const tot = Number(r.dur1) + Number(r.dur2);
-        if (prev && prev._tot <= tot) continue;
-        byHub.set(String(r.hub).toLowerCase(), { ...r, _tot: tot, _days: days });
+        if (!days) continue;   // no shared operating day = a fiction with a hotel bill in it
+        const hub: [number, number] = [Number(r.h_lat), Number(r.h_lng)];
+        const hop1Km = haversineKm([Number(r.o_lat), Number(r.o_lng)], hub);
+        const hop2Km = haversineKm(hub, [Number(r.d_lat), Number(r.d_lng)]);
+        if (!hopIsPossible(hop1Km, Number(r.dur1)) || !hopIsPossible(hop2Km, Number(r.dur2))) continue;
+        const key = `${String(r.origin_city).toLowerCase()}|${String(r.hub).toLowerCase()}|${String(r.dest_city).toLowerCase()}`;
+        if (seenVia.has(key)) continue; seenVia.add(key);
+        const toKmRaw = haversineKm([Number(r.d_lat), Number(r.d_lng)], b.coord);
+        cands.push({ ...r, _tot: Number(r.dur1) + Number(r.dur2), _days: days, _toKmRaw: toKmRaw });
       }
-      for (const r of [...byHub.values()].sort((x, y) => x._tot - y._tot)) {
+      // nearest landing airport to HIS town first, then the shortest pairing
+      cands.sort((x, y) => (x._toKmRaw - y._toKmRaw) || (x._tot - y._tot));
+      for (const r of cands) {
         const fromKm = haversineKm(a.coord, [Number(r.o_lat), Number(r.o_lng)]) * 1.25;
         const toKm   = haversineKm([Number(r.d_lat), Number(r.d_lng)], b.coord) * 1.25;
         const aHigh = (a.elevationM ?? 0) > 1200 || (b.elevationM ?? 0) > 1200;

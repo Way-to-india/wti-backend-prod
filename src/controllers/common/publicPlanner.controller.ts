@@ -439,11 +439,21 @@ export class PublicPlannerController {
       // his refusals, his interests — each carrying the receipt that says whether HE said
       // it or WE worked it out. (US-601.)
       let intent: TravellerIntent | null = null;
-      if (cities.length < 2 && request) {
+      // ---- THE PICK PATH DROPPED HIS BRIEF (found live, 15 Jul 2026). --------------------
+      //
+      // This guard read `cities.length < 2 && request` — so his sentence was parsed on the
+      // FIRST ask and never again. The moment he picked a journey (the pick posts its stops
+      // as cities[]), the whole brief died: no contract, no luxury tier, no "prefer
+      // flights", no rail-ordeal gate. The card was built ON his words and the plan was
+      // built WITHOUT them — which is exactly how the one-stop flight the card promised
+      // lost, silently, to a 46-hour train. His sentence is the brief on EVERY path that
+      // carries it. (The parsed CITIES still merge only when he stated none — Law 1: towns
+      // he posted as fields outrank anything a model reads.)
+      if (request) {
         const heard = await parseIntent(request);
         const parsed = heard?.trip ?? null;
         if (heard) intent = intentFromRaw(heard.raw, request);
-        if (parsed) {
+        if (parsed && cities.length < 2) {
           // US-845 — A DESTINATION THE MODEL CHOSE IS NOT A DESTINATION HE NAMED.
           // "A relaxed beach break" came back as cities:[Goa]; "the Char Dham yatra in
           // December" came back as the four temple towns — and the named-cities path then
