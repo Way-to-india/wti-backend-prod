@@ -509,8 +509,46 @@ export class PublicPlannerController {
       if (totalNights > 21) return res.status(400).json({ status: false, message: 'That is a very long trip for one plan. Please keep it within 21 nights, or split it into two trips.' });
       if (end && !ok.has(end.toLowerCase())) end = null;
 
+      // ======================================================================
+      // US-831 — WE DO NOT PLAN A TRIP FOR A MAN WHOSE FRONT DOOR WE CANNOT FIND.
+      //
+      // FOUNDER, 13 July 2026:
+      //   "I THINK THE BASIC FLAW IS NOT ASKING FROM WHERE THE PERSON WISHES TO START HIS
+      //    JOURNEY. ONCE WE KNOW WHERE HE WANTS TO START HIS JOURNEY AND THE THEME OF HIS
+      //    JOURNEY -- OTHER THINGS START BECOMING CLEAR."
+      //
+      // Until this line existed, the engine's own echo panel said `origin -- we_need_it` and
+      // THE ENGINE PLANNED ANYWAY. It called inferGateway(), which takes the CENTROID of the
+      // places he wants to visit and calls that his home. For a South India pilgrimage the
+      // centroid is in the deep south, so the plan began at RAMESWARAM -- a town with no
+      // airport, which no traveller on earth can start a holiday from. The man lives in
+      // LUCKNOW. Nothing in the request said otherwise, and nothing in the code asked.
+      //
+      // A GUESS AT THE ORIGIN IS NOT A WEAK FACT. IT IS A WRONG TRIP.
+      // Every leg, every mode, every gateway, every rejection hangs off it. There is no honest
+      // provisional available -- so we ask, and we wait, and we do not plan.
+      //
+      // The gateway inference is NOT deleted. It stays for the CRM, where an operator building
+      // a package genuinely has no traveller to ask. It is simply no longer allowed to speak
+      // for a real person who is standing right there.
+      if (!startWasStated || !start) {
+        const q = intent ? counterQuestions(intent) : [];
+        return res.status(200).json({
+          status: false,
+          need: 'origin',
+          echo: intent ? buildEcho(intent) : [],
+          questions: q.length ? q : [{
+            key: 'origin',
+            risk: 1,
+            text: 'Where does your journey start from? Tell us your city and we will plan from your door, not from somebody else\'s.',
+          }],
+          message: 'Before we plan anything, tell us the city you are starting from. It changes everything: which airport you can use, which train, and which of these places are even worth the journey. We would rather ask you once than send you a trip that begins in a town you cannot reach.',
+        });
+      }
+
       // ---- resolve the ORIGIN -----------------------------------------------
-      // Ladder: he said it → we verify it. He did not → we infer the gateway and say so.
+      // He said it. We verify it. (The `else` branch below is now unreachable from the public
+      // planner and is kept only because the CRM shares this ladder.)
       let startSource: StartSource = 'we_guessed';
       let startWhy = '';
 

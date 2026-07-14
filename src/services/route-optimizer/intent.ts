@@ -104,6 +104,22 @@ export interface TravellerIntent {
   budgetStance: Reading<BudgetStance>;
   modeStances: ModeStance[];
   interests: Reading<string>[];
+  /** US-831 — THE MAIN REASON HE IS TRAVELLING. His chips. ONLY THESE MAY PULL THE CHAIN:
+   *  a town is worth TRAVELLING TO only if it serves one of these. */
+  mainChips: Reading<Chip>[];
+  /** US-831 — "While you are there, would you also like to see...?"
+   *
+   *  FOUNDER, 14 Jul 2026: "while a person might be going to pilgrimage, he can always visit
+   *  heritage buildings, forts etc as part of sightseeing — BUT THIS NEEDS TO BE CONFIRMED
+   *  FROM THE USER."
+   *
+   *  IT IS A QUESTION, NOT AN ASSUMPTION. So this field is `he_said` OR IT IS EMPTY. There is
+   *  no code path that infers it, and there never may be — `intentFromRaw` fills it only from
+   *  an explicit chip row the traveller pressed. A secondary interest MAY NEVER ADD TRAVEL: it
+   *  decides what we add to a town ALREADY on the route, and it can never drag a pilgrim
+   *  200 km off his yatra to see a fort. That rule lives in the radar; this field is what
+   *  makes it enforceable. */
+  alsoHappyToSee: Reading<Chip>[];
   pace: Reading<Pace>;
   party: Reading<PartyFacts>;
   /** TWO FACTS, TWO RECEIPTS. These were once a single Reading<{nights, month}> — and the echo
@@ -131,12 +147,34 @@ export interface RawIntent {
   pace?: string | null;
   composition?: string | null;
   interests?: string[] | null;
+  /** US-831 — pressed by the traveller on the FIRST chip row. Never guessed from prose. */
+  mainChips?: string[] | null;
+  /** US-831 — pressed on the SECOND chip row. `he_said` or nothing. Never guessed. */
+  alsoHappyToSee?: string[] | null;
   modes?: { mode?: string; stance?: string; qualifier?: string; strength?: number }[] | null;
   /** the model must hand back the traveller's OWN words for anything it claims he said. */
   quotes?: Record<string, string> | null;
 }
 
 const PURPOSES: Purpose[] = ['honeymoon', 'pilgrimage', 'family_holiday', 'heritage', 'leisure', 'adventure', 'wildlife', 'wellness', 'business'];
+
+/** US-830 / US-831 — THE EIGHT CHIPS THE FOUNDER APPROVED. The same eight, and only the same
+ *  eight, that the `intent_place` CHECK constraint permits in the database. A place is not a
+ *  REASON to travel, so "Rajasthan Tours" is not here; a format is not a reason either, so
+ *  "Weekend Tours" is not here — the weekend is a RANGE FILTER over these eight (founder ruling,
+ *  14 Jul 2026), never a ninth chip. If this list and the DB constraint ever disagree, the
+ *  DATABASE is right, because the founder ticked the database. */
+export const CHIPS = [
+  'Pilgrimage', 'Beaches', 'Honeymoon & Romance', 'Culture & Festivals',
+  'Heritage & Forts', 'Hill Stations & Mountains', 'Trekking & Adventure', 'Wildlife & Nature',
+] as const;
+export type Chip = typeof CHIPS[number];
+
+const asChip = (v: unknown): Chip | null => {
+  if (typeof v !== 'string') return null;
+  const hit = CHIPS.find((c) => c.toLowerCase() === v.trim().toLowerCase());
+  return hit ?? null;
+};
 const TIERS: ComfortTier[] = ['budget', 'standard', 'premium', 'luxury'];
 const PACES: Pace[] = ['savour', 'steady', 'packed'];
 const COMPOSITIONS: Composition[] = ['couple', 'family_kids', 'seniors', 'friends', 'solo'];
@@ -399,7 +437,24 @@ export function intentFromRaw(raw: RawIntent | null | undefined, text: string): 
     .slice(0, 7)
     .map((c) => heSaid(c.name.trim(), c.name.trim()));
 
-  return { purpose, comfortTier, budgetStance, modeStances, interests, pace, party, nights, month, origin, destinations };
+  // ---- US-831 — the two chip rows ------------------------------------------------------
+  // A chip is a BUTTON HE PRESSED. There is no prose to quote, and no inference to make:
+  // either it is in the payload because he pressed it, or it is not in the intent at all.
+  // `he_said` needs a quote everywhere else in this file; here the quote IS the button, so we
+  // record the chip itself as the quote and the rubric stays honest.
+  const mainChips: Reading<Chip>[] = (r.mainChips ?? [])
+    .map(asChip)
+    .filter((c): c is Chip => c !== null)
+    .map((c) => heSaid(c, c));
+
+  // THE SECOND ROW. It can only ever be `he_said`. If he did not press it, it is EMPTY --
+  // and empty means "he has not told us", which is NOT the same as "nothing else".
+  const alsoHappyToSee: Reading<Chip>[] = (r.alsoHappyToSee ?? [])
+    .map(asChip)
+    .filter((c): c is Chip => c !== null)
+    .map((c) => heSaid(c, c));
+
+  return { purpose, comfortTier, budgetStance, modeStances, interests, mainChips, alsoHappyToSee, pace, party, nights, month, origin, destinations };
 }
 
 /** The gateway step's one legal way to fill an origin we had to work out ourselves. */
@@ -500,12 +555,29 @@ export function tightened<T extends Clampable>(base: T, t?: Tightening): T {
 
 /** How much a wrong value here would damage the plan. Fixed table (spec 1.6). */
 export const PLAN_IMPACT: Record<string, number> = {
+  // US-831 — THE FOUNDER'S LAW, 13 July 2026:
+  //
+  //   "I THINK THE BASIC FLAW IS NOT ASKING FROM WHERE THE PERSON WISHES TO START HIS JOURNEY.
+  //    ONCE WE KNOW WHERE HE WANTS TO START HIS JOURNEY AND THE THEME OF HIS JOURNEY -- OTHER
+  //    THINGS START BECOMING CLEAR."
+  //
+  // He is right, and this table is where we were wrong. `origin` sat at 0.5 -- BELOW the ask
+  // threshold of 0.45 only by the width of a rounding error, and with NO QUESTION ATTACHED TO
+  // IT AT ALL, so it could never be asked however high we set it. The engine's own echo said
+  // `origin -- we_need_it`. IT KNEW IT DID NOT KNOW, AND IT PLANNED ANYWAY. It guessed a start
+  // city from the CENTROID of the destinations -- a function that can never know the traveller
+  // lives in Lucknow -- and bent the whole route around a fact we had invented. That is how a
+  // South India pilgrimage came to START AT RAMESWARAM: a town with no airport, where nobody
+  // can begin a holiday.
+  //
+  // ORIGIN IS 1.0. It is the most trip-shaping fact there is, above the month, above the party.
+  // Nothing outranks knowing where the man actually is.
+  origin: 1.0,
   month: 0.9,
   party: 0.9,
   comfortTier: 0.8,
   budgetStance: 0.8,
   nights: 0.6,
-  origin: 0.5,
   pace: 0.4,
   interests: 0.3,
 };
@@ -536,6 +608,15 @@ export function counterQuestions(intent: TravellerIntent): CounterQuestion[] {
   };
 
   const candidates: CounterQuestion[] = [
+    {
+      key: 'origin',
+      risk: risk(intent.origin, 'origin'),
+      // NO PROVISIONAL. Every other question here carries our provisional answer, because a
+      // consultant proposes while he asks. THIS ONE MAY NOT, and that is the whole of US-831:
+      // a provisional origin IS the bug. There is no honest guess available -- the centroid of
+      // his destinations is not where he lives -- so we do not offer one. We ask, and we wait.
+      text: 'Where does your journey start from? Tell us your city and we will plan from your door, not from somebody else\'s.',
+    },
     {
       key: 'month',
       risk: risk(intent.month, 'month'),

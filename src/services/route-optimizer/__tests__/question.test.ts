@@ -43,10 +43,24 @@ const qs = counterQuestions(intent);
 // ---- 1. EXACTLY ONE QUESTION ---------------------------------------------------------
 console.log('  -- the canonical request --');
 for (const q of qs) console.log(`     ? ${q.text}`);
-check('EXACTLY ONE question is asked', qs.length === 1, `${qs.length}: ${qs.map((q) => q.key).join(', ')}`);
-check('...and it is the MONTH — the one thing we truly do not have', qs[0]?.key === 'month');
-check('the question carries our provisional answer — a consultant proposes while he asks', !!qs[0]?.provisional);
-check('...and it says WHY it matters, in facts our own engine can prove (monsoon roads)', /June and September|slower in the rain/.test(qs[0]?.text ?? ''));
+// US-831 — TWO questions now, and the FIRST is the origin.
+//
+// This file used to assert ONE, and it was wrong for the same reason the golden test was wrong:
+// we were asking him the month and INVENTING HIS HOME CITY, which is the fact the entire route
+// hangs off. Founder, 13 July 2026: "THE BASIC FLAW IS NOT ASKING FROM WHERE THE PERSON WISHES
+// TO START HIS JOURNEY."
+check('EXACTLY TWO questions are asked — still not a form', qs.length === 2, `${qs.length}: ${qs.map((q) => q.key).join(', ')}`);
+check('...and the FIRST is WHERE HE STARTS FROM — impact 1.0, above the month', qs[0]?.key === 'origin');
+check('...and the second is the MONTH', qs[1]?.key === 'month');
+
+// THE ORIGIN QUESTION CARRIES NO PROVISIONAL, AND THAT IS DELIBERATE.
+// Every other question here proposes while it asks, because a consultant does. But there is no
+// honest guess at a man's front door: the centroid of the places he wants to visit is not where
+// he lives, and pretending otherwise is the whole bug. A PROVISIONAL ORIGIN IS THE BUG.
+check('the ORIGIN question offers no provisional — there is no honest guess at a man\'s home',
+      qs[0]?.provisional === undefined);
+check('the MONTH question still carries our provisional — a consultant proposes while he asks', !!qs[1]?.provisional);
+check('...and it says WHY it matters, in facts our own engine can prove (monsoon roads)', /June and September|slower in the rain/.test(qs[1]?.text ?? ''));
 
 // The season claim is grounded in physiology.terrainSpeedKmh, which really does slow hill
 // roads in the monsoon. We do NOT invent a "best season" for a place we have no season data
@@ -81,7 +95,12 @@ check('the threshold is 0.45, and pace (impact 0.4) falls under it — so we nev
 
 // ---- 5. once he answers, we never ask again ---------------------------------------------------
 const answered = withAnsweredMonth(intent, 12, 'December');
-check('he answers "December" → the question is gone', counterQuestions(answered).length === 0);
+// He answered the month. The ORIGIN question remains, because he has still not told us where he
+// lives — and we do not plan until he does. THAT IS THE POINT OF US-831.
+const afterMonth = counterQuestions(answered);
+check('he answers "December" → the MONTH question is gone', !afterMonth.some((q) => q.key === 'month'));
+check('...but we STILL ask where he starts from. We do not plan a trip for a man whose door we cannot find',
+      afterMonth.length === 1 && afterMonth[0].key === 'origin');
 check('...and December is now HIS word, not our guess', answered.month.provenance === 'he_said');
 
 // THE BUG THIS TEST CAUGHT, and it is the exact dishonesty the panel exists to prevent:

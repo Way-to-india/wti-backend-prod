@@ -90,8 +90,25 @@ check('mountains and sea — HE SAID IT', intent.interests.map((i) => i.value).j
 console.log('\n  ── 2. the one question we ask ──');
 const questions = counterQuestions(intent);
 for (const q of questions) console.log(`     ? ${q.text}`);
-check('EXACTLY ONE question', questions.length === 1, `${questions.length}`);
-check('...and it is the month — the only thing we genuinely do not have', questions[0]?.key === 'month');
+// US-831 — THIS ASSERTION USED TO SAY "EXACTLY ONE", AND IT WAS BLESSING A BUG.
+//
+// Read the sin table at the top of THE-CONSULTANTS-LAW.md again. Line one:
+//
+//     | Starting from | Bengaluru | we guessed |
+//
+// The law INDICTS that row. This test was asserting we should keep it. We asked him the month
+// and quietly invented his home city, and the invented home city is the fact the whole route
+// hangs off -- every airport, every train, every leg, every rejection. On the South India
+// pilgrimage that same silence began the trip at RAMESWARAM, a town with no airport, which no
+// traveller can start a holiday from.
+//
+// FOUNDER, 13 July 2026: "THE BASIC FLAW IS NOT ASKING FROM WHERE THE PERSON WISHES TO START
+// HIS JOURNEY." So now we ask. TWO questions, not one -- and still not a form.
+check('EXACTLY TWO questions — the two things we genuinely do not have', questions.length === 2, `${questions.length}`);
+check('...and the FIRST is where he starts from — the most trip-shaping fact there is', questions[0]?.key === 'origin');
+check('...and the second is the month', questions[1]?.key === 'month');
+check('the origin question offers NO provisional — a provisional origin IS the bug',
+      questions[0]?.key === 'origin' && questions[0]?.provisional === undefined);
 
 // he answers. December.
 intent = withAnsweredMonth(intent, 12, 'December');
@@ -234,7 +251,8 @@ check('3. FLY Mangalore → Goa, on a service that really exists', /6E 7431/.tes
 check('4. THE NETRAVATHI IS REJECTED, and for the reason HE would give', /you asked us not to travel by train/.test(netraLine));
 check('5. THE SUBSTITUTION IS ANNOUNCED — finding, reason, alternative', /We checked every way/.test(p) && /has no airport/.test(p) && /So here is our advice/.test(p));
 check('6. It ties back to what he wanted: "just as you preferred"', /just as you preferred/.test(p));
-check('7. ONE question was asked. Not a form.', questions.length === 1 && questions[0].key === 'month');
+check('7. TWO questions were asked — where he starts, and when. Not a form.',
+      questions.length === 2 && questions[0].key === 'origin' && questions[1].key === 'month');
 check('8. NOT ONE WORD about saving a hotel night — anywhere', !/hotel night/i.test(p + netraLine + roadLine + JSON.stringify(buildEcho(intent))));
 check('9. NO price is quoted to him', !/₹|rupee/i.test(p + netraLine + roadLine));
 check('10. NO adjective the data cannot prove ("scenic", "beautiful")', !/scenic|beautiful|stunning|breathtaking/i.test(p));
