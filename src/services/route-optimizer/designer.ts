@@ -631,7 +631,11 @@ export function designAll(
         const next = inRegion
           .filter((c) => !joined.includes(c) && !isGatewayOf(c, joined))
           .map((c) => ({ c, km: haversineKm([last.node.lat, last.node.lng], [c.node.lat, c.node.lng]) }))
-          .filter((x) => x.km <= 400)
+          // A TOWN 15 KM AWAY IS A DAY-TRIP, NOT A HOTEL. Srirangapatna sits 15 km from
+          // Mysore and burned a stop slot that belonged to Hampi. Anything under 30 km of
+          // a chosen stop is seen FROM that stop — it must not cost a packing morning.
+          .filter((x) => x.km >= 30 && x.km <= 400
+            && !joined.some((jc) => haversineKm([jc.node.lat, jc.node.lng], [x.c.node.lat, x.c.node.lng]) < 30))
           .sort((a, b) => (a.km - b.km) || (b.c.node.tourCount - a.c.node.tourCount))[0];
         if (!next) break;
         joined.push(next.c);

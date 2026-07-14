@@ -640,7 +640,8 @@ export class PublicPlannerController {
               // The gates still stand — a named circuit is not above the season or the
               // body. But the DAYS gate binds only on a number HE gave: gating a sold
               // 10-night yatra on our own default of 6 would be a silent assumption.
-              const saidNights = intent?.nights.value ?? nightsFromWords(request)?.maxNights ?? null;
+              const saidNights = (intent?.nights.provenance === 'he_said' ? intent.nights.value : null)
+                ?? nightsFromWords(request)?.maxNights ?? null;
               const coords = new Map(stays.map((s) => [lowc(s.name), [s.lat, s.lng] as [number, number]]));
               const elevations: Record<string, number> = {};
               for (const s of stays) if (s.elevationM != null) elevations[lowc(s.name)] = s.elevationM;
@@ -869,7 +870,8 @@ export class PublicPlannerController {
           // The DAYS gate binds only on a number HE gave. brief.nights carries our default
           // of 6 when he said nothing — gating on our own default would be a silent
           // assumption doing a founder ruling's job.
-          const saidNightsTheme = intent?.nights.value ?? nightsFromWords(request)?.maxNights ?? null;
+          const saidNightsTheme = (intent?.nights.provenance === 'he_said' ? intent.nights.value : null)
+            ?? nightsFromWords(request)?.maxNights ?? null;
           const facts: GateFacts = {
             nightsCeiling: saidNightsTheme ?? 99,
             month: month ?? null,
@@ -964,8 +966,8 @@ export class PublicPlannerController {
               + `${modeWord}I would give you ${stopWords} — `
               + `${proposal.totalNights} nights of stay`
               // "the N you allowed" may only be said when HE allowed it (Law 5's spirit).
-              + ((intent?.nights.value ?? nightsFromWords(request)?.maxNights)
-                  ? `, well inside the ${intent?.nights.value ?? nightsFromWords(request)!.maxNights} you allowed,`
+              + (((intent?.nights.provenance === 'he_said' ? intent.nights.value : null) ?? nightsFromWords(request)?.maxNights)
+                  ? `, well inside the ${(intent?.nights.provenance === 'he_said' ? intent.nights.value : null) ?? nightsFromWords(request)!.maxNights} you allowed,`
                   : ',')
               + ' and the journey either side.'
               + (shapedProposals.length > 1
