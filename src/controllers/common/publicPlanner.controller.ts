@@ -35,7 +35,7 @@ import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb'
 import { foodFor } from '@/services/route-optimizer/foodDb';
 import { foodNeedFromWords } from '@/services/route-optimizer/food';
 import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
-import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, cityWasNamed, frameFromText, heSaid, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
+import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, cityWasNamed, frameFromText, heSaid, isStatedCityList, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 import { mergeDuplicateCities } from '@/services/route-optimizer/optimize';
@@ -390,6 +390,19 @@ export class PublicPlannerController {
       }
 
       const body = req.body || {};
+      // ---- US-857 — AN EMPTY LIST IS NOT A STATED LIST ---------------------------------
+      //
+      // The public page has ALWAYS sent `cities: []` alongside the free text (AskScreen:
+      // `onSolve({ cities: [], … })`). Four guards below asked `!Array.isArray(body.cities)`
+      // to mean "he did not supply structured cities" — and an empty array made every one
+      // of them lie. So for every REAL page traveller: US-854 never removed the frame
+      // (the Karnataka sentence shipped Delhi → Bangalore → Goa, the frame flown and the
+      // heritage skipped — the exact plan the law was written to kill), US-853b never
+      // removed his home, and the understanding panel called parsed towns "you said".
+      // The 18-traveller sweep missed all of it because its curl bodies OMITTED the key —
+      // the sweep tested with bodies the page never sends. A stated list is a list with
+      // something in it.
+      const statedCities = isStatedCityList(body.cities);
       let cities: { name: string; nights: number }[] = Array.isArray(body.cities)
         ? body.cities
             .filter((c: any) => c && typeof c.name === 'string' && c.name.trim())
@@ -514,7 +527,7 @@ export class PublicPlannerController {
       // verified against the gazetteer, and its cities leave the destination list — BUT
       // ONLY when a theme or a region exists to fill the middle. Otherwise nothing changes.
       const frame: { entry: string | null; exit: string | null } = { entry: null, exit: null };
-      if (request && !Array.isArray(body.cities)) {
+      if (request && !statedCities) {
         const f = frameFromText(request);
         if (f.entry) {
           const v = await verifyCity(f.entry);
@@ -545,7 +558,7 @@ export class PublicPlannerController {
       // removed from the destination list (unless he explicitly asked to end there, which
       // is the round-trip ask, handled below). With the false destination gone, the named
       // circuit and the theme shortlist can answer, as designed.
-      if (request && !Array.isArray(body.cities) && start && cities.length) {
+      if (request && !statedCities && start && cities.length) {
         const s = start.trim().toLowerCase();
         const askedToEndThere = !!(end && end.trim().toLowerCase() === s);
         if (!askedToEndThere) {
@@ -1283,8 +1296,8 @@ export class PublicPlannerController {
         },
         {
           key: 'nights', label: 'Nights', value: String(totalNights),
-          source: request && !Array.isArray(body.cities) ? 'we_guessed' : 'you_said',
-          why: request && !Array.isArray(body.cities) ? 'We split your days across the places you named' : undefined,
+          source: request && !statedCities ? 'we_guessed' : 'you_said',
+          why: request && !statedCities ? 'We split your days across the places you named' : undefined,
         },
         {
           key: 'travellers', label: 'Travellers', value: String(pax),

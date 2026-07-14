@@ -281,6 +281,15 @@ const toNum = (w: string): number | null => {
   return Number.isFinite(n) && n >= 1 && n <= 30 ? n : null;
 };
 
+/** US-857 — AN EMPTY LIST IS NOT A STATED LIST. The public page has always sent
+ *  `cities: []` beside the free text, and guards that asked only `Array.isArray`
+ *  read that as "he supplied cities" — switching off US-854 (frame removal) and
+ *  US-853b (his home is not a destination) for every real page traveller. A city
+ *  list counts as HIS only when there is a city in it. */
+export function isStatedCityList(v: unknown): boolean {
+  return Array.isArray(v) && v.length > 0;
+}
+
 /** Days are not nights. Ten days is nine nights. */
 const toNights = (n: number, unit: string): number => (/^day/i.test(unit) ? n - 1 : n);
 
