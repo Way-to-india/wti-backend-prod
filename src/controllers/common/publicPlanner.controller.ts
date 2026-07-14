@@ -696,6 +696,19 @@ export class PublicPlannerController {
               if (gated.offered.length) {
                 const g = gated.offered[0];
                 const stopWords = g.proposal.stops.map((s) => `${s.name} (${s.nights} night${s.nights > 1 ? 's' : ''})`).join(', ');
+                // The ready-to-POST body for the pick (see the theme branch for why).
+                const pick = {
+                  request,
+                  cities: g.proposal.stops.map((s) => ({ name: s.name, nights: s.nights })),
+                  start: (startWasStated && start) ? start : null,
+                  end: end ?? null,
+                  ...(month ? { month } : {}),
+                  pax, profile,
+                };
+                const shapedCircuit = {
+                  ...g.proposal, gates: g.gates, gateNotes: g.gateNotes, whyForYou: null,
+                  shape: buildShape(entry.get(lowc(stays[0].name)) ?? null, null), pick,
+                };
                 return res.status(200).json({
                   status: false,
                   need: 'destinations',
@@ -704,8 +717,8 @@ export class PublicPlannerController {
                   towns: [],
                   echo: intent ? buildEcho(intent) : [],
                   questions,
-                  proposal: { ...g.proposal, gates: g.gates, gateNotes: g.gateNotes, whyForYou: null, shape: buildShape(entry.get(lowc(stays[0].name)) ?? null, null) },
-                  proposals: [{ ...g.proposal, gates: g.gates, gateNotes: g.gateNotes, whyForYou: null, shape: buildShape(entry.get(lowc(stays[0].name)) ?? null, null) }],
+                  proposal: shapedCircuit,
+                  proposals: [shapedCircuit],
                   refusedProposals: [],
                   message: `${reading}That is a journey we run ourselves — ${tour.title}, `
                     + `${g.proposal.totalNights} nights: ${stopWords}. ${circuitHit.circuit.note}.`
@@ -896,9 +909,23 @@ export class PublicPlannerController {
         }
 
         // Flatten for the page: each offer is the Proposal the frontend already renders,
-        // plus its gates, notes, shape and the personal sentence.
+        // plus its gates, notes, shape and the personal sentence — AND the `pick` object:
+        // the EXACT body the page POSTs back when he chooses this journey. The frame
+        // (entry/exit), his month, his party all ride inside it, so the frontend cannot
+        // lose the frame even by accident (US-855's carry problem, closed structurally).
         const shaped = (offered as (typeof offered[number] & { shape?: unknown; whyForYou?: string })[])
-          .map((g) => ({ ...g.proposal, gates: g.gates, gateNotes: g.gateNotes, shape: (g as any).shape ?? null, whyForYou: (g as any).whyForYou ?? null }));
+          .map((g) => ({
+            ...g.proposal, gates: g.gates, gateNotes: g.gateNotes,
+            shape: (g as any).shape ?? null, whyForYou: (g as any).whyForYou ?? null,
+            pick: {
+              request,
+              cities: g.proposal.stops.map((s) => ({ name: s.name, nights: s.nights })),
+              start: frame.entry ?? (startWasStated && start ? start : null),
+              end: frame.exit ?? null,
+              ...(month ? { month } : {}),
+              pax, profile,
+            },
+          }));
         const proposal = (shaped[0] as Proposal | undefined) ?? null;
         const shapedProposals = shaped as unknown as Proposal[];
         const stopWords = proposal
