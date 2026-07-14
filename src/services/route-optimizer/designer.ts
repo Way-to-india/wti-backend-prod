@@ -49,6 +49,7 @@
 
 import type { StayNode, Gateway } from './spine';
 import { nodeTier, nodeVoice, railReachable, gatewayDriveHours } from './spine';
+import { haversineKm } from './geo';
 import type { DesignerMemory, Tier, Confidence } from './designerMemory';
 import { coDesignStrength, coDesignedWith, pairConfidence, nightsWeCanStandBehind } from './designerMemory';
 import type { FoodFact, FoodNeed, FoodStatus } from './food';
@@ -599,6 +600,44 @@ export function designAll(
   if (!circuits.length) {
     const tier2 = eligible.filter((c) => !c.outOfRegion).slice(0, maxStops(brief));
     if (tier2.length) circuits.push(tier2);
+  }
+
+  // US-854 — WHERE THE MEMORY IS ALL SINGLETONS, GEOGRAPHY MAY PROPOSE ONE JOINED TRIP.
+  //
+  // THE LIVE FAILURE (Karnataka heritage, 2026-07-14): the pool held Mysore, Hassan,
+  // Halebid, Hampi, Badami — and the offer was three LONE TOWNS, because our designers'
+  // pairs barely touch the region, every BFS circuit was a singleton, and the Tier-2 pad
+  // only draws from WITHIN a circuit — a singleton can never grow. A traveller who asked
+  // for "the heritage cities of Karnataka" plural was answered in the singular.
+  //
+  // So when NOT ONE real circuit exists, geography joins compact singletons into ONE trip:
+  // nearest-neighbour, each hop ≤ 400 km (the same compactness the pool fence uses). The
+  // joining is OURS and circuitVoice already says so out loud ("our designers have not
+  // built these towns together…") — Tier 2 doctrine, extended from zero-circuits to
+  // all-singletons. Geography may propose; it still cannot outrank a designers' circuit,
+  // because this runs only when there is none.
+  const hasRealCircuit = circuits.some((g) => g.length > 1);
+  if (!hasRealCircuit && eligible.length >= 2) {
+    const inRegion = eligible.filter((c) => !c.outOfRegion);
+    const seeds = [...inRegion].sort((a, b) =>
+      (b.node.tourCount - a.node.tourCount) || (b.attractions - a.attractions) || a.node.name.localeCompare(b.node.name));
+    const cap = maxStops(brief);
+    // The strongest town may be geographically ISOLATED (a lone star far from the rest).
+    // A seed that cannot join anything is not a failure of the idea — try the next one.
+    for (const seed of seeds) {
+      const joined: Candidate[] = [seed];
+      while (joined.length < cap) {
+        const last = joined[joined.length - 1];
+        const next = inRegion
+          .filter((c) => !joined.includes(c) && !isGatewayOf(c, joined))
+          .map((c) => ({ c, km: haversineKm([last.node.lat, last.node.lng], [c.node.lat, c.node.lng]) }))
+          .filter((x) => x.km <= 400)
+          .sort((a, b) => (a.km - b.km) || (b.c.node.tourCount - a.c.node.tourCount))[0];
+        if (!next) break;
+        joined.push(next.c);
+      }
+      if (joined.length > 1) { circuits.unshift(joined); break; }
+    }
   }
 
   // A LONE TOWN IS A FALLBACK, NOT A THIRD OPTION.

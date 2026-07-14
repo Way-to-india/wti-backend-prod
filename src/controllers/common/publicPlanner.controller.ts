@@ -825,10 +825,17 @@ export class PublicPlannerController {
             if (!node || !origin) { entry.set(key, null); continue; }
             const crow = haversineKm(origin.coord, [node.lat, node.lng]);
             let fact: EntryFact | null = null;
+            // US-854b — A THREE-HOUR DRIVE IS A DRIVE. Bangalore → Mysore came back as
+            // "fly Bangalore → Kannur", because any sector between any nearby airports
+            // outranked the honest short road. When the road estimate is a comfortable
+            // half-day or less, the road IS the entry (Law 2: the ordeal is the point,
+            // not the mode) and we do not go looking for an aeroplane.
+            const roadHours = (crow * 1.3) / 55;
+            const shortDrive = roadHours <= 4.5;
             // A NAME IS NOT A KEY: airport_cities holds synonym rows (Bengaluru AND
             // Bangalore) and the sectors are keyed to one of them. Check the few nearest
             // airports on EACH side, direct first, then one change of plane.
-            const originAirports = await airportsNear(origin.coord, 200, 3);
+            const originAirports = shortDrive ? [] : await airportsNear(origin.coord, 200, 3);
             const anchorAirports = originAirports.length ? await airportsNear([node.lat, node.lng], 150, 3) : [];
             outer:
             for (const oa of originAirports) {
