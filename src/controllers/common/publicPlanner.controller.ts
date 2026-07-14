@@ -35,7 +35,7 @@ import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb'
 import { foodFor } from '@/services/route-optimizer/foodDb';
 import { foodNeedFromWords } from '@/services/route-optimizer/food';
 import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
-import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, cityWasNamed, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
+import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, cityWasNamed, frameFromText, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 import { mergeDuplicateCities } from '@/services/route-optimizer/optimize';
@@ -470,6 +470,39 @@ export class PublicPlannerController {
         }
       }
 
+      // ---- US-854 — THE FRAME IS NOT THE TRIP -------------------------------------------
+      //
+      // "The heritage cities of Karnataka starting from Bangalore… flying from Delhi…
+      // fly back from Goa." THREE city names, ZERO destinations: entry gate, home, exit
+      // gate. The live payload answered it with Delhi → Bangalore → Goa — the frame flown,
+      // the heritage skipped. The frame is read deterministically from his own words,
+      // verified against the gazetteer, and its cities leave the destination list — BUT
+      // ONLY when a theme or a region exists to fill the middle. Otherwise nothing changes.
+      const frame: { entry: string | null; exit: string | null } = { entry: null, exit: null };
+      if (request && !Array.isArray(body.cities)) {
+        const f = frameFromText(request);
+        if (f.entry) {
+          const v = await verifyCity(f.entry);
+          if (v.ok && v.name) frame.entry = v.name;
+        }
+        if (f.exit) {
+          const v = await verifyCity(f.exit);
+          if (v.ok && v.name) frame.exit = v.name;
+        }
+        if (frame.exit && !end) end = frame.exit;
+        const canFillMiddle = ((intent ? chipsOf(intent).length : 0) > 0 || !!resolveRegion(request));
+        if (canFillMiddle && (frame.entry || frame.exit)) {
+          const frameNames = new Set([frame.entry, frame.exit]
+            .filter((s): s is string => !!s).map((s) => s.trim().toLowerCase()));
+          const before = cities.length;
+          cities = cities.filter((c) => !frameNames.has(c.name.trim().toLowerCase()));
+          if (cities.length !== before) {
+            console.warn('US-854 — frame cities removed from destinations (entry/exit gates, not stays):',
+              [...frameNames].join(', '));
+          }
+        }
+      }
+
       // ---- US-853b — HIS HOME IS NOT A DESTINATION -------------------------------------
       // "I want to do a van durga yatra with my mother, we are from Delhi" — the parser
       // put Delhi into cities because the word appears in his sentence, and the one thing
@@ -772,9 +805,13 @@ export class PublicPlannerController {
         try {
           const nodeByName = new Map(nodes.map((n) => [n.name.trim().toLowerCase(), n] as const));
           const stopNames = [...new Set(proposals.flatMap((p) => p.stops.map((s) => s.name)))];
+          // US-854 — when he declared an ENTRY gate ("starting from Bangalore"), the trip
+          // is reached from THERE; his home city is where the flights come from, and it
+          // must not be the yardstick for the origin gate.
+          const gateOrigin = frame.entry ?? start;
           const [seasons, access, elevations, origin] = await Promise.all([
             loadSeasonFacts(stopNames), loadAccessFacts(stopNames),
-            loadElevations(stopNames), originFactsFor(start),
+            loadElevations(stopNames), originFactsFor(gateOrigin),
           ]);
           const coords = new Map(nodes.map((n) => [n.name.trim().toLowerCase(), [n.lat, n.lng] as [number, number]]));
 
@@ -831,7 +868,7 @@ export class PublicPlannerController {
             month: month ?? null,
             profile: (['standard', 'family', 'senior'].includes(profile) ? profile : 'standard') as GateFacts['profile'],
             coords, elevations, seasons, access, entry,
-            originName: start,
+            originName: gateOrigin,
           };
           const gated = gateProposals(proposals, facts);
           offered = gated.offered;
@@ -883,6 +920,11 @@ export class PublicPlannerController {
           // US-840 — the theme block: which chips opened this shortlist, and his own words
           // for the reason he travels, when he gave us words.
           theme: chips.length ? { chips, quote: youSaid } : null,
+          // US-854 — the FRAME he declared: entry gate, exit gate, home. The pick-flow and
+          // the page must carry these into the final plan (start = entry, end = exit).
+          frame: (frame.entry || frame.exit || startWasStated)
+            ? { home: startWasStated ? start : null, entry: frame.entry, exit: frame.exit }
+            : null,
           towns,
           // US-811 — THE CHIPS. He is entitled to see what we heard, BEFORE we build on it,
           // and each chip must say whether HE said it, WE guessed it, or we still need it.
@@ -923,6 +965,12 @@ export class PublicPlannerController {
                   ? ` And this is not the only way to do it. I have laid out `
                     + `${shapedProposals.length} real journeys. Look at them `
                     + 'side by side and tell me which one is yours.'
+                  : '')
+              + (frame.entry || frame.exit
+                  ? ` The journey enters${frame.entry ? ` through ${frame.entry}` : ''}`
+                    + `${frame.exit ? ` and leaves through ${frame.exit}` : ''}`
+                    + `${startWasStated && start && start.toLowerCase() !== (frame.entry ?? '').toLowerCase() ? `, with the flights from ${start} either side` : ''}`
+                    + ' — exactly as you asked.'
                   : '')
               + (refusedProposals.length
                   ? ` There ${refusedProposals.length === 1 ? 'is one journey' : 'are journeys'} I looked at and ruled out for you — the reasons are below, in plain words.`

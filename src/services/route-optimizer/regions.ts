@@ -81,7 +81,16 @@ export type RegionKey =
   | 'south_india'
   | 'central_india'
   | 'east_india'
-  | 'andamans';
+  | 'andamans'
+  // US-854 — single states a traveller actually names ("the heritage cities of
+  // KARNATAKA"). The resolver knew eleven multi-state regions and not the states
+  // themselves, so "Karnataka" resolved to nothing and the theme fence never closed.
+  | 'karnataka'
+  | 'tamil_nadu'
+  | 'gujarat'
+  | 'himachal'
+  | 'uttarakhand'
+  | 'kashmir_valley';
 
 export interface Region {
   key: RegionKey;
@@ -126,6 +135,8 @@ const S = {
   TELANGANA:    { admin1Code: '40', name: 'Telangana',                 witness: 'Hyderabad' },
   LADAKH:       { admin1Code: '41', name: 'Ladakh',                    witness: 'Leh' },
   MAHARASHTRA:  { admin1Code: '16', name: 'Maharashtra',               witness: 'Mumbai' },
+  // US-854 — verified on production 2026-07-14: Ahmedabad carries admin1Code '09'.
+  GUJARAT:      { admin1Code: '09', name: 'Gujarat',                   witness: 'Ahmedabad' },
 } as const satisfies Record<string, StateRef>;
 
 /**
@@ -217,6 +228,47 @@ export const REGIONS: Region[] = [
     label: 'the Andaman Islands',
     states: [S.ANDAMAN],
     phrases: ['andaman', 'andamans', 'andaman islands', 'andaman and nicobar', 'nicobar'],
+  },
+  // ---- US-854 — the single states travellers actually name ------------------------------
+  // "The heritage cities of Karnataka" resolved to NOTHING: the resolver knew regions and
+  // not states. Longest-phrase-wins already arbitrates against the multi-state regions
+  // ("himachal pradesh" beats "himalayas" when he wrote the former). Codes verified; the
+  // witness is beside each in S.
+  {
+    key: 'karnataka',
+    label: 'Karnataka',
+    states: [S.KARNATAKA],
+    phrases: ['karnataka', 'karnatka'],
+  },
+  {
+    key: 'tamil_nadu',
+    label: 'Tamil Nadu',
+    states: [S.TAMIL_NADU],
+    phrases: ['tamil nadu', 'tamilnadu'],
+  },
+  {
+    key: 'gujarat',
+    label: 'Gujarat',
+    states: [S.GUJARAT],
+    phrases: ['gujarat', 'gujrat', 'kutch', 'kachchh'],
+  },
+  {
+    key: 'himachal',
+    label: 'Himachal Pradesh',
+    states: [S.HIMACHAL],
+    phrases: ['himachal', 'himachal pradesh'],
+  },
+  {
+    key: 'uttarakhand',
+    label: 'Uttarakhand',
+    states: [S.UTTARAKHAND],
+    phrases: ['uttarakhand', 'uttaranchal', 'garhwal', 'kumaon'],
+  },
+  {
+    key: 'kashmir_valley',
+    label: 'Kashmir',
+    states: [S.KASHMIR],
+    phrases: ['kashmir', 'kashmir valley', 'jammu and kashmir'],
   },
 ];
 

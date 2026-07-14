@@ -489,6 +489,73 @@ const INTEREST_CHIP: [RegExp, Chip][] = [
   [/honeymoon|romantic|romance/i, 'Honeymoon & Romance'],
 ];
 
+/**
+ * US-854 — THE FRAME IS NOT THE TRIP.
+ *
+ * "I want to cover the heritage cities of Karnataka starting from Bangalore. We would be
+ * 4 persons flying from Delhi and would like to fly back from Goa after completing the
+ * tour." — THREE city names, and not one of them is a destination. Bangalore is the ENTRY
+ * gate, Goa is the EXIT gate, Delhi is HOME. The traveller has given us the FRAME and is
+ * asking us to fill the MIDDLE — which is the most consultant-shaped request there is,
+ * and the live payload of 2026-07-14 answered it with Delhi → Bangalore → Goa: the frame
+ * flown, the heritage skipped.
+ *
+ * This reads the frame deterministically out of his own words. The caller then removes
+ * frame cities from the destination list (so the theme shortlist can fill the middle) and
+ * carries the frame forward. PURE — verification against the gazetteer stays with the
+ * caller.
+ */
+const FRAME_STOP = /\b(?:we|i|they|and|with|for|to|who|that|all|after|before|via|on|by|would|will|want|wants|is|are|in|the)\b/i;
+
+function cutCityCand(raw: string): string | null {
+  let cand = raw.split(/[,.;:!?]/)[0].trim();
+  const stop = FRAME_STOP.exec(cand);
+  if (stop && stop.index > 0) cand = cand.slice(0, stop.index).trim();
+  cand = cand.replace(/\s+/g, ' ').trim();
+  if (cand.length < 3 || cand.length > 28) return null;
+  if (/^(the|a|an|there|here|home|india)$/i.test(cand)) return null;
+  return cand;
+}
+
+export interface TripFrame {
+  /** where the TOUR begins — "starting from Bangalore". */
+  entry: string | null;
+  entryQuote: string | null;
+  /** where he leaves the tour for home — "fly back from Goa", "ending in Goa". */
+  exit: string | null;
+  exitQuote: string | null;
+}
+
+export function frameFromText(text: string | null | undefined): TripFrame {
+  const out: TripFrame = { entry: null, entryQuote: null, exit: null, exitQuote: null };
+  if (!text || typeof text !== 'string') return out;
+
+  const entryRe = /\b(?:start|starting|begin|beginning)\s+(?:(?:the|our|this|my)\s+)?(?:tour|trip|journey|yatra)?\s*(?:from|at|in)\s+([A-Za-z][A-Za-z .'-]{2,32})/i;
+  const em = entryRe.exec(text);
+  if (em?.[1]) {
+    const c = cutCityCand(em[1]);
+    if (c) { out.entry = c; out.entryQuote = em[0].trim(); }
+  }
+
+  const exitRes = [
+    /\b(?:fly|flying|travel|go|going|return|returning|head|heading)\s+back\s+(?:home\s+)?from\s+([A-Za-z][A-Za-z .'-]{2,32})/i,
+    /\breturn\s+from\s+([A-Za-z][A-Za-z .'-]{2,32})/i,
+    /\bend(?:ing)?\s+(?:(?:the|our|this|my)\s+)?(?:tour|trip|journey|yatra)?\s*(?:at|in)\s+([A-Za-z][A-Za-z .'-]{2,32})/i,
+  ];
+  for (const re of exitRes) {
+    const m = re.exec(text);
+    if (m?.[1]) {
+      const c = cutCityCand(m[1]);
+      if (c) { out.exit = c; out.exitQuote = m[0].trim(); break; }
+    }
+  }
+  // A frame that begins and ends at the same place is a round trip, not a frame.
+  if (out.entry && out.exit && out.entry.toLowerCase() === out.exit.toLowerCase()) {
+    return { ...out, exit: null, exitQuote: null };
+  }
+  return out;
+}
+
 export function chipsOf(intent: TravellerIntent): string[] {
   const out = new Set<string>();
   for (const c of intent.mainChips) if (c.value) out.add(c.value);

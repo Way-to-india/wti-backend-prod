@@ -108,3 +108,26 @@ describe('US-845b — his interests reach the chips deterministically', () => {
     expect(chips).toContain('Heritage & Forts');
   });
 });
+
+// ---- US-854 — the frame is not the trip ----------------------------------------------------
+import { frameFromText } from '../intent';
+import { resolveRegion } from '../regions';
+
+describe('US-854 — the frame is not the trip (the Karnataka heritage case)', () => {
+  const M = 'I want to cover the heritage cities of Karnataka starting from bangalore.We would be 4 persons flying from Delhi and would like to fly back from Goa after completing the tour.';
+  it('reads the entry and exit gates from his own words', () => {
+    const f = frameFromText(M);
+    expect(f.entry?.toLowerCase()).toBe('bangalore');
+    expect(f.exit?.toLowerCase()).toBe('goa');
+  });
+  it('a trip that starts and ends at the same place is a round trip, not a frame', () => {
+    const f = frameFromText('starting from Delhi and ending in Delhi');
+    expect(f.entry?.toLowerCase()).toBe('delhi');
+    expect(f.exit).toBe(null);
+  });
+  it('"Karnataka" resolves as a region now (it resolved to nothing)', () => {
+    expect(resolveRegion(M)?.region.key).toBe('karnataka');
+    expect(resolveRegion('forts of gujarat')?.region.key).toBe('gujarat');
+    expect(resolveRegion('himachal pradesh in march')?.region.key).toBe('himachal');
+  });
+});
