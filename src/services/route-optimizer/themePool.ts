@@ -259,16 +259,28 @@ export async function flightOneStopExists(a: string, b: string): Promise<boolean
 /** The nearest airport city WITH real scheduled service to a coordinate. 163 rows — read
  *  once per call, filtered here. Null when nothing is within `maxKm` straight-line. */
 export async function nearestAirportTo(coord: [number, number], maxKm = 150): Promise<{ city: string; km: number } | null> {
+  const list = await airportsNear(coord, maxKm, 1);
+  return list[0] ?? null;
+}
+
+/**
+ * The few nearest airport cities to a coordinate. WHY A LIST AND NOT ONE NAME: the sweep
+ * caught Bengaluru → Goa priced as 23 hours of ROAD, because `airport_cities` holds BOTH
+ * "Bengaluru" and "Bangalore" as rows and the sectors are keyed "Bangalore" — one nearest
+ * name missed the 20 real daily flights sitting under its synonym. A NAME IS NOT A KEY,
+ * again. Checking the 3 nearest on each side makes the existence test robust to the
+ * synonym rows without trusting any name matching.
+ */
+export async function airportsNear(coord: [number, number], maxKm = 150, limit = 3): Promise<{ city: string; km: number }[]> {
   try {
     const airports = await prisma.$queryRawUnsafe<any[]>(`SELECT city, lat, lng FROM airport_cities`);
-    let nearest: { city: string; km: number } | null = null;
-    for (const a of airports) {
-      const km = haversineKm(coord, [Number(a.lat), Number(a.lng)]);
-      if (!nearest || km < nearest.km) nearest = { city: String(a.city), km };
-    }
-    return nearest && nearest.km <= maxKm ? nearest : null;
+    return airports
+      .map((a) => ({ city: String(a.city), km: haversineKm(coord, [Number(a.lat), Number(a.lng)]) }))
+      .filter((a) => a.km <= maxKm)
+      .sort((a, b) => a.km - b.km)
+      .slice(0, limit);
   } catch (e) {
-    console.error('nearestAirportTo failed:', e);
-    return null;
+    console.error('airportsNear failed:', e);
+    return [];
   }
 }

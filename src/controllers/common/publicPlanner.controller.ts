@@ -39,7 +39,7 @@ import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFrom
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 import { mergeDuplicateCities } from '@/services/route-optimizer/optimize';
-import { poolForChips, scopedDesignerMemory, originFactsFor, flightSectorExists, flightOneStopExists, nearestAirportTo } from '@/services/route-optimizer/themePool';
+import { poolForChips, scopedDesignerMemory, originFactsFor, flightSectorExists, flightOneStopExists, airportsNear } from '@/services/route-optimizer/themePool';
 import { gateProposals, buildShape, type EntryFact, type GateFacts } from '@/services/route-optimizer/proposalGates';
 import { loadSeasonFacts, loadAccessFacts } from '@/services/route-optimizer/placeFactsDb';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
@@ -643,14 +643,31 @@ export class PublicPlannerController {
             if (!node || !origin) { entry.set(key, null); continue; }
             const crow = haversineKm(origin.coord, [node.lat, node.lng]);
             let fact: EntryFact | null = null;
-            const anchorAirport = origin.nearestAirport ? await nearestAirportTo([node.lat, node.lng]) : null;
-            if (origin.nearestAirport && anchorAirport) {
-              if (await flightSectorExists(origin.nearestAirport.city, anchorAirport.city)) {
-                fact = { hours: 4.5 + anchorAirport.km / 60, how: 'AIR',
-                  basis: `a scheduled ${origin.nearestAirport.city} → ${anchorAirport.city} flight exists` };
-              } else if (await flightOneStopExists(origin.nearestAirport.city, anchorAirport.city)) {
-                fact = { hours: 7.5 + anchorAirport.km / 60, how: 'AIR',
-                  basis: `${origin.nearestAirport.city} → ${anchorAirport.city} is flyable with one change of plane` };
+            // A NAME IS NOT A KEY: airport_cities holds synonym rows (Bengaluru AND
+            // Bangalore) and the sectors are keyed to one of them. Check the few nearest
+            // airports on EACH side, direct first, then one change of plane.
+            const originAirports = await airportsNear(origin.coord, 200, 3);
+            const anchorAirports = originAirports.length ? await airportsNear([node.lat, node.lng], 150, 3) : [];
+            outer:
+            for (const oa of originAirports) {
+              for (const aa of anchorAirports) {
+                if (await flightSectorExists(oa.city, aa.city)) {
+                  fact = { hours: 4.5 + aa.km / 60, how: 'AIR',
+                    basis: `a scheduled ${oa.city} → ${aa.city} flight exists` };
+                  break outer;
+                }
+              }
+            }
+            if (!fact) {
+              outer2:
+              for (const oa of originAirports) {
+                for (const aa of anchorAirports) {
+                  if (await flightOneStopExists(oa.city, aa.city)) {
+                    fact = { hours: 7.5 + aa.km / 60, how: 'AIR',
+                      basis: `${oa.city} → ${aa.city} is flyable with one change of plane` };
+                    break outer2;
+                  }
+                }
               }
             }
             if (!fact) {
