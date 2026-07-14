@@ -35,7 +35,7 @@ import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb'
 import { foodFor } from '@/services/route-optimizer/foodDb';
 import { foodNeedFromWords } from '@/services/route-optimizer/food';
 import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
-import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
+import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 import { mergeDuplicateCities } from '@/services/route-optimizer/optimize';
