@@ -35,7 +35,7 @@ import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb'
 import { foodFor } from '@/services/route-optimizer/foodDb';
 import { foodNeedFromWords } from '@/services/route-optimizer/food';
 import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
-import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
+import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, cityWasNamed, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 import { mergeDuplicateCities } from '@/services/route-optimizer/optimize';
@@ -413,7 +413,22 @@ export class PublicPlannerController {
         const parsed = heard?.trip ?? null;
         if (heard) intent = intentFromRaw(heard.raw, request);
         if (parsed) {
-          if (parsed.cities.length) cities = parsed.cities;
+          // US-845 — A DESTINATION THE MODEL CHOSE IS NOT A DESTINATION HE NAMED.
+          // "A relaxed beach break" came back as cities:[Goa]; "the Char Dham yatra in
+          // December" came back as the four temple towns — and the named-cities path then
+          // BYPASSED every shortlist gate (days/origin/season/body). Seniors were sold a
+          // December Char Dham with the temples shut. The source for "he wants to go there"
+          // is HIS SENTENCE: a parsed city that does not occur in it (with a little give for
+          // spelling) is dropped, and the gated theme/region shortlist answers instead.
+          if (parsed.cities.length) {
+            const named = parsed.cities.filter((c) => cityWasNamed(c.name, request));
+            const invented = parsed.cities.filter((c) => !named.some((n) => n.name === c.name));
+            if (invented.length) {
+              console.warn('US-845 — model-proposed destinations dropped (not in his sentence):',
+                invented.map((c) => c.name).join(', '));
+            }
+            cities = named;
+          }
           start = start || parsed.start || null;
           // US-831b — the model missed it. Read it ourselves. It still has to survive verifyCity
           // below, so nothing enters the plan that our own gazetteer cannot confirm.
@@ -428,6 +443,11 @@ export class PublicPlannerController {
                 if (heard?.raw) {
                   heard.raw.start = v.name;
                   heard.raw.quotes = { ...(heard.raw.quotes ?? {}), start: guess.quote };
+                  // US-845c — the echo must SHOW the origin we just read out of his own
+                  // sentence. The intent was compiled before this patch, so the panel said
+                  // `origin — we need it` while the plan quietly began at his city: one
+                  // screen arguing with itself, again. Recompile from the patched raw.
+                  intent = intentFromRaw(heard.raw, request);
                 }
               }
             }

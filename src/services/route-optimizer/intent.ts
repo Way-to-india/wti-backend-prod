@@ -473,12 +473,71 @@ const PURPOSE_CHIP: Partial<Record<Purpose, Chip>> = {
   adventure: 'Trekking & Adventure',
 };
 
+/** US-845b — HIS INTERESTS, mapped to chips DETERMINISTICALLY. "We love festivals, music
+ *  and old cities" reached no chip, so a culture traveller got a 400: `Culture & Festivals`
+ *  was unreachable from prose because no Purpose maps to it. The interests are his (each one
+ *  carries its provenance); the keyword map below is ours, fixed, and testable. It can only
+ *  WIDEN the shortlist trigger — it never overrides a named city (Law 1). */
+const INTEREST_CHIP: [RegExp, Chip][] = [
+  [/festival|culture|cultural|music|dance|fair|mela/i, 'Culture & Festivals'],
+  [/beach|sea|coast|island/i, 'Beaches'],
+  [/trek|hike|hiking|rafting|adventure|paragliding|camping/i, 'Trekking & Adventure'],
+  [/wildlife|safari|tiger|jungle|bird|elephant|rhino|national park/i, 'Wildlife & Nature'],
+  [/fort|palace|heritage|monument|ruins|old cit/i, 'Heritage & Forts'],
+  [/mountain|hill|himalaya|snow|valley/i, 'Hill Stations & Mountains'],
+  [/temple|pilgrim|yatra|darshan|shrine|spiritual|jyotirlinga|dham/i, 'Pilgrimage'],
+  [/honeymoon|romantic|romance/i, 'Honeymoon & Romance'],
+];
+
 export function chipsOf(intent: TravellerIntent): string[] {
   const out = new Set<string>();
   for (const c of intent.mainChips) if (c.value) out.add(c.value);
   const p = intent.purpose.value;
   if (p && PURPOSE_CHIP[p]) out.add(PURPOSE_CHIP[p] as string);
+  for (const i of intent.interests) {
+    if (!i.value) continue;
+    for (const [re, chip] of INTEREST_CHIP) if (re.test(String(i.value))) out.add(chip);
+  }
   return [...out];
+}
+
+/**
+ * US-845 — A DESTINATION THE MODEL CHOSE IS NOT A DESTINATION HE NAMED.
+ *
+ * The 2026-07-14 live sweep caught the model inventing the brief: "a relaxed beach break"
+ * became `cities: [Goa]`; "the Char Dham yatra in December" became the four temple towns —
+ * and because a city name survived, the NAMED-CITIES path ran and every shortlist gate
+ * (days, origin, SEASON, BODY) was bypassed. Seniors got a December Char Dham with the
+ * temples shut. The parser's own instructions said "cities the traveller wants to visit";
+ * the model volunteered its own.
+ *
+ * THE SOURCE FOR "HE WANTS TO GO THERE" IS HIS SENTENCE. So a parsed city is kept only if
+ * its name actually occurs in what he wrote — with a little give for spelling (Rameswaram/
+ * Rameshwaram), because HIS spelling must never cost him HIS city. Everything else is
+ * dropped, and the theme/region shortlist — the path with the gates — answers instead.
+ */
+export function cityWasNamed(name: string, text: string): boolean {
+  const n = norm(name), t = norm(text);
+  if (!n || !t) return false;
+  if (t.includes(n)) return true;
+  // Fuzzy: every word of the name must appear as a token of his text within edit distance 2.
+  const tokens = t.split(/[^a-z0-9]+/).filter(Boolean);
+  const words = n.split(/[^a-z0-9]+/).filter(Boolean);
+  const close = (a: string, b: string): boolean => {
+    if (Math.abs(a.length - b.length) > 2) return false;
+    // small Levenshtein, capped at 2
+    const dp = Array.from({ length: a.length + 1 }, (_, i) => i);
+    for (let j = 1; j <= b.length; j++) {
+      let prev = dp[0]; dp[0] = j;
+      for (let i = 1; i <= a.length; i++) {
+        const cur = dp[i];
+        dp[i] = Math.min(dp[i] + 1, dp[i - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+        prev = cur;
+      }
+    }
+    return dp[a.length] <= 2;
+  };
+  return words.every((w) => w.length >= 3 && tokens.some((tok) => tok === w || (w.length >= 5 && close(w, tok))));
 }
 
 /** The gateway step's one legal way to fill an origin we had to work out ourselves. */

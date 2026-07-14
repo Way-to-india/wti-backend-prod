@@ -82,3 +82,29 @@ describe('US-839 (input) — a city named twice is one city, its nights summed',
     expect(out.length).toBe(2);
   });
 });
+
+// ---- US-845 — a destination the MODEL chose is not a destination HE named -----------------
+import { cityWasNamed, intentFromRaw, chipsOf } from '../intent';
+
+describe('US-845 — the model may not choose his destinations', () => {
+  it('keeps a city he actually wrote, including his own spelling of it', () => {
+    expect(cityWasNamed('Jaipur', 'We want to visit Jaipur and Udaipur in October')).toBe(true);
+    expect(cityWasNamed('Rameshwaram', 'Temple towns of the south — Madurai, Rameswaram and Kanyakumari')).toBe(true);
+    expect(cityWasNamed('Tirthan Valley', 'a week in Tirthan Valley please')).toBe(true);
+  });
+  it('drops a city he never wrote — the sweep caught Goa invented from "beach break"', () => {
+    expect(cityWasNamed('Goa', 'Two of us want a relaxed beach break. 4 days maximum.')).toBe(false);
+    expect(cityWasNamed('Kedarnath', 'They want to do the Char Dham yatra in December.')).toBe(false);
+    expect(cityWasNamed('Kochi', 'I want to see backwaters and greenery. Only 4 days.')).toBe(false);
+  });
+});
+
+describe('US-845b — his interests reach the chips deterministically', () => {
+  it('"festivals, music and old cities" opens Culture & Festivals (it was unreachable)', () => {
+    const intent = intentFromRaw({ interests: ['festivals', 'old cities'], quotes: { interests: 'festivals' } } as any,
+      'we love festivals, music and old cities');
+    const chips = chipsOf(intent);
+    expect(chips).toContain('Culture & Festivals');
+    expect(chips).toContain('Heritage & Forts');
+  });
+});

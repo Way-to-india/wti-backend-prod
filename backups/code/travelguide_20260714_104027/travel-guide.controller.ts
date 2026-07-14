@@ -1,22 +1,5 @@
 import { TravelGuideService } from '@/services/admin/travel-guide.service';
 import type { Request, Response } from 'express';
-import { uploadImageToS3 } from '@/utils/s3';
-import { S3Folder } from '@/common/constants';
-
-// Multipart/form-data sends every field as a string, so "false" would otherwise
-// be read as truthy. Coerce before handing values to Prisma.
-const toBool = (v: unknown): boolean | undefined =>
-  v === undefined || v === null || v === ''
-    ? undefined
-    : typeof v === 'string'
-      ? v === 'true'
-      : Boolean(v);
-
-const toInt = (v: unknown): number | undefined => {
-  if (v === undefined || v === null || v === '') return undefined;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : undefined;
-};
 
 export class TravelGuideController {
   /**
@@ -362,21 +345,14 @@ export class TravelGuideController {
         return res.deliver(400, false, undefined, 'cityId and stateId are required');
       }
 
-      // A file uploaded from the admin panel always wins over any string value.
-      let cityImageKey: string | undefined =
-        typeof cityImage === 'string' && cityImage ? cityImage : undefined;
-      if (req.file) {
-        cityImageKey = await uploadImageToS3(req.file, S3Folder.CITY_IMAGES);
-      }
-
       const guideData = await TravelGuideService.createGuideData({
         cityId,
         citySlug,
         stateId,
         stateSlug,
-        originalCityId: toInt(originalCityId),
-        menuId: toInt(menuId),
-        isActive: toBool(isActive),
+        originalCityId,
+        menuId,
+        isActive,
         introduction,
         facts,
         foodAndDining,
@@ -389,7 +365,7 @@ export class TravelGuideController {
         placesToSeeTop,
         placesToSeeBottom,
         hotelDetails,
-        cityImage: cityImageKey,
+        cityImage,
         travelTipsStructured,
       });
 
@@ -436,21 +412,14 @@ export class TravelGuideController {
         travelTipsStructured,
       } = req.body;
 
-      // A file uploaded from the admin panel always wins over any string value.
-      let cityImageKey: string | undefined =
-        typeof cityImage === 'string' && cityImage ? cityImage : undefined;
-      if (req.file) {
-        cityImageKey = await uploadImageToS3(req.file, S3Folder.CITY_IMAGES);
-      }
-
       const guideData = await TravelGuideService.updateGuideData(id, {
         cityId,
         citySlug,
         stateId,
         stateSlug,
-        originalCityId: toInt(originalCityId),
-        menuId: toInt(menuId),
-        isActive: toBool(isActive),
+        originalCityId,
+        menuId,
+        isActive,
         introduction,
         facts,
         foodAndDining,
@@ -463,7 +432,7 @@ export class TravelGuideController {
         placesToSeeTop,
         placesToSeeBottom,
         hotelDetails,
-        cityImage: cityImageKey,
+        cityImage,
         travelTipsStructured,
       });
 
