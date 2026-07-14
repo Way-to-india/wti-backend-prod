@@ -179,6 +179,67 @@ export function comfortStopHours(baseHrs: number, tol: Tolerance): number {
  * exceeds the party's hard cap is refused. Strictly-greater so a leg exactly at the
  * cap stays legal (matches the Ramayana ground-truth 213 km / 5.0 h senior drive).
  */
+/**
+ * ⚠️ US-834 — THE FOUNDER'S CONSENTED ROAD DAY. Ruling of 14 July 2026, verbatim:
+ *
+ *   "Do not make 275 a break point. For an old couple also 350 km can be outer limit for one
+ *    day road travel, BUT STRICTLY AFTER EDUCATING THEM AND TAKING THEIR CONSENT."
+ *
+ * THIS DOES NOT LOOSEN A BODY GATE, AND IT CANNOT. `hardCapHrs` is untouched, and a leg over it
+ * is still refused BY DEFAULT. What changes is what we DO with the refusal.
+ *
+ * We were silently dropping the trip. A 5.0 h cap for an elderly party is about 275 km of good
+ * road, so a 340 km day simply vanished — and a real consultant does not do that. He says:
+ *
+ *   "Sir, that day is 340 kilometres, about six and a quarter hours with stops for tea and
+ *    lunch. It is longer than I would normally plan for you. If you are happy with it, we can do
+ *    it and you keep the extra night at the temple. If not, we break the drive."
+ *
+ * THAT IS LAW 4: WHEN THE PREFERENCE CANNOT BE MET, SAY SO OUT LOUD, NEVER SUBSTITUTE IN
+ * SILENCE. The traveller's INFORMED CONSENT is his own word, and his word is the brief (Law 1).
+ * The doctrine that physiology may only be tightened exists to stop THE ENGINE loosening a gate
+ * FOR ITS OWN CONVENIENCE -- to save a hotel night. It was never meant to stop a grown man
+ * telling us what he is willing to do with his own day.
+ *
+ * AND IT IS EXPRESSED IN HOURS, NOT KILOMETRES, ON PURPOSE. 350 km on a plain is a long but
+ * civil day. 350 km in the Himalaya is TWELVE HOURS and nobody should consent to it because
+ * nobody is told what they are consenting to. So the founder's number is converted ONCE, at the
+ * founder-locked good-road ceiling of 55 km/h, and the resulting HOUR ceiling is what the gate
+ * uses. On flat land it yields his 350 km exactly. In the hills it yields far fewer km, all by
+ * itself -- the same way his 300 km ring shrinks into the mountains.
+ */
+export const ROAD_DAY_CONSENT_KM = 350;          // FOUNDER-LOCKED, 14 Jul 2026
+export const GOOD_ROAD_KMH = 55;                 // the founder-locked road ceiling (see terrainSpeedKmh)
+export const ROAD_DAY_CONSENT_HRS = ROAD_DAY_CONSENT_KM / GOOD_ROAD_KMH;   // 6.36 h
+
+/** The longest road day this body may be ASKED to accept — never the longest it is GIVEN. */
+export function consentedRoadDayHrs(tol: Tolerance): number {
+  return Math.max(tol.hardCapHrs, ROAD_DAY_CONSENT_HRS);
+}
+
+export type RoadDayVerdict = 'comfortable' | 'needs_consent' | 'refused';
+
+/**
+ * Three verdicts, not two. The middle one is the founder's, and it is the one that was missing.
+ *   comfortable    — inside his body's own cap. Plan it and say nothing.
+ *   needs_consent  — over the cap but within the consented ceiling. EDUCATE HIM AND ASK.
+ *   refused        — beyond even that. It is not a day, it is an ordeal. Break it or fly it.
+ */
+export function roadDayVerdict(
+  leg: Pick<LegOption, 'mode' | 'durationMin' | 'distanceKm' | 'durationSource'>,
+  tol: Tolerance, ctx: HoursCtx = {},
+): { verdict: RoadDayVerdict; hrs: number; km: number; capHrs: number; consentHrs: number } {
+  const hrs = vehicleHours(leg, ctx);
+  const km = Math.round(leg.distanceKm ?? 0);
+  const capHrs = tol.hardCapHrs;
+  const consentHrs = consentedRoadDayHrs(tol);
+  const verdict: RoadDayVerdict =
+    hrs <= capHrs + 1e-9 ? 'comfortable'
+    : hrs <= consentHrs + 1e-9 ? 'needs_consent'
+    : 'refused';
+  return { verdict, hrs, km, capHrs, consentHrs };
+}
+
 export function roadDayHardCapExceeded(
   leg: Pick<LegOption, 'mode' | 'durationMin' | 'distanceKm' | 'durationSource'>, tol: Tolerance, ctx: HoursCtx = {},
 ): { exceeded: boolean; hrs: number; capHrs: number } {

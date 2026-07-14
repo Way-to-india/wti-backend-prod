@@ -47,7 +47,57 @@ function sayForcedSubstitution(from: string, to: string, mode: Mode, identifier:
   const word = mode === 'RAIL' ? 'train' : mode === 'ROAD' ? 'road journey' : mode === 'AIR' ? 'flight' : 'service';
   const named = identifier ? ` (${identifier})` : '';
   const quote = contract?.voice.quotes[`mode_${mode.toLowerCase()}`];
-  const said = quote ? `You told us "${quote}".` : `You asked us to avoid travelling by ${word}.`;
+
+  // ==========================================================================================
+  // US-821b — WE WERE PUTTING WORDS IN HIS MOUTH, AND WE WERE DOING IT IN NEARLY EVERY PLAN.
+  //
+  // This line used to read:
+  //
+  //     const said = quote ? `You told us "${quote}".` : `You asked us to avoid travelling by ${word}.`;
+  //
+  // Read the `else`. When we had NO QUOTE FROM HIM AT ALL, we simply ASSERTED that he had
+  // refused the mode. He had not. A ten-traveller sweep on 14 July 2026 found this lie in FOUR
+  // PLANS OUT OF SIX:
+  //
+  //   a luxury honeymooner who said "no long TRAIN journeys" was told:
+  //       "You asked us to avoid travelling by FLIGHT."          -- he never said it
+  //   a man who said "we prefer to FLY between cities" was told:
+  //       "You asked us to avoid travelling by TRAIN."           -- he never said it
+  //   a pilgrim who said "we would prefer FLIGHTS wherever possible" was told:
+  //       "You asked us to avoid travelling by ROAD JOURNEY."    -- he never said it
+  //
+  // A LEG CAN BE FORCED FOR THREE QUITE DIFFERENT REASONS, and the old code told the same lie
+  // for all three. It is forced because HE REFUSED the alternatives; or because HIS BODY refuses
+  // them; or because THERE IS NOTHING ELSE ON EARTH between these two towns. Only the first is
+  // about his word, and we may only speak of his word when he has actually given us one.
+  //
+  // THE ANTI-FABRICATION LOCK GUARDS `Reading.provenance`. IT NEVER GUARDED THE PROSE.
+  // Law 5: a rejected option must be rejected for a HUMAN reason -- HIS reason. And Law 1: his
+  // word is the brief. A brief we invent is not a brief. It is a forgery.
+  // ==========================================================================================
+  const banned = (contract?.filters.banModes ?? []).includes(mode);
+  const preferred = contract?.preferences?.preferModes ?? [];
+  const otherWord = (m: Mode) => (m === 'RAIL' ? 'train' : m === 'ROAD' ? 'road' : m === 'AIR' ? 'flight' : 'service');
+
+  let said: string;
+  if (quote) {
+    // HIS OWN WORDS, verbatim. The only case in which we may say "you told us".
+    said = `You told us "${quote}".`;
+  } else if (banned) {
+    // He refused this mode -- the contract proves it -- but gave us no quotable phrase. We may
+    // still say what he asked, because he really did ask it.
+    said = `You asked us not to travel by ${word}.`;
+  } else if (preferred.length && !preferred.includes(mode)) {
+    // THE T8 CASE. He never said a word against this mode. He said he would rather travel by
+    // ANOTHER one. So that is what we say, and not a syllable more.
+    said = `You told us you would rather travel by ${preferred.map(otherWord).join(' or ')} where we can manage it.`;
+  } else {
+    // HE SAID NOTHING ABOUT THIS MODE AT ALL. So we say nothing about what he said. The leg was
+    // forced by the road, or by his body -- not by his word -- and the honest sentence names the
+    // real reason instead of inventing a preference he never expressed.
+    said = `This leg is harder than we would normally plan for you.`;
+  }
+
   return `${said} We checked every way to travel from ${from} to ${to}, and the only service we have on this leg is a ${word}${named}. We have used it so that your plan is complete, but we are telling you plainly rather than slipping it past you. If you would rather not take it, tell us and we will re-plan this part of the route.`;
 }
 
@@ -424,6 +474,11 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
 
   const metrics = scorePlan(exp.legs, exp.days, pax, input.profile ?? 'standard');
   const warnings = [...exp.warnings, ...contractNotes];
+  // US-834 — THE CONSENTS. A long road day may be PLANNED but it may never be ASSUMED.
+  // Founder, 14 Jul 2026: "for an old couple also 350 km can be outer limit for one day road
+  // travel, BUT STRICTLY AFTER EDUCATING THEM AND TAKING THEIR CONSENT." These are the exact
+  // sentences we put to him — the kilometres, the hours, and a real choice. Law 4.
+  const consents = [...(exp.consents ?? [])];
   if (phase && (!phase.aligned || phase.shiftDays !== 0)) warnings.push(`Phase shift: ${phase.reason}`);
   // §3.3/§7 rhythm gates: accumulate the fatigue ledger over the scheduled days and
   // surface any two-consecutive-heavy / heavy→heavy-drive / 3-day-streak violation.
@@ -442,6 +497,7 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
     days: exp.days,
     totals: toTotals(metrics),
     warnings,
+    consents,
     verifyBeforeBooking: verifyList(chosenList),
     map: mapRoute(names, chosen, nodesByName),
     label,

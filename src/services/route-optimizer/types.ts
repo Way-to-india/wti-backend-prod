@@ -362,6 +362,8 @@ export interface Plan {
   days: DayItem[];
   totals: Totals;
   warnings: string[];
+  /** US-834 — long road days he must be TOLD about and must AGREE to. Never assumed. Law 4. */
+  consents?: string[];
   verifyBeforeBooking: string[];
   map: MapRoute;
   /** which objective produced this plan (best vs. alternates). */

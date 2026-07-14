@@ -16,7 +16,7 @@
  * problem into product value: the pearl split IMPROVES the itinerary.
  */
 import { haversineKm } from './geo';
-import { terrainSpeedKmh, type Tolerance } from './physiology';
+import { terrainSpeedKmh, consentedRoadDayHrs, type Tolerance } from './physiology';
 
 export const MIN_ANCHOR_VALUE_DAYS = 0.5; // ≥ half a day of genuine experience
 export const MAX_DETOUR_PCT = 0.15;       // ≤ 15 % detour vs the straight leg
@@ -53,6 +53,9 @@ export interface AnchorEvaluation {
   detourPct: number;
   subLegs: [SubLeg, SubLeg];
   reasons: string[];
+  /** US-834 — this halt works, but one of its halves is a LONG day. We may offer it only after
+   *  telling him exactly how long it is, and only if he says yes. Never in silence. */
+  needsConsent: boolean;
 }
 
 /** Derive an anchor value (in days) from WTI popularity/monument signals for a
@@ -84,15 +87,30 @@ export function evaluateAnchor(
     { km: Math.round(leg1Km), hrs: Math.round((leg1Km / speed) * 100) / 100 },
     { km: Math.round(leg2Km), hrs: Math.round((leg2Km / speed) * 100) / 100 },
   ];
+  // US-834 — THE FOUNDER'S CONSENTED CEILING. "Do not make 275 a break point. For an old couple
+  // also 350 km can be outer limit for one day road travel, but strictly after educating them
+  // and taking their consent." So a sub-leg between the body's own cap and the consented ceiling
+  // NO LONGER KILLS THE HALT. It makes the halt CONDITIONAL, and the condition is his yes.
+  const ceiling = consentedRoadDayHrs(tol);
   const reasons: string[] = [];
+  let needsConsent = false;
   if (cand.valueDays < MIN_ANCHOR_VALUE_DAYS) reasons.push(`value ${cand.valueDays}d < ${MIN_ANCHOR_VALUE_DAYS}d (not worth a halt)`);
   if (detourPct > MAX_DETOUR_PCT + 1e-9) reasons.push(`detour ${(detourPct * 100).toFixed(0)}% > ${MAX_DETOUR_PCT * 100}%`);
-  if (sub[0].hrs > tol.hardCapHrs + 1e-9) reasons.push(`sub-leg 1 ${sub[0].hrs} h exceeds the ${tol.hardCapHrs} h cap`);
-  if (sub[1].hrs > tol.hardCapHrs + 1e-9) reasons.push(`sub-leg 2 ${sub[1].hrs} h exceeds the ${tol.hardCapHrs} h cap`);
-  return { ok: reasons.length === 0, detourPct: Math.round(detourPct * 1000) / 1000, subLegs: sub, reasons };
+  for (const [i, sl] of sub.entries()) {
+    if (sl.hrs > ceiling + 1e-9) {
+      reasons.push(`sub-leg ${i + 1} ${sl.hrs} h exceeds even the consented ${ceiling.toFixed(1)} h ceiling`);
+    } else if (sl.hrs > tol.hardCapHrs + 1e-9) {
+      needsConsent = true;   // a long day, but one we are allowed to OFFER him
+    }
+  }
+  return { ok: reasons.length === 0, detourPct: Math.round(detourPct * 1000) / 1000, subLegs: sub, reasons, needsConsent };
 }
 
 export interface AnchorChoice {
+  /** US-834 — this halt is only legal once he has SAID YES to a long day. Never assume it. */
+  needsConsent?: boolean;
+  /** the exact sentence we put to him: the kilometres, the hours, and the choice. */
+  consentAsk?: string | null;
   anchor: AnchorCandidate | null;
   detourPct: number;
   subLegs: [SubLeg, SubLeg] | null;
@@ -152,15 +170,35 @@ export function chooseAnchor(
 
   // ...and within the pool, CLOSEST TO MID-DISTANCE, because the point of the halt is to HALVE
   // the drive. A halt 60 km along the road halves nothing; it only adds a hotel bill.
-  const scored = pool.sort((a, b) => (fromMid(a.c) - fromMid(b.c)) || (b.c.valueDays - a.c.valueDays));
+  // US-834 — AND WITHIN THAT, a halt he need not be asked about beats one he must be asked
+  // about. We would always rather not have to ask. But we would ALWAYS rather ask than
+  // silently drop his trip.
+  const noAsk = pool.filter((x) => !x.e.needsConsent);
+  const finalPool = noAsk.length ? noAsk : pool;
+  const scored = finalPool.sort((a, b) => (fromMid(a.c) - fromMid(b.c)) || (b.c.valueDays - a.c.valueDays));
   if (!scored.length) {
     return { anchor: null, detourPct: 0, subLegs: null, deadHalt: true, reason: 'no en-route anchor clears value ≥ ½ day + detour ≤ 15% + both sub-legs within the hour cap — re-sequence to avoid this leg' };
   }
   const best = scored[0];
+  // US-834 — THE EDUCATION. He is not being asked to approve an abstraction. He is being told
+  // exactly how many kilometres and exactly how many hours, in his own language, and THEN asked.
+  // A consent taken without the number is not a consent; it is a signature on a blank page.
+  const longHalf = best.e.needsConsent
+    ? (best.e.subLegs[0].hrs > best.e.subLegs[1].hrs ? best.e.subLegs[0] : best.e.subLegs[1])
+    : null;
+  const hoursWords = (h: number) => {
+    const whole = Math.floor(h); const mins = Math.round((h - whole) * 60);
+    return mins >= 45 ? `about ${whole + 1} hours` : mins >= 15 ? `about ${whole} and a half hours` : `about ${whole} hours`;
+  };
+  const consentAsk = longHalf
+    ? `One of these two days is ${longHalf.km} kilometres, ${hoursWords(longHalf.hrs)} on the road with stops for tea and lunch. That is longer than we would normally plan for you. If you are happy with it we will do it, and you keep your night at ${best.c.name}. If you would rather not, tell us and we will break the drive again.`
+    : null;
   return {
     anchor: best.c,
     detourPct: best.e.detourPct,
     subLegs: best.e.subLegs,
+    needsConsent: best.e.needsConsent,
+    consentAsk,
     deadHalt: false,
     reason: best.c.servesIntent && best.c.chip
       ? `split at ${best.c.name} — and it is a ${best.c.chip} town, which is what he came for (${(best.e.detourPct * 100).toFixed(0)}% detour): ${best.e.subLegs[0].hrs} h + ${best.e.subLegs[1].hrs} h`

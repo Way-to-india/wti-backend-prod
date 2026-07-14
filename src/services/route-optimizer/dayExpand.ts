@@ -57,6 +57,8 @@ export interface ExpandOutput {
   days: DayItem[];
   warnings: string[];
   /** true if any day carried a hard-constraint violation (plan should be rejected/rerouted). */
+  /** US-834 — long road days he must be TOLD about and must AGREE to. Never assumed. */
+  consents: string[];
   infeasible: boolean;
 }
 
@@ -74,6 +76,8 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
   const legs: PlanLeg[] = [];
   const days: DayItem[] = [];
   const warnings: string[] = [];
+  /** US-834 — long days he must be TOLD about and must AGREE to. Never assumed. */
+  const consents: string[] = [];
   let infeasible = false;
 
   const stamp = (dayIdx: number): string | null =>
@@ -148,7 +152,7 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     // §4.4 pearl-on-the-string: an over-cap ROAD leg should be split at a worthy
     // anchor (value ≥ ½ day, detour ≤ 15%, both halves within cap). No anchor => dead
     // halt, prefer re-sequencing. Graceful: only runs when candidates were injected.
-    let pearlSplit: { anchor: string; detourPct: number; subHrs?: [number, number]; why?: string | null } | undefined;
+    let pearlSplit: { anchor: string; detourPct: number; subHrs?: [number, number]; why?: string | null; needsConsent?: boolean; consentAsk?: string | null } | undefined;
     let deadHalt = false;
     if (opt.mode === 'ROAD' && roadDayHardCapExceeded(opt, tol, { month: inp.month }).exceeded) {
       const cands = inp.anchorsByLeg?.get(legKey(from, to));
@@ -157,8 +161,17 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
         const ch = chooseAnchor(fc, tc, cands, tol, { month: inp.month });
         if (ch.deadHalt) { deadHalt = true; warnings.push(`${from} → ${to}: ${ch.reason}`); }
         else if (ch.anchor) {
-          pearlSplit = { anchor: ch.anchor.name, detourPct: ch.detourPct, subHrs: ch.subLegs ? [ch.subLegs[0].hrs, ch.subLegs[1].hrs] : undefined, why: ch.anchor.why };
+          pearlSplit = {
+            anchor: ch.anchor.name, detourPct: ch.detourPct,
+            subHrs: ch.subLegs ? [ch.subLegs[0].hrs, ch.subLegs[1].hrs] : undefined,
+            why: ch.anchor.why,
+            needsConsent: !!ch.needsConsent,
+            consentAsk: ch.consentAsk ?? null,
+          };
           warnings.push(`${from} → ${to}: ${ch.reason}. Insert an overnight at ${ch.anchor.name} and split the drive.`);
+          // US-834 — AND WE ASK HIM. A long day may be planned, but it may NEVER be assumed.
+          // The founder: "strictly after educating them and taking their consent."
+          if (ch.consentAsk) consents.push(ch.consentAsk);
         }
       }
     }
@@ -215,5 +228,5 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     clock = arr % 1440 + TRANSFER_BUFFER_MIN;
   }
 
-  return { legs, days, warnings, infeasible };
+  return { legs, days, warnings, consents, infeasible };
 }

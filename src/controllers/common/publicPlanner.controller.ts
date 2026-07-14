@@ -239,6 +239,57 @@ async function parseIntent(text: string): Promise<{ trip: ParsedTrip; raw: RawIn
   }
 }
 
+/**
+ * ⚠️ US-831b — THE ORIGIN IS TOO IMPORTANT TO LEAVE TO A MODEL IN A GOOD MOOD.
+ *
+ * A ten-traveller sweep on 14 July 2026 caught this the moment the origin gate went live. Haiku
+ * read "We live in LUCKNOW", "Couple from HYDERABAD" and "starting from KOLKATA" perfectly --
+ * and then MISSED, in three consecutive requests:
+ *
+ *     "Two of us from BENGALURU want a beach break in Goa."
+ *     "I am a wildlife photographer from CHENNAI."
+ *     "Four friends from PUNE, all in our twenties."
+ *
+ * The man SAID where he lives. We asked him again. That is not a consultant asking a good
+ * question -- IT IS A CONSULTANT WHO WAS NOT LISTENING, which is the precise crime the echo
+ * panel exists to prevent. And it is worse than the old bug it replaced: before, we guessed and
+ * were wrong; now we interrogate a man who has already answered.
+ *
+ * SO WE READ IT OURSELVES, DETERMINISTICALLY, AND WE DO NOT INVENT IT. The regex only PROPOSES
+ * a name; `verifyCity` must then find it in our own catalogue or the gazetteer, or it is thrown
+ * away. A model may propose. Only the gazetteer may confirm. And `verifyQuote` still governs
+ * whether it may be labelled `he_said` -- the phrase has to be literally present in his sentence.
+ *
+ * The model stays. This runs only when the model came back with nothing, and it never overrides
+ * a start the traveller typed into the form.
+ */
+const ORIGIN_PATTERNS: RegExp[] = [
+  /\b(?:we|i|they|my parents|my wife and i)?\s*(?:are\s+)?(?:travelling|traveling|starting|departing|leaving|flying|coming)\s+(?:out\s+)?from\s+([A-Za-z][A-Za-z .'-]{2,28})/i,
+  /\b(?:we|i|they|my parents)\s+(?:live|are\s+based|reside)\s+in\s+([A-Za-z][A-Za-z .'-]{2,28})/i,
+  /\bbased\s+in\s+([A-Za-z][A-Za-z .'-]{2,28})/i,
+  /\bfrom\s+([A-Za-z][A-Za-z .'-]{2,28})\b/i,          // the plain one, last: "four friends from PUNE"
+];
+
+/** Words that follow a city name and mean the match has run off the end of it. */
+const ORIGIN_STOP = /\b(?:want|wants|wish|wishes|and|with|for|to|who|that|we|i|they|all|aged|in our|looking|would|will|plan|planning|travelling|traveling|is|are|has|have)\b/i;
+
+function originFromText(text: string): { name: string; quote: string } | null {
+  for (const re of ORIGIN_PATTERNS) {
+    const m = re.exec(text);
+    if (!m || !m[1]) continue;
+    // Cut the capture at the first word that cannot be part of a city name. "PUNE, all in our
+    // twenties" must yield "Pune", never "Pune all in our twenties".
+    let cand = m[1].split(/[,.;:!?]/)[0].trim();
+    const stop = ORIGIN_STOP.exec(cand);
+    if (stop && stop.index > 0) cand = cand.slice(0, stop.index).trim();
+    cand = cand.replace(/\s+/g, ' ').trim();
+    if (cand.length < 3 || cand.length > 28) continue;
+    if (/^(the|a|an|there|here|home|india)$/i.test(cand)) continue;
+    return { name: cand, quote: m[0].trim() };
+  }
+  return null;
+}
+
 /** Keep only cities world_cities can resolve — the anti-hallucination gate. */
 async function resolvable(names: string[]): Promise<Set<string>> {
   if (!names.length) return new Set();
@@ -328,6 +379,23 @@ export class PublicPlannerController {
         if (parsed) {
           if (parsed.cities.length) cities = parsed.cities;
           start = start || parsed.start || null;
+          // US-831b — the model missed it. Read it ourselves. It still has to survive verifyCity
+          // below, so nothing enters the plan that our own gazetteer cannot confirm.
+          if (!start) {
+            const guess = originFromText(request);
+            if (guess) {
+              const v = await verifyCity(guess.name);
+              if (v.ok && v.name) {
+                // Setting `start` is enough: `startWasStated` is derived from it below, and it
+                // is TRUE, because HE SAID IT. We simply had not been listening.
+                start = v.name;
+                if (heard?.raw) {
+                  heard.raw.start = v.name;
+                  heard.raw.quotes = { ...(heard.raw.quotes ?? {}), start: guess.quote };
+                }
+              }
+            }
+          }
           end = end || parsed.end || null;
           // "I along with few friends" must never become 1 traveller. If the model
           // returns a single traveller while the text plainly speaks of a group, we
