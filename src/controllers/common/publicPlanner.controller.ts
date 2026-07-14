@@ -470,6 +470,25 @@ export class PublicPlannerController {
         }
       }
 
+      // ---- US-853b — HIS HOME IS NOT A DESTINATION -------------------------------------
+      // "I want to do a van durga yatra with my mother, we are from Delhi" — the parser
+      // put Delhi into cities because the word appears in his sentence, and the one thing
+      // it appears AS is his front door. A start that came out of the same sentence is
+      // removed from the destination list (unless he explicitly asked to end there, which
+      // is the round-trip ask, handled below). With the false destination gone, the named
+      // circuit and the theme shortlist can answer, as designed.
+      if (request && !Array.isArray(body.cities) && start && cities.length) {
+        const s = start.trim().toLowerCase();
+        const askedToEndThere = !!(end && end.trim().toLowerCase() === s);
+        if (!askedToEndThere) {
+          const before = cities.length;
+          cities = cities.filter((c) => c.name.trim().toLowerCase() !== s);
+          if (cities.length !== before) {
+            console.warn(`US-853b — "${start}" removed from destinations: it is his ORIGIN, read from the same sentence.`);
+          }
+        }
+      }
+
       // ---- US-839 (input class) — A CITY NAMED TWICE IS ONE CITY -----------------------
       // T5 listed Delhi twice; the engine built two nodes with one name, the matrix and the
       // nights map tripped over each other, and an EMPTY plan shipped with easeScore 94.

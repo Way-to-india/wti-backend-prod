@@ -181,6 +181,40 @@ export function gateProposals(proposals: Proposal[], facts: GateFacts, opts: { b
     // recompute nights after any body-gate removal
     p.totalNights = p.stops.reduce((s, x) => s + x.nights, 0);
 
+    // ---- GATE 3 RUNS BEFORE GATE 1 — THE SEASON IS THE DEEPER TRUTH ----------------------
+    // Live payload, 2026-07-14: December Char Dham was refused for being one night over his
+    // days — while the temples themselves were SHUT. When two gates would both refuse, the
+    // absolute fact (a closed temple) must speak before the arithmetic one (a tight
+    // calendar): the days can be negotiated; the winter cannot.
+    if (facts.month != null) {
+      let seasonFail: string | null = null;
+      for (const stop of p.stops) {
+        const rows = facts.seasons.filter((s) => low(s.place) === low(stop.name));
+        for (const s of rows) {
+          const inMonths = s.months.includes(facts.month);
+          if (s.kind === 'closed' && inMonths) {
+            seasonFail = `${stop.name} is closed in ${MONTHS[facts.month - 1]} — ${s.note}`;
+          } else if (s.kind === 'yatra_window' && !inMonths) {
+            seasonFail = `${stop.name} is only open in its yatra window (${s.months.map((m) => MONTHS[m - 1]).join(', ')}) — ${s.note}`;
+          } else if (s.kind === 'advisory' && inMonths) {
+            verdict.season = 'advisory';
+            notes.push(`${stop.name} in ${MONTHS[facts.month - 1]}: ${s.note}`);
+          }
+        }
+        if (seasonFail) break;
+      }
+      if (seasonFail) {
+        refused.push({
+          proposal: original, gate: 'season',
+          reason: `${seasonFail} That is the place's own calendar, not our preference. Tell me your month is flexible, or let me build you what ${MONTHS[facts.month - 1]} is actually good for.`,
+        });
+        continue;
+      }
+      if (verdict.season === 'unknown') verdict.season = 'pass';
+    } else if (p.stops.some((st) => facts.seasons.some((s) => low(s.place) === low(st.name)))) {
+      notes.push('This trip has a real season. Tell us your month and we will confirm the temples and roads are open.');
+    }
+
     // ---- GATE 1 — DAYS ------------------------------------------------------------------
     const travelDays = internalTravelDaysLowerBound(p.stops.map((s) => s.name), facts.coords);
     const need = p.totalNights + travelDays;
@@ -212,38 +246,7 @@ export function gateProposals(proposals: Proposal[], facts: GateFacts, opts: { b
       verdict.origin = 'pass';
     }
 
-    // ---- GATE 3 — SEASON ----------------------------------------------------------------
-    if (facts.month != null) {
-      let seasonFail: string | null = null;
-      for (const stop of p.stops) {
-        const rows = facts.seasons.filter((s) => low(s.place) === low(stop.name));
-        for (const s of rows) {
-          const inMonths = s.months.includes(facts.month);
-          if (s.kind === 'closed' && inMonths) {
-            seasonFail = `${stop.name} is closed in ${MONTHS[facts.month - 1]} — ${s.note}`;
-          } else if (s.kind === 'yatra_window' && !inMonths) {
-            seasonFail = `${stop.name} is only open in its yatra window (${s.months.map((m) => MONTHS[m - 1]).join(', ')}) — ${s.note}`;
-          } else if (s.kind === 'advisory' && inMonths) {
-            verdict.season = 'advisory';
-            notes.push(`${stop.name} in ${MONTHS[facts.month - 1]}: ${s.note}`);
-          }
-        }
-        if (seasonFail) break;
-      }
-      if (seasonFail) {
-        refused.push({
-          proposal: original, gate: 'season',
-          reason: `${seasonFail} That is the place's own calendar, not our preference. Tell me your month is flexible, or let me build you what ${MONTHS[facts.month - 1]} is actually good for.`,
-        });
-        continue;
-      }
-      if (verdict.season === 'unknown') verdict.season = 'pass';
-    } else if (p.stops.some((st) => facts.seasons.some((s) => low(s.place) === low(st.name)))) {
-      // He gave no month and this circuit HAS a season. Do not guess — flag that the month
-      // question matters more than usual for this trip. (The counter-question machinery
-      // already asks it; this note says why.)
-      notes.push('This trip has a real season. Tell us your month and we will confirm the temples and roads are open.');
-    }
+    // (GATE 3 — SEASON — runs ABOVE, before the days gate: the deeper truth speaks first.)
 
     offered.push({ proposal: p, gates: verdict, gateNotes: notes });
   }

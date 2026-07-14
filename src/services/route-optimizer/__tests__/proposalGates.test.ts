@@ -158,3 +158,21 @@ describe('US-840 — THE SHAPE is existence facts + a declared deferral, never a
     expect(r.in.kind).toBe('ROAD');
   });
 });
+
+describe('US-853 — gate order and the un-edited sold tour', () => {
+  it('when December kills the Char Dham AND the days are tight, the SEASON speaks, not the arithmetic', () => {
+    const p = proposal([stop('Haridwar', 4), stop('Kedarnath', 4), stop('Badrinath', 4)]);
+    const { refused } = gateProposals([p], facts({ month: 12, nightsCeiling: 5 }));
+    expect(refused.length).toBe(1);
+    expect(refused[0].gate).toBe('season');
+    expect(refused[0].reason).toContain('closes for the winter');
+  });
+  it('with bodyEdits false, a senior gets the trek ADVISORY and the sold tour keeps its stop', () => {
+    const p = proposal([stop('Haridwar', 2), stop('Kedarnath', 2)]);
+    const { offered } = gateProposals([p], facts({ profile: 'senior', month: 5 }), { bodyEdits: false });
+    expect(offered.length).toBe(1);
+    expect(offered[0].proposal.stops.map((s) => s.name)).toContain('Kedarnath');
+    expect(offered[0].gates.body).toBe('advisory');
+    expect(offered[0].gateNotes.join(' ')).toContain('16 km');
+  });
+});
