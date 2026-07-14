@@ -19,6 +19,7 @@ import type { DayItem, LegOption, PlanLeg, CityNode, GroupProfile, Weekday } fro
 import { WEEKDAY_NAMES } from './types';
 import { isTrueOvernight, gateArrivalFeasible, gateReachMin, toMin, fmtMin } from './constraints';
 import { toleranceForProfile, roadDayHardCapExceeded } from './physiology';
+import { RAIL_ORDEAL_ADVISORY_HRS } from './ordeal';
 import { chooseAnchor, type AnchorCandidate } from './anchors';
 
 const DOW_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -185,6 +186,46 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     // reliability / staleness → verify list handled by guardrails; flag thin options here too
     const verifyFlag = (opt.reliability != null && opt.reliability <= 2) || !!opt.seasonal;
 
+    // ---- US-847 / US-860 — AN AIR LEG SPEAKS ITS WHOLE ANATOMY. ---------------------------
+    //
+    // THE LIE, live on 14 July 2026: "Mumbai → Shimla, AIR, 6E 6393, arr 16:35". 6E 6393
+    // lands at CHANDIGARH. No Mumbai → Shimla sector exists. The engine had charged the
+    // 113 km hill transfer honestly inside its own arithmetic — and then handed the page a
+    // leg that said the plane lands at Shimla with only the sector's 140 minutes on the
+    // clock. The judge saw the truth; the traveller saw the costume. From today the leg
+    // CARRIES its anatomy: the real airports, the road transfers with their honest hours,
+    // and the hub of a one-stop — and the sentence below says it in his language.
+    const durTxt = (min: number | null | undefined): string => {
+      if (min == null || !Number.isFinite(min) || min <= 0) return '';
+      const h = Math.floor(min / 60), mm = Math.round(min % 60);
+      return h === 0 ? `${mm} min` : mm === 0 ? `${h} h` : `${h} h ${String(mm).padStart(2, '0')}`;
+    };
+    const anatomyBits: string[] = [];
+    if (opt.mode === 'AIR') {
+      if (opt.viaHub) {
+        anatomyBits.push(`This is a one-stop flight — you change planes at ${opt.viaHub}. Both flights are real scheduled services; the connection timing must be confirmed at booking.`);
+      }
+      if (opt.fromAirportCity && (opt.accessFromKm ?? 0) > 0) {
+        anatomyBits.push(`The drive from ${from} to ${opt.fromAirportCity} airport is ${opt.accessFromKm} km (about ${durTxt(opt.accessFromMin)}) and it is counted in your day.`);
+      }
+      if (opt.toAirportCity && (opt.accessToKm ?? 0) > 0) {
+        anatomyBits.push(`Your flight lands at ${opt.toAirportCity} — from there it is a ${opt.accessToKm} km road transfer to ${to} (about ${durTxt(opt.accessToMin)}), and it is counted in your day.`);
+      }
+    }
+    // ---- THE RAIL-ORDEAL ADVISORY (founder ruling, 15 July 2026). --------------------------
+    // Any train of 24 hours or more gets a named warning, for every party. (The 30-hour
+    // refusal for senior/comfort-first parties fires earlier, in the DDCV hard gates.)
+    if (opt.mode === 'RAIL' && durationMin >= RAIL_ORDEAL_ADVISORY_HRS * 60) {
+      const hrsTxt = `${Math.round(durationMin / 60)} hours`;
+      anatomyBits.push(`Please note: this is ${hrsTxt} on a train. We are telling you plainly — many travellers find a journey of this length hard, and we can re-plan this leg by air or in stages if you prefer.`);
+      warnings.push(`${from} → ${to}: ${hrsTxt} on a train — advisory given to the traveller (rail-ordeal ruling, 24 h+).`);
+    }
+    const noteParts = [
+      positioning ? `Positioning drive to reach ${to} gateway — disclosed.` : undefined,
+      violations.length ? violations.join(' ') : undefined,
+      ...anatomyBits,
+    ].filter((s): s is string => !!s);
+
     legs.push({
       from, to, mode: opt.mode, identifier: opt.identifier ?? null,
       dep: opt.depTime ?? fmtMin(dep), arr: opt.arrTime ?? fmtMin(arr % 1440),
@@ -194,7 +235,12 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
       operatingDays: opt.operatingDays,
       frequency: opt.mode !== 'ROAD' ? freqLabel(opt.operatingDays) : undefined,
       pearlSplit, deadHalt: deadHalt || undefined,
-      note: positioning ? `Positioning drive to reach ${to} gateway — disclosed.` : violations.length ? violations.join(' ') : undefined,
+      viaHub: opt.viaHub ?? undefined,
+      fromAirportCity: opt.fromAirportCity ?? undefined,
+      toAirportCity: opt.toAirportCity ?? undefined,
+      accessFromKm: opt.accessFromKm, accessFromMin: opt.accessFromMin,
+      accessToKm: opt.accessToKm, accessToMin: opt.accessToMin,
+      note: noteParts.length ? noteParts.join(' ') : undefined,
     });
 
     if (positioning) {
@@ -209,14 +255,19 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     const verb = opt.mode === 'AIR' ? 'Fly' : opt.mode === 'RAIL' ? 'Train' : opt.mode === 'FERRY' ? 'Ferry' : 'Drive';
     const freq = opt.mode !== 'ROAD' ? freqLabel(opt.operatingDays) : 'daily';
     const idTxt = opt.identifier ? ` · ${opt.identifier}${opt.mode !== 'ROAD' && freq !== 'daily' ? ` (${freq})` : ''}` : '';
+    // US-847/US-860 — the day line tells him where the plane actually lands.
+    const flyVia = opt.mode === 'AIR' && opt.toAirportCity && (opt.accessToKm ?? 0) > 0
+      ? `Fly ${from} → ${opt.toAirportCity}${idTxt}, then road to ${to} (${opt.accessToKm} km)`
+      : null;
     days.push({
       day: dayIdx + 1, weekday: stamp(dayIdx), city: to, halt: isHalt,
       activity: isHalt ? `En-route overnight halt at ${to} (break the ${from} drive; sightseeing + hotel)`
         : overnight ? `Overnight train ${from} → ${to}${idTxt}${inp.praiseHotelNight === false ? '' : ' (saves a hotel night)'}`
-        : `${verb} ${from} → ${to}${idTxt}${positioning ? ' (positioning)' : ''}`,
+        : flyVia ?? `${verb} ${from} → ${to}${idTxt}${positioning ? ' (positioning)' : ''}`,
       transit: { from, to, mode: opt.mode, identifier: opt.identifier ?? null, dep: opt.depTime ?? null, arr: opt.arrTime ?? null },
       roadKm: opt.mode === 'ROAD' ? km : 0,
-      transitMin: durationMin,
+      // the day's honest clock: the service PLUS the airport road transfers at both ends.
+      transitMin: durationMin + (opt.accessFromMin ?? 0) + (opt.accessToMin ?? 0),
       violations: violations.length ? violations : undefined,
     });
 

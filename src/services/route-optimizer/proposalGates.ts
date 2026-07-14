@@ -285,3 +285,74 @@ export function buildShape(entry: EntryFact | null, gateway: Proposal['gateway']
   }
   return { in: { kind: 'ROAD', at: null, basis: 'we have not yet measured a better way in' }, within: 'ROAD', provisional: true, note };
 }
+
+// ---- US-850 — THE NAMED PATH GETS THE SAME SEASON AND BODY TRUTH AS THE SHORTLIST -----------
+//
+// T12 asked for Amarnath in October and got a ROUTE — because he NAMED it, and the named path
+// bypassed the proposal gates by design (his word is the brief; we may not delete his stop).
+// US-845 narrowed this failure class to exactly the travellers we cannot gate away. The honest
+// behaviour is the one the sweep ruled: the facts are CONSULTED FOR EVERY STOP OF EVERY
+// FINISHED PLAN at the controller exit, and —
+//
+//   a CLOSURE  becomes a consent-style sentence + the month question ("the yatra window is
+//              July–August — tell us your dates are flexible"), never a silent delete;
+//   an ADVISORY becomes a note he reads;
+//   a hard ACCESS (trek/climb) for a senior party becomes a named warning with the offer
+//              to re-plan — his stop stays, because he asked for it by name.
+//
+// PURE: the controller loads the facts and hands them in; this function only speaks.
+export interface ExitFactWarning {
+  kind: 'closure' | 'advisory';
+  place: string;
+  sentence: string;
+  /** closure only — the question the page should ask (consent framing). */
+  ask?: string;
+}
+
+export function seasonBodyExitCheck(
+  stops: string[],
+  month: number | null | undefined,
+  profile: string | null | undefined,
+  seasons: SeasonFact[],
+  access: AccessFact[],
+): ExitFactWarning[] {
+  const out: ExitFactWarning[] = [];
+  for (const stop of stops) {
+    const sRows = seasons.filter((s) => low(s.place) === low(stop));
+    if (month != null) {
+      for (const s of sRows) {
+        const inMonths = s.months.includes(month);
+        if (s.kind === 'closed' && inMonths) {
+          out.push({
+            kind: 'closure', place: stop,
+            sentence: `${stop} is closed in ${MONTHS[month - 1]} — ${s.note} You asked for it by name, so we have kept it in your plan rather than decide for you — but we cannot honestly send you there that month.`,
+            ask: `${stop} is closed in ${MONTHS[month - 1]}. Tell us your dates are flexible, or ask us to re-plan this part around what is open.`,
+          });
+        } else if (s.kind === 'yatra_window' && !inMonths) {
+          out.push({
+            kind: 'closure', place: stop,
+            sentence: `${stop} is only open in its yatra window (${s.months.map((m) => MONTHS[m - 1]).join(', ')}) — ${s.note} You asked for it by name, so we have kept it in your plan rather than decide for you — but the shrine itself will not be open when you go.`,
+            ask: `The ${stop} yatra window is ${s.months.map((m) => MONTHS[m - 1]).join(', ')}. Tell us your dates are flexible, or ask us to re-plan this part.`,
+          });
+        } else if (s.kind === 'advisory' && inMonths) {
+          out.push({ kind: 'advisory', place: stop, sentence: `${stop} in ${MONTHS[month - 1]}: ${s.note}` });
+        }
+      }
+    } else if (sRows.length) {
+      out.push({
+        kind: 'advisory', place: stop,
+        sentence: `${stop} has a real season. Tell us your month and we will confirm it is open when you travel.`,
+      });
+    }
+    if (profile === 'senior') {
+      const acc = access.find((a) => low(a.place) === low(stop));
+      if (acc && (acc.access === 'trek' || acc.access === 'climb')) {
+        out.push({
+          kind: 'advisory', place: stop,
+          sentence: `${stop} is reached by ${acc.magnitude ?? 'a long mountain trek'} — ${acc.note} You asked for it by name, so it stays in your plan — but tell us plainly if walking far is hard, and we will re-plan this part rather than put you on that path.`,
+        });
+      }
+    }
+  }
+  return out;
+}

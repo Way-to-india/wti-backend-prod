@@ -104,6 +104,20 @@ export function travelsThroughNight(o: LegOption): boolean {
 
 const hasBerth = (o: LegOption) => (o.classes ?? []).some((c) => ['1A', '2A', '3A'].includes(c.toUpperCase()));
 
+// ---- THE RAIL-ORDEAL RULING (founder, 15 July 2026) -------------------------------------
+//
+// THE HOLE IT CLOSES: the body gate refused a 41-hour ROAD by name -- and passed a 43-hour
+// TRAIN for a 56-year-old luxury couple who had written "prefer flights wherever possible"
+// (US-860, found by the founder himself on the live page). The road had an hour cap; rail
+// had NONE. A gate that weighs one mode's hours and not another's is a decoration.
+//
+// THE RULING, his word: an advisory for EVERYONE at 24 hours and above; a HARD REFUSAL for
+// a senior or comfort-first (luxury/premium) party at 30 hours and above. The refusal is a
+// body-truth gate: BLOCKED, not merely expensive -- and like every refusal it must arrive
+// with an honest alternative or an honest apology, never in silence.
+export const RAIL_ORDEAL_ADVISORY_HRS = 24;
+export const RAIL_ORDEAL_REFUSE_HRS = 30;
+
 export function endurance(o: LegOption, party: OrdealParty): number {
   switch (o.mode) {
     case 'ROAD':

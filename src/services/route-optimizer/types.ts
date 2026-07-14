@@ -147,6 +147,11 @@ export interface LegOption {
   /** the airport cities actually used, so Law 4 can NAME them to him. */
   fromAirportCity?: string | null;
   toAirportCity?: string | null;
+  /** US-847/US-860 -- a ONE-STOP flight: both hops are real scheduled sectors that meet at
+   *  this hub city. Existence-checked, never time-checked: the connection must be confirmed
+   *  at booking (verifyFlag rides with it), and every consumer of this option is obliged to
+   *  SAY SO. Absent = a direct sector. */
+  viaHub?: string | null;
 }
 
 // ---- input -------------------------------------------------------------------
@@ -278,6 +283,16 @@ export interface PlanLeg {
   deadHalt?: boolean;
   /** true overnight rail (saves a hotel night). */
   overnight?: boolean;
+  /** US-847/US-860 — the AIR leg's honest anatomy. A flight that lands at a different town
+   *  than the leg's destination must NAME the airport and the road transfer; a one-stop
+   *  must NAME its hub. Absent on a same-city direct flight. */
+  viaHub?: string | null;
+  fromAirportCity?: string | null;
+  toAirportCity?: string | null;
+  accessFromKm?: number;
+  accessFromMin?: number;
+  accessToKm?: number;
+  accessToMin?: number;
   note?: string;
   /** opt-in break-town suggestions when this road leg exceeds the day cap. */
   haltSuggestions?: HaltSuggestion[];

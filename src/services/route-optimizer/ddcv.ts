@@ -21,6 +21,7 @@ import {
   roadDayHardCapExceeded, departsTooEarly, arrivesTooLate, arrivesInDeadHours, overnightClassOk,
 } from './physiology';
 import { tightened, type Tightening } from './intent';
+import { RAIL_ORDEAL_REFUSE_HRS } from './ordeal';
 
 // ---- weight vector -----------------------------------------------------------
 
@@ -77,6 +78,9 @@ export interface LegCtx {
   /** US-606 — when false, the hotel-night reward below is NOT PAID AT ALL. Absent ⇒ paid,
    *  which is the right answer for the budget family it was written for. */
   rewardHotelNightSaving?: boolean;
+  /** RAIL-ORDEAL RULING (founder, 15 Jul 2026) — true when the party is comfort-first
+   *  (luxury/premium, or "money no object"). Drives the 30-hour rail refusal below. */
+  comfortFirst?: boolean;
 }
 
 const DAY_START = 6 * 60, DAY_END = 18 * 60, DAY_LEN = DAY_END - DAY_START; // useful daylight window
@@ -156,6 +160,15 @@ export function ddcv(o: LegOption, ctx: LegCtx): DDCV {
   // red-eye flight for a body that must avoid it
   if (o.mode === 'AIR' && depMin != null && depMin < 5 * 60 && !tol.redEyeOk) {
     blockReasons.push(`red-eye ${o.identifier ?? 'flight'} dep ${fmtClock(depMin)} — avoid for a ${tol.cls} party`);
+  }
+  // ---- THE RAIL-ORDEAL RULING (founder, 15 July 2026). US-860 organ 3. ------------------
+  // The gate refused a 41-hour ROAD by name and passed a 43-hour TRAIN for a 56-year-old
+  // luxury couple: the road had an hour cap, rail had none. His ruling: a 30-hour-plus
+  // train is NEVER sold to a senior or comfort-first party. T here is the honest
+  // door-to-door clock, so a train cannot shrink itself by hiding its access.
+  if (o.mode === 'RAIL' && T >= RAIL_ORDEAL_REFUSE_HRS
+      && (ctx.comfortFirst || tol.cls === 'elderly' || tol.cls === 'reduced_mobility')) {
+    blockReasons.push(`${Math.round(T)} hours on a train is not a journey we will sell to ${ctx.comfortFirst ? 'a comfort-first party' : `a ${tol.cls} party`} — the ceiling is ${RAIL_ORDEAL_REFUSE_HRS} h (founder ruling, 15 Jul 2026)`);
   }
   // overnight used but coach class below the body floor
   if (overnight && !overnightClassOk(o.classes, tol)) {

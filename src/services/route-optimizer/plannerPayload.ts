@@ -69,6 +69,12 @@ export interface PlannerTransit {
   note?: string;
   /** true only when the leg genuinely breaks his stated contract (forced substitution). */
   contractBreach?: boolean;
+  /** US-847/US-860 — the AIR leg's honest anatomy (one-stop hub, real airports, transfers). */
+  viaHub?: string | null;
+  fromAirportCity?: string | null;
+  toAirportCity?: string | null;
+  accessFromKm?: number; accessFromMin?: number;
+  accessToKm?: number; accessToMin?: number;
   pearlSplit?: { anchor: string; detourPct: number; subHrs?: [number, number]; why?: string | null };
   decisionRecord?: DecisionRecord;
 }
@@ -154,6 +160,13 @@ export function findLegFor(
 }
 
 /** Merge the thin day.transit with its rich PlanLeg. Facts only — nothing invented. */
+/** test hook — hydrate one thin transit against the legs it should join to (pure). */
+export function hydrateTransitForTest(
+  transit: NonNullable<DayItem['transit']>, legs: PlanLeg[],
+): PlannerTransit {
+  return hydrateTransit(transit, findLegFor(transit, legs));
+}
+
 function hydrateTransit(transit: NonNullable<DayItem['transit']>, leg: PlanLeg | undefined): PlannerTransit {
   const out: PlannerTransit = {
     from: transit.from, to: transit.to, mode: transit.mode as string,
@@ -172,6 +185,15 @@ function hydrateTransit(transit: NonNullable<DayItem['transit']>, leg: PlanLeg |
   // did not show is a sentence we did not say. Facts only; nothing invented.
   if (typeof leg.note === 'string' && leg.note) out.note = leg.note;
   if (leg.contractBreach === true) out.contractBreach = true;
+  // US-847/US-860 — the anatomy must survive the join: a transfer we computed and did not
+  // show is a transfer we hid.
+  if (leg.viaHub) out.viaHub = leg.viaHub;
+  if (leg.fromAirportCity) out.fromAirportCity = leg.fromAirportCity;
+  if (leg.toAirportCity) out.toAirportCity = leg.toAirportCity;
+  if (leg.accessFromKm != null) out.accessFromKm = leg.accessFromKm;
+  if (leg.accessFromMin != null) out.accessFromMin = leg.accessFromMin;
+  if (leg.accessToKm != null) out.accessToKm = leg.accessToKm;
+  if (leg.accessToMin != null) out.accessToMin = leg.accessToMin;
   if (leg.pearlSplit) out.pearlSplit = leg.pearlSplit;
   if (leg.decisionRecord) out.decisionRecord = leg.decisionRecord;
   return out;

@@ -176,6 +176,89 @@ export async function airOptions(a: CityNode, b: CityNode, _ctx: FindCtx): Promi
       });
       if (opts.length >= 5) break;
     }
+
+    // ---- US-847 / US-860 -- THE ONE-STOP VIA-NODE. THE POOL MUST BE ABLE TO KEEP THE CARD'S
+    // PROMISE. ---------------------------------------------------------------------------
+    //
+    // THE BUG, founder-found on the live page, 14 July 2026: the card promised a luxury couple
+    // "You fly in -- Lucknow -> Kochi is flyable with one change of plane" -- and the BUILT plan
+    // opened with a 43-hour train, because the leg pool for Lucknow -> Malampuzha held no AIR
+    // option at all. No direct sector reaches any airport near Malampuzha from Lucknow, so the
+    // loop above produced nothing, and the prefer-flights tilt had NOTHING TO TILT TOWARD. The
+    // shortlist checked flightOneStopExists() and promised accordingly; the builder never held
+    // the option the promise described. A promise the builder cannot keep is a lie with a
+    // one-screen delay.
+    //
+    // So when NO direct sector survives, we compose the one-stop the shortlist already swears
+    // by: two REAL scheduled sectors meeting at the same hub, operating-day intersection
+    // non-empty. Existence-checked, never time-checked -- the clock we claim is the two flight
+    // times plus a minimum connection, the arrival time is NOT asserted, and the option carries
+    // verifyFlag (reliability 2) so every rendering of it says "confirm at booking". The drive
+    // to and from the airports is charged exactly as for a direct flight. A model proposes; only
+    // flight_sectors confirms.
+    if (opts.length === 0) {
+      const MIN_CONNECT_MIN = 90;
+      const oneStop = await prisma.$queryRawUnsafe<any[]>(`
+        WITH a_ap AS (SELECT city, lat, lng FROM airport_cities WHERE lat BETWEEN ${aLat - BOX_AIR} AND ${aLat + BOX_AIR} AND lng BETWEEN ${aLng - BOX_AIR} AND ${aLng + BOX_AIR}),
+             b_ap AS (SELECT city, lat, lng FROM airport_cities WHERE lat BETWEEN ${bLat - BOX_AIR} AND ${bLat + BOX_AIR} AND lng BETWEEN ${bLng - BOX_AIR} AND ${bLng + BOX_AIR})
+        SELECT f1.origin_city, f1.dest_city AS hub, f2.dest_city,
+               f1.flight_no AS fno1, f2.flight_no AS fno2, f1.airline,
+               f1.dep_min, f1.dur_min AS dur1, f2.dur_min AS dur2,
+               f1.operating_days AS days1, f2.operating_days AS days2,
+               oa.lat AS o_lat, oa.lng AS o_lng, da.lat AS d_lat, da.lng AS d_lng
+        FROM flight_sectors f1
+        JOIN flight_sectors f2 ON lower(f2.origin_city) = lower(f1.dest_city)
+        JOIN a_ap oa ON f1.origin_city = oa.city
+        JOIN b_ap da ON f2.dest_city  = da.city
+        WHERE lower(f1.origin_city) <> lower(f2.dest_city)
+          AND f1.dur_min IS NOT NULL AND f2.dur_min IS NOT NULL
+        ORDER BY (f1.dur_min + f2.dur_min) ASC
+        LIMIT 60`);
+      const byHub = new Map<string, any>();
+      for (const r of oneStop) {
+        // both hops must be able to run on the SAME day of the week, or the "connection"
+        // is a fiction with a hotel bill in the middle.
+        const days = (Number(r.days1) || 0) & (Number(r.days2) || 0);
+        if (!days) continue;
+        const prev = byHub.get(String(r.hub).toLowerCase());
+        const tot = Number(r.dur1) + Number(r.dur2);
+        if (prev && prev._tot <= tot) continue;
+        byHub.set(String(r.hub).toLowerCase(), { ...r, _tot: tot, _days: days });
+      }
+      for (const r of [...byHub.values()].sort((x, y) => x._tot - y._tot)) {
+        const fromKm = haversineKm(a.coord, [Number(r.o_lat), Number(r.o_lng)]) * 1.25;
+        const toKm   = haversineKm([Number(r.d_lat), Number(r.d_lng)], b.coord) * 1.25;
+        const aHigh = (a.elevationM ?? 0) > 1200 || (b.elevationM ?? 0) > 1200;
+        const accessKmh = terrainSpeedKmh(aHigh ? 2 : 4, null);
+        const fromHrs = fromKm / accessKmh, toHrs = toKm / accessKmh;
+        if (fromHrs > AIRPORT_TRANSFER_MAX_HRS || toHrs > AIRPORT_TRANSFER_MAX_HRS) continue;
+        if (fromKm > AIRPORT_REACH_KM || toKm > AIRPORT_REACH_KM) continue;
+        const fromMin = Math.round(fromHrs * 60), toMin2 = Math.round(toHrs * 60);
+        const sameCityFrom = fromKm < 25, sameCityTo = toKm < 25;
+        opts.push({
+          from: a.name, to: b.name, mode: 'AIR',
+          identifier: `${String(r.fno1).trim()} + ${String(r.fno2).trim()} (change at ${r.hub})`,
+          fromNode: r.origin_city, toNode: r.dest_city,
+          distanceKm: dist,
+          durationMin: Number(r.dur1) + MIN_CONNECT_MIN + Number(r.dur2),
+          depTime: r.dep_min != null ? fmtMin(Number(r.dep_min)) : null,
+          arrTime: null,            // we cannot prove the pairing's clock; we do not claim one
+          arrDayOffset: 0,
+          operatingDays: r._days,
+          classes: ['ECONOMY'],
+          reliability: 2,           // => verifyFlag downstream: "confirm the connection at booking"
+          source: 'dgca-schedule-onestop', verifiedAt: null,
+          viaHub: String(r.hub),
+          accessFromKm: sameCityFrom ? 0 : Math.round(fromKm),
+          accessFromMin: sameCityFrom ? 0 : fromMin,
+          accessToKm: sameCityTo ? 0 : Math.round(toKm),
+          accessToMin: sameCityTo ? 0 : toMin2,
+          fromAirportCity: sameCityFrom ? null : String(r.origin_city),
+          toAirportCity: sameCityTo ? null : String(r.dest_city),
+        });
+        if (opts.length >= 2) break;
+      }
+    }
     return opts;
   } catch (e) { console.error('airOptions failed:', e); return []; }
 }

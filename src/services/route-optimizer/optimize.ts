@@ -26,7 +26,8 @@ import { fmtDuration } from './geo';
 import { ddcv, ddcvScalar, weightsForObjective, type LegCtx, type Weights } from './ddcv';
 import { applyTPP } from './tpp';
 import { buildLegExplain, optionKey } from './explain';
-import { toleranceForProfile, type Tolerance } from './physiology';
+import { toleranceForProfile, roadDayHardCapExceeded, type Tolerance } from './physiology';
+import { chooseAnchor } from './anchors';
 import { hybridAccessHours } from './fallback';
 import { checkPlanTruth, TruthViolationError, type TruthViolation, type TruthCtx } from './truth';
 import type { AnchorCandidate } from './anchors';
@@ -181,6 +182,9 @@ function legCtx(
     accessToHrs: a.to + hyb.hrs + (o.accessToMin ?? 0) / 60,
     accessCostPp: hyb.costPp,
     tighten: contract?.tighten,
+    // THE RAIL-ORDEAL RULING (founder, 15 Jul 2026): the 30-hour rail refusal in ddcv needs
+    // to know whether this party is comfort-first. His own words decide (budgetStance).
+    comfortFirst: contract?.budgetStance === 'comfort_first' || contract?.budgetStance === 'money_no_object',
   };
 }
 
@@ -339,10 +343,41 @@ function rankLegOptions(opts: LegOption[] | undefined, obj: Objective, pax: numb
 function buildMatrix(names: string[], deps: OptimizeDeps, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights, contract?: PlanContract, elevations?: ElevationIndex): number[][] {
   const n = names.length;
   const m: number[][] = Array.from({ length: n }, () => new Array(n).fill(BIG));
+  const nodeByName = new Map(deps.nodes.map((nd) => [nd.name.toLowerCase(), nd] as const));
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
     if (i === j) { m[i][j] = 0; continue; }
     const best = bestOption(deps.pool.get(legKey(names[i], names[j])), obj, pax, { preferDaily, contract, elevations }, tol, month, w);
-    m[i][j] = best ? optionCost(best, obj, pax, preferDaily, tol, month, w, contract, elevations) : BIG;
+    if (!best) { m[i][j] = BIG; continue; }
+
+    // ---- US-832a — A PAIR WHOSE ONLY HONEST ANSWER IS "RE-SEQUENCE" IS A FORBIDDEN EDGE.
+    // anchors.ts has returned the literal string "re-sequence to avoid this leg" since §4.4
+    // shipped — and NOBODY LISTENED. An over-cap road day with no honourable halt kept its
+    // finite cost, so the solver kept choosing it and dayExpand kept apologising for it one
+    // screen later. The advice is now taken where the ordering is decided: the edge costs
+    // BIG, exactly as if the pair had no options at all, and Held-Karp routes around it
+    // whenever any other order exists. (Graceful: only when anchor candidates were injected —
+    // absent candidates, we cannot tell a dead halt from an un-analysed leg.)
+    if (best.mode === 'ROAD' && roadDayHardCapExceeded(best, tol, { month }).exceeded) {
+      const cands = deps.anchorsByLeg?.get(legKey(names[i], names[j]));
+      const fc = nodeByName.get(names[i].toLowerCase())?.coord;
+      const tc = nodeByName.get(names[j].toLowerCase())?.coord;
+      if (cands && cands.length && fc && tc) {
+        const ch = chooseAnchor(fc, tc, cands, tol, { month });
+        if (ch.deadHalt) { m[i][j] = BIG; continue; }
+      }
+    }
+
+    // ---- US-832b — THE DOOR-TO-DOOR TIME TERM. GEOMETRY RE-ENTERS THE ORDERING. ----------
+    // The DDCV scalar weighs time against money, fatigue and risk — right for CHOOSING a
+    // service, wrong on its own for ORDERING a tour: on a fly-heavy trip the fixed airport
+    // overheads flatten the gradient until Tirupati → Kanyakumari → Madurai (fly to the tip,
+    // come back north) costs the same as the sane order, and a 43-hour leg can win on terms
+    // that never saw a clock. So the matrix cell — and ONLY the matrix cell — carries the
+    // leg's honest door-to-door HOURS additively. Hours always grow with distance; time is a
+    // fact, not a tunable; no coefficient is invented (the unit weight IS the statement).
+    const doorHours = ddcv(best, legCtx(best, tol, pax, month, contract, elevations)).T;
+    m[i][j] = optionCost(best, obj, pax, preferDaily, tol, month, w, contract, elevations)
+      + (Number.isFinite(doorHours) ? doorHours : 0);
   }
   return m;
 }

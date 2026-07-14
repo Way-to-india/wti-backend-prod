@@ -28,7 +28,7 @@ import { anthropic, enrichmentEnabled } from '@/services/enrichment/core';
 import { verifyCity } from '@/services/route-optimizer/cityVerify';
 import { inferGateway, type StartSource } from '@/services/route-optimizer/gateway';
 import { resolveRegion, regionIsUsable, statesOf, stateNamesOf, type RegionMatch } from '@/services/route-optimizer/regions';
-import { stayNodesInStates, stayNodesByNames, gatewaysFor, attractionsFor } from '@/services/route-optimizer/spineDb';
+import { stayNodesInStates, stayNodesByNames, stayNodesNear, gatewaysFor, attractionsFor } from '@/services/route-optimizer/spineDb';
 import { nodeTier, nodeVoice, type StayNode } from '@/services/route-optimizer/spine';
 import { design, designAll, type Candidate, type DesignerBrief, type Proposal } from '@/services/route-optimizer/designer';
 import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb';
@@ -40,7 +40,7 @@ import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 import { mergeDuplicateCities } from '@/services/route-optimizer/optimize';
 import { poolForChips, scopedDesignerMemory, originFactsFor, flightSectorExists, flightOneStopExists, airportsNear } from '@/services/route-optimizer/themePool';
-import { gateProposals, buildShape, type EntryFact, type GateFacts } from '@/services/route-optimizer/proposalGates';
+import { gateProposals, buildShape, seasonBodyExitCheck, type EntryFact, type GateFacts } from '@/services/route-optimizer/proposalGates';
 import { loadSeasonFacts, loadAccessFacts } from '@/services/route-optimizer/placeFactsDb';
 import { resolveNamedCircuit } from '@/services/route-optimizer/namedCircuits';
 import { circuitStays, circuitTourFacts } from '@/services/route-optimizer/namedCircuitsDb';
@@ -352,7 +352,7 @@ const ASK_START =
 /** What the plan is resting on — every fact, and whether HE gave it or WE assumed it.
  *  The confirm screen renders exactly this. Nothing is assumed silently, ever. */
 export interface UnderstoodField {
-  key: 'start' | 'destinations' | 'nights' | 'travellers' | 'month' | 'hotel';
+  key: 'start' | 'destinations' | 'nights' | 'travellers' | 'month' | 'hotel' | 'end';
   label: string;
   value: string;
   source: StartSource;      // 'you_said' | 'we_guessed' | 'we_need_it'
@@ -871,6 +871,9 @@ export class PublicPlannerController {
           proposal: p, gates: { days: 'pass', origin: 'unknown', season: 'unknown', body: 'pass' }, gateNotes: [],
         }));
         let refusedProposals: { stops: string[]; gate: string; reason: string }[] = [];
+        // US-851 — true when the offers came from the near-origin re-pool, so the opening
+        // sentence says plainly that his first ask died and what these are instead.
+        let repooledNearOrigin = false;
         const brief = briefFrom(intent, request);
         try {
           const nodeByName = new Map(nodes.map((n) => [n.name.trim().toLowerCase(), n] as const));
@@ -948,11 +951,67 @@ export class PublicPlannerController {
             coords, elevations, seasons, access, entry,
             originName: gateOrigin,
           };
-          const gated = gateProposals(proposals, facts);
+          let gated = gateProposals(proposals, facts);
           offered = gated.offered;
           refusedProposals = gated.refused.map((r) => ({
             stops: r.proposal.stops.map((s) => s.name), gate: r.gate, reason: r.reason,
           }));
+
+          // ---- US-851 — A SHORTLIST THAT REFUSES EVERYTHING OFFERS NOTHING. ---------------
+          //
+          // T5 (Guwahati, backwaters, 4 days) got three honest refusals and ZERO alternatives.
+          // A consultant who rules out Kerala from Guwahati-with-4-days immediately offers
+          // what 4 days from Guwahati IS good for — Shillong and Kaziranga are IN the
+          // catalogue, 100 km from his door. So on zero survivors we RE-POOL NEARER THE
+          // ORIGIN: our own catalogue towns within an honest day's reach of him, the same
+          // designer, the SAME gates (a re-pool that skipped the gates would be a second
+          // door left open). The refusals stay in the payload — he reads why his first ask
+          // died AND what his days are genuinely good for.
+          if (!offered.length && gated.refused.length && origin) {
+            try {
+              const nearNodes = (await stayNodesNear(origin.coord, 350))
+                .filter((n) => n.name.trim().toLowerCase() !== (gateOrigin ?? '').trim().toLowerCase());
+              if (nearNodes.length >= 2) {
+                const memNear = chips.length ? (await scopedDesignerMemory(chips)).memory : undefined;
+                const nearProposals = await proposeForRegion(nearNodes, intent, request, memNear);
+                for (const p of nearProposals) {
+                  const anchor = p.stops[0]?.name;
+                  if (!anchor) continue;
+                  const key = anchor.trim().toLowerCase();
+                  if (entry.has(key)) continue;
+                  const node = nearNodes.find((n) => n.name.trim().toLowerCase() === key);
+                  if (!node) { entry.set(key, null); continue; }
+                  const crowKm = haversineKm(origin.coord, [node.lat, node.lng]);
+                  entry.set(key, {
+                    hours: (crowKm * 1.3) / 55, how: 'ROAD',
+                    basis: `about ${Math.round(crowKm * 1.3)} km by road from ${gateOrigin ?? 'your city'} — near enough to drive`,
+                  });
+                }
+                const gatedNear = gateProposals(nearProposals, facts);
+                if (gatedNear.offered.length) {
+                  offered = gatedNear.offered;
+                  repooledNearOrigin = true;
+                }
+              }
+            } catch (e) {
+              console.error('US-851 re-pool failed (non-fatal — honest refusals still shown):', e);
+            }
+          }
+
+          // ---- US-849 — EASE FROM HIS ENTRY ENTERS THE RANKING. ----------------------------
+          //
+          // Samastipur and Lucknow received the SAME three journeys, led by Delhi–Haridwar —
+          // while Varanasi and Bodh Gaya sat beside Samastipur. The origin gates REFUSE the
+          // unreachable; nothing REWARDED the near. The ruling order stands: gates first
+          // (everything in `offered` already passed), the designers' hand (tier), then
+          // ease-from-HIS-entry ascending. The entry facts were always computed; the sort
+          // simply never read them.
+          offered = offered.slice().sort((a, b) => {
+            const tierRank = (g: typeof a) => (g.proposal.tier === 'designer_catalogue' ? 0 : 1);
+            const hours = (g: typeof a) =>
+              entry.get(g.proposal.stops[0]?.name.trim().toLowerCase() ?? '')?.hours ?? Number.POSITIVE_INFINITY;
+            return (tierRank(a) - tierRank(b)) || (hours(a) - hours(b));
+          });
 
           // The shape and the personal sentence ride on each offer.
           for (const g of offered as (typeof offered[number] & { shape?: unknown; whyForYou?: string })[]) {
@@ -1045,7 +1104,10 @@ export class PublicPlannerController {
           // Each part now lives where it belongs: signalVoice under its own trip card, the
           // food warning in the food box, the shortfall in the shortfall box.
           message: proposal
-            ? `${youSaid ? `You said ${youSaid}, and I have kept everything else you told me too. ` : ''}`
+            ? `${repooledNearOrigin
+                ? `What you first asked for I could not honestly give you from ${frame.entry ?? start ?? 'your city'} in the days you have — the reasons are below, in plain words. But those days ARE genuinely good for something from your door, and this is it. `
+                : ''}`
+              + `${youSaid ? `You said ${youSaid}, and I have kept everything else you told me too. ` : ''}`
               + `${modeWord}I would give you ${stopWords} — `
               + `${proposal.totalNights} nights of stay`
               // "the N you allowed" may only be said when HE allowed it (Law 5's spirit).
@@ -1085,7 +1147,23 @@ export class PublicPlannerController {
       // destination request, i.e. the commonest request in travel.)
       if (cities.length < 1) return res.status(400).json({ status: false, message: ASK_AGAIN });
       if (totalNights > 21) return res.status(400).json({ status: false, message: 'That is a very long trip for one plan. Please keep it within 21 nights, or split it into two trips.' });
-      if (end && !ok.has(end.toLowerCase())) end = null;
+      // ---- US-858 — THE EXIT GATE IS DROPPED AT THE PICK. -------------------------------
+      //
+      // THE BUG, live, 14 July 2026: the Karnataka pick carried `end:"Goa"` — his own words,
+      // "fly back from Goa" — and this line NULLED IT, because `ok` holds only the towns he
+      // SLEEPS in and an exit gate is precisely a town he does not sleep in. The plan ended
+      // at Mysore, 300 km from the airport he told us he flies home from, with no sentence
+      // about it. "Never substitute in silence", broken at step 5 by a membership test.
+      //
+      // An exit gate is HIS WORD. It gets the same verify ladder as every other place; only
+      // a name our gazetteer cannot confirm is dropped — and a drop is SPOKEN, never silent
+      // (the understanding panel carries the sentence).
+      let endDropped: string | null = null;
+      if (end && !ok.has(end.toLowerCase())) {
+        const vEnd = await verifyCity(end);
+        if (vEnd.ok && vEnd.name) end = vEnd.name;
+        else { endDropped = end; end = null; }
+      }
 
       // ======================================================================
       // US-831 — WE DO NOT PLAN A TRIP FOR A MAN WHOSE FRONT DOOR WE CANNOT FIND.
@@ -1190,6 +1268,14 @@ export class PublicPlannerController {
       // it with ZERO nights — a gateway you pass through, not a place you stay.
       if (start && !cities.some((c) => c.name.toLowerCase() === start!.toLowerCase())) {
         cities = [{ name: start, nights: 0 }, ...cities];
+      }
+      // US-858 — and the EXIT gate is a node too, for the same reason the origin is: the
+      // engine can only end a path at a city it knows. Zero nights — a gateway he leaves
+      // from, not a place he stays. (When end === start he asked to come home; tripType
+      // handles that below and no extra node is needed.)
+      if (end && (!start || end.toLowerCase() !== start.toLowerCase())
+          && !cities.some((c) => c.name.toLowerCase() === end!.toLowerCase())) {
+        cities = [...cities, { name: end, nights: 0 }];
       }
 
       // ---- THE BRIEF (US-604) ------------------------------------------------
@@ -1302,6 +1388,17 @@ export class PublicPlannerController {
           key: 'destinations', label: 'Going to', value: stops.join(', ') || '—',
           source: 'you_said',
         },
+        // US-858 — the exit gate, honoured out loud (or its drop confessed, never silent).
+        ...(end && (!start || end.toLowerCase() !== start.toLowerCase()) ? [{
+          key: 'end' as const, label: 'Finishing at', value: end,
+          source: 'you_said' as StartSource,
+          why: 'You told us where your journey ends, and the route is planned to finish there.',
+        }] : []),
+        ...(endDropped ? [{
+          key: 'end' as const, label: 'Finishing at', value: '—',
+          source: 'we_need_it' as StartSource,
+          why: `You asked to finish at ${endDropped}, but we could not find that place on our map. Tell us the nearest big town and we will plan the route to end there.`,
+        }] : []),
         {
           key: 'nights', label: 'Nights', value: String(totalNights),
           source: request && !statedCities ? 'we_guessed' : 'you_said',
@@ -1363,6 +1460,39 @@ export class PublicPlannerController {
       // before it renders is a front-end decision; the payload carries everything it needs.)
       const echo: EchoRow[] = intent ? buildEcho(intent) : [];
       const questions: CounterQuestion[] = intent ? counterQuestions(intent) : [];
+
+      // ---- US-850 — THE NAMED PATH GETS THE SAME SEASON AND BODY TRUTH. -----------------
+      //
+      // T12 asked for Amarnath in October and got a ROUTE — outside the yatra window,
+      // because he NAMED the shrine and the named path bypassed the proposal gates by
+      // design (his word is the brief; we may not delete his stop). The honest behaviour,
+      // as ruled: place_seasons / place_access are consulted for EVERY STOP of EVERY
+      // FINISHED PLAN, here at the exit. A CLOSURE becomes a consent-style sentence plus
+      // the month question — never a silent delete, never a silent route. An ADVISORY
+      // becomes a note he reads. The sentences ride contractNotes, which survive the
+      // public gate precisely because the traveller is the person who must read them.
+      try {
+        const finalStops = cities.filter((c) => c.nights > 0).map((c) => c.name);
+        const [exitSeasons, exitAccess] = await Promise.all([
+          loadSeasonFacts(finalStops), loadAccessFacts(finalStops),
+        ]);
+        const exitWarnings = seasonBodyExitCheck(
+          finalStops, month ?? null, profile, exitSeasons, exitAccess,
+        );
+        if (exitWarnings.length && planner.plan) {
+          planner.plan.contractNotes = [
+            ...(planner.plan.contractNotes ?? []),
+            ...exitWarnings.map((w) => w.sentence),
+          ];
+          for (const w of exitWarnings) {
+            if (w.kind === 'closure' && w.ask) {
+              questions.push({ key: 'month', risk: 1, text: w.ask } as CounterQuestion);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('US-850 exit season/body check failed (non-fatal):', e);
+      }
 
       // THE PUBLIC GATE: only the scrubbed planner payload ever leaves.
       // plans[], enrichment PII, costBreakdown, warnings never reach the wire.

@@ -75,6 +75,55 @@ export async function stayNodesInStates(admin1Codes: string[]): Promise<StayNode
 }
 
 /**
+ * US-851 — the RE-POOL: every catalogue town within an honest reach of the traveller's own
+ * door. Used ONLY when a shortlist refused everything: a consultant who rules out Kerala
+ * from Guwahati-with-4-days must immediately offer what 4 days from Guwahati IS good for —
+ * and those towns are in our own catalogue, not in a model's imagination. Box pre-filter,
+ * true crow-distance post-filter, strongest-sold first.
+ */
+export async function stayNodesNear(coord: [number, number], maxKm = 350): Promise<StayNode[]> {
+  const [lat, lng] = coord;
+  const dLat = maxKm / 111;                       // ~degrees per km of latitude
+  const dLng = maxKm / (111 * Math.max(0.3, Math.cos((lat * Math.PI) / 180)));
+  try {
+    const rows = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT n.id, n.name, n.lat, n.lng, n.admin1_code, n.state_name, n.district,
+              n.tour_count, n.source_kind, n.elevation_m,
+              g.source_url AS guide_url, COALESCE(g.has_food, false) AS has_food
+         FROM stay_nodes n
+         LEFT JOIN stay_node_guides g ON g.stay_node_id = n.id
+        WHERE n.lat BETWEEN $1 AND $2 AND n.lng BETWEEN $3 AND $4
+        ORDER BY n.tour_count DESC, n.name
+        LIMIT 40`, lat - dLat, lat + dLat, lng - dLng, lng + dLng);
+    const R = 6371;
+    const crow = (aLat: number, aLng: number) => {
+      const p = Math.PI / 180;
+      const s = Math.sin(((aLat - lat) * p) / 2) ** 2
+        + Math.cos(lat * p) * Math.cos(aLat * p) * Math.sin(((aLng - lng) * p) / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(s));
+    };
+    return rows
+      .filter((r) => crow(Number(r.lat), Number(r.lng)) <= maxKm)
+      .map((r) => ({
+        id: String(r.id),
+        name: String(r.name),
+        lat: Number(r.lat),
+        lng: Number(r.lng),
+        admin1Code: r.admin1_code ?? null,
+        stateName: r.state_name ?? null,
+        district: r.district ?? null,
+        tourCount: Number(r.tour_count) || 0,
+        source: String(r.source_kind) as StayNode['source'],
+        guideUrl: r.guide_url ?? null,
+        hasOwnFoodNotes: r.has_food === true,
+      }));
+  } catch (e) {
+    console.error('stayNodesNear failed:', e);
+    return [];
+  }
+}
+
+/**
  * The gateways for a set of StayNodes. Only `primary` and `nearest` — the shortlist ranks
  * are working notes, not answers.
  *
