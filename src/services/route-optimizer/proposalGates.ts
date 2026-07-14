@@ -116,9 +116,13 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
  * Law 4, all three, every time. The BODY gate may REMOVE a stop (and say so) rather than
  * kill a circuit that survives without it.
  */
-export function gateProposals(proposals: Proposal[], facts: GateFacts): { offered: GatedProposal[]; refused: RefusedProposal[] } {
+export function gateProposals(proposals: Proposal[], facts: GateFacts, opts: { bodyEdits?: boolean } = {}): { offered: GatedProposal[]; refused: RefusedProposal[] } {
   const offered: GatedProposal[] = [];
   const refused: RefusedProposal[] = [];
+  // US-853 — a NAMED, SOLD tour is advised, never silently edited: with bodyEdits false
+  // the body gate speaks (advisory, magnitude named, alternatives offered) but does not
+  // remove a stop from a product our designers built.
+  const mayEdit = opts.bodyEdits !== false;
 
   for (const original of proposals) {
     // work on a copy — the body gate may edit the stops, and the caller's array is not ours.
@@ -134,7 +138,12 @@ export function gateProposals(proposals: Proposal[], facts: GateFacts): { offere
       for (const stop of [...p.stops]) {
         const acc = facts.access.find((a) => low(a.place) === low(stop.name));
         if (acc && (acc.access === 'trek' || acc.access === 'climb')) {
-          if (p.stops.length >= 2) {
+          if (!mayEdit) {
+            // Advise, do not edit: the stop stays, the truth is said, and the choice is his.
+            verdict.body = 'advisory';
+            notes.push(`${stop.name} is reached by ${acc.magnitude ?? 'a long mountain trek'} — ${acc.note} `
+              + 'Tell me plainly if walking far is hard, and I will re-plan this part rather than put you on that path.');
+          } else if (p.stops.length >= 2) {
             p.stops = p.stops.filter((s) => s !== stop);
             const rej: Rejection = {
               name: stop.name, state: stop.state,

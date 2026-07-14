@@ -42,6 +42,8 @@ import { mergeDuplicateCities } from '@/services/route-optimizer/optimize';
 import { poolForChips, scopedDesignerMemory, originFactsFor, flightSectorExists, flightOneStopExists, airportsNear } from '@/services/route-optimizer/themePool';
 import { gateProposals, buildShape, type EntryFact, type GateFacts } from '@/services/route-optimizer/proposalGates';
 import { loadSeasonFacts, loadAccessFacts } from '@/services/route-optimizer/placeFactsDb';
+import { resolveNamedCircuit } from '@/services/route-optimizer/namedCircuits';
+import { circuitStays, circuitTourFacts } from '@/services/route-optimizer/namedCircuitsDb';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
 import { haversineKm } from '@/services/route-optimizer/geo';
 import type { DesignerMemory } from '@/services/route-optimizer/designerMemory';
@@ -548,9 +550,133 @@ export class PublicPlannerController {
       // shortlist the region branch already knows how to serve. Law 1 stands untouched:
       // a named, resolvable city always wins, and this branch never sees it.
       const chips = intent ? chipsOf(intent) : [];
+      // US-853 — A FAMOUS CIRCUIT NAMED IS A DESTINATION ANSWERED. "Nau Devi yatra" is not
+      // a missing city; it is the most precise brief a pilgrim can give. The registry only
+      // matches circuits OUR OWN CATALOGUE sells, and the towns and nights are read from
+      // that tour at request time. A spelling VARIANT ("van durga") is a READING: the route
+      // may be shown, but the reading is said out loud and he can correct it (founder rule).
+      const circuitHit = cities.length < 1 ? resolveNamedCircuit(request) : null;
 
-      if (cities.length < 1 && (regionIsUsable(regionMatch, cities.length) || chips.length > 0)) {
+      if (cities.length < 1 && (circuitHit || regionIsUsable(regionMatch, cities.length) || chips.length > 0)) {
         const m: RegionMatch | null = regionMatch;
+
+        if (circuitHit) {
+          try {
+            const [stays, tour] = await Promise.all([
+              circuitStays(circuitHit.circuit.tourId), circuitTourFacts(circuitHit.circuit.tourId),
+            ]);
+            if (stays.length && tour) {
+              const lowc = (s: string) => s.trim().toLowerCase();
+              const circuitP: Proposal = {
+                stops: stays.map((st) => ({
+                  name: st.name, state: st.stateName, nights: Math.max(1, st.nights),
+                  nightsSource: 'catalogue_ai_parsed' as const,
+                  nightsWhy: `taken from our own ${tour.title} itinerary`,
+                  tier: 'designer_catalogue' as const,
+                  why: `part of our own ${tour.title}`,
+                  railheadNote: null, outOfRegion: false,
+                  foodStatus: 'unknown' as const, foodNote: null,
+                })),
+                totalNights: stays.reduce((s, x) => s + Math.max(1, x.nights), 0),
+                shortfall: null, foodParagraph: null, gateway: null,
+                tier: 'designer_catalogue', signal: 'built_before',
+                signalVoice: `This is our own ${tour.title} — a journey we run ourselves. `
+                  + `${circuitHit.circuit.note}.`,
+                cohesion: 0, rejected: [], alsoConsidered: [],
+              };
+
+              // The gates still stand — a named circuit is not above the season or the
+              // body. But the DAYS gate binds only on a number HE gave: gating a sold
+              // 10-night yatra on our own default of 6 would be a silent assumption.
+              const saidNights = intent?.nights.value ?? nightsFromWords(request)?.maxNights ?? null;
+              const coords = new Map(stays.map((s) => [lowc(s.name), [s.lat, s.lng] as [number, number]]));
+              const elevations: Record<string, number> = {};
+              for (const s of stays) if (s.elevationM != null) elevations[lowc(s.name)] = s.elevationM;
+              const stayNames = stays.map((s) => s.name);
+              const [seasons, access] = await Promise.all([loadSeasonFacts(stayNames), loadAccessFacts(stayNames)]);
+
+              // Entry facts from HIS door, when he has told us where that is.
+              const entry = new Map<string, import('@/services/route-optimizer/proposalGates').EntryFact | null>();
+              if (startWasStated && start && stays[0]) {
+                const origin = await originFactsFor(start);
+                if (origin) {
+                  const first = stays[0];
+                  let fact: import('@/services/route-optimizer/proposalGates').EntryFact = {
+                    hours: (haversineKm(origin.coord, [first.lat, first.lng]) * 1.3) / 55,
+                    how: 'ROAD', basis: 'estimated by road until we can prove a better way',
+                  };
+                  const oa = await airportsNear(origin.coord, 200, 3);
+                  const aa = await airportsNear([first.lat, first.lng], 150, 3);
+                  outer:
+                  for (const o of oa) for (const a of aa) {
+                    if (await flightSectorExists(o.city, a.city)) {
+                      fact = { hours: 4.5 + a.km / 60, how: 'AIR', basis: `a scheduled ${o.city} → ${a.city} flight exists` };
+                      break outer;
+                    }
+                  }
+                  entry.set(lowc(first.name), fact);
+                }
+              }
+
+              const gated = gateProposals([circuitP], {
+                nightsCeiling: saidNights ?? 99,
+                month: month ?? null,
+                profile: (['standard', 'family', 'senior'].includes(profile) ? profile : 'standard') as any,
+                coords, elevations, seasons, access, entry, originName: start ?? null,
+              }, { bodyEdits: false });
+
+              const reading = circuitHit.confidence === 'variant'
+                ? `I read "${circuitHit.quote}" as ${circuitHit.circuit.label}. If you meant something else, tell me plainly and I will start again. `
+                : `You asked for ${circuitHit.circuit.label}. `;
+              const askOrigin = (!startWasStated || !start)
+                ? ' Now tell me the city you are starting from, and I will fit the journey to your door — the right trains, the right flights, and honest days.'
+                : '';
+              const originQ: CounterQuestion = {
+                key: 'origin', risk: 1,
+                text: 'Where does your journey start from? Tell us your city and we will plan from your door, not from somebody else\'s.',
+              };
+              const baseQs = intent ? counterQuestions(intent) : [];
+              const questions = (!startWasStated || !start)
+                ? [originQ, ...baseQs.filter((q) => q.key !== 'origin')].slice(0, 2)
+                : baseQs;
+
+              if (gated.offered.length) {
+                const g = gated.offered[0];
+                const stopWords = g.proposal.stops.map((s) => `${s.name} (${s.nights} night${s.nights > 1 ? 's' : ''})`).join(', ');
+                return res.status(200).json({
+                  status: false,
+                  need: 'destinations',
+                  circuit: { key: circuitHit.circuit.key, label: circuitHit.circuit.label, quote: circuitHit.quote, confidence: circuitHit.confidence, tourId: circuitHit.circuit.tourId },
+                  region: null, theme: chips.length ? { chips, quote: null } : null,
+                  towns: [],
+                  echo: intent ? buildEcho(intent) : [],
+                  questions,
+                  proposal: { ...g.proposal, gates: g.gates, gateNotes: g.gateNotes, whyForYou: null, shape: buildShape(entry.get(lowc(stays[0].name)) ?? null, null) },
+                  proposals: [{ ...g.proposal, gates: g.gates, gateNotes: g.gateNotes, whyForYou: null, shape: buildShape(entry.get(lowc(stays[0].name)) ?? null, null) }],
+                  refusedProposals: [],
+                  message: `${reading}That is a journey we run ourselves — ${tour.title}, `
+                    + `${g.proposal.totalNights} nights: ${stopWords}. ${circuitHit.circuit.note}.`
+                    + (g.gateNotes.length ? ` ${g.gateNotes.join(' ')}` : '')
+                    + askOrigin,
+                });
+              }
+              // The circuit was refused — say WHY (December Char Dham dies HERE, by name).
+              const r = gated.refused[0];
+              return res.status(200).json({
+                status: false,
+                need: 'destinations',
+                circuit: { key: circuitHit.circuit.key, label: circuitHit.circuit.label, quote: circuitHit.quote, confidence: circuitHit.confidence, tourId: circuitHit.circuit.tourId },
+                region: null, theme: chips.length ? { chips, quote: null } : null,
+                towns: [], echo: intent ? buildEcho(intent) : [], questions,
+                proposal: null, proposals: [],
+                refusedProposals: [{ stops: r.proposal.stops.map((s) => s.name), gate: r.gate, reason: r.reason }],
+                message: `${reading}${r.reason}`,
+              });
+            }
+          } catch (e) {
+            console.error('named circuit failed (non-fatal — falls through to the theme shortlist):', e);
+          }
+        }
 
         // FOUNDER, 13 July 2026: "once we know where he wants to START his journey and the
         // THEME of his journey — other things start becoming clear." The gates (days from
@@ -677,8 +803,12 @@ export class PublicPlannerController {
             entry.set(key, fact);
           }
 
+          // The DAYS gate binds only on a number HE gave. brief.nights carries our default
+          // of 6 when he said nothing — gating on our own default would be a silent
+          // assumption doing a founder ruling's job.
+          const saidNightsTheme = intent?.nights.value ?? nightsFromWords(request)?.maxNights ?? null;
           const facts: GateFacts = {
-            nightsCeiling: brief.nights,
+            nightsCeiling: saidNightsTheme ?? 99,
             month: month ?? null,
             profile: (['standard', 'family', 'senior'].includes(profile) ? profile : 'standard') as GateFacts['profile'],
             coords, elevations, seasons, access, entry,
@@ -764,8 +894,12 @@ export class PublicPlannerController {
           message: proposal
             ? `${youSaid ? `You said ${youSaid}, and I have kept everything else you told me too. ` : ''}`
               + `${modeWord}I would give you ${stopWords} — `
-              + `${proposal.totalNights} nights of stay, well inside the `
-              + `${brief.nights} you allowed, and the journey either side.`
+              + `${proposal.totalNights} nights of stay`
+              // "the N you allowed" may only be said when HE allowed it (Law 5's spirit).
+              + ((intent?.nights.value ?? nightsFromWords(request)?.maxNights)
+                  ? `, well inside the ${intent?.nights.value ?? nightsFromWords(request)!.maxNights} you allowed,`
+                  : ',')
+              + ' and the journey either side.'
               + (shapedProposals.length > 1
                   ? ` And this is not the only way to do it. I have laid out `
                     + `${shapedProposals.length} real journeys. Look at them `
