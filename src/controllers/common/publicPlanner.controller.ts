@@ -381,7 +381,15 @@ export class PublicPlannerController {
       //
       // TO RESTORE: remove PLANNER_RATE_LIMIT=off from .env and `pm2 restart 0`. Nothing else.
       const rateLimitOn = process.env.PLANNER_RATE_LIMIT !== 'off';
-      const gate = rateLimitOn ? allow(ip) : { ok: true as const, retryMin: 0 };
+      // THE TESTER'S DOOR (founder, 2026-07-14, five minutes after the brake went on:
+      // he was testing the page and the brake shut the door on HIM). A request carrying
+      // the secret test key skips the rate limit; everyone else still meets the wall.
+      // The key lives in .env (PLANNER_TEST_KEY) and in the tester's own browser
+      // (localStorage 'wti_planner_test' — the page attaches it to the POST body).
+      // Rotate the env value to revoke every tester at once. No key set = no door.
+      const testKey = process.env.PLANNER_TEST_KEY || '';
+      const isTester = !!testKey && typeof req.body?.testKey === 'string' && req.body.testKey === testKey;
+      const gate = rateLimitOn && !isTester ? allow(ip) : { ok: true as const, retryMin: 0 };
       if (!gate.ok) {
         return res.status(429).json({
           status: false,
