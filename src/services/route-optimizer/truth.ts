@@ -69,6 +69,7 @@
  */
 
 import { haversineKm } from './geo';
+import { HILL_M } from './terrain';
 import type { LatLng, LegOption, Plan } from './types';
 
 export interface TruthViolation {
@@ -86,11 +87,50 @@ export class TruthViolationError extends Error {
 }
 
 // ---- L1 — GEOGRAPHY CANNOT BE ARGUED WITH ---------------------------------------------------
-/** A road cannot be shorter than the crow flies, and it cannot be 5× longer either. */
+/** A road cannot be shorter than the crow flies. THE FLOOR IS GEOMETRY AND IT NEVER MOVES. */
 export const ROAD_MIN_RATIO = 0.95;
+/** THE CEILING ON THE PLAINS — founder-locked. Jaipur → Udaipur came back 1,878 km across a
+ *  ~400 km gap (4.7×) and we shipped it. On the plains, no road detours like that. */
 export const ROAD_MAX_RATIO = 2.2;
 
-export function roadKmIsImpossible(km: number | null | undefined, a: LatLng, b: LatLng): string | null {
+/**
+ * ⚠️ US-841 — THE CEILING WAS A PLAINS INTUITION, AND IN THE MOUNTAINS IT MANUFACTURED A LIE
+ *              FAR MORE DANGEROUS THAN THE ONE IT WAS BUILT TO CATCH.
+ *
+ * The 2.2× ceiling was written with Rajasthan in mind. Then it met the Garhwal Himalaya, and
+ * the 15 July log filled up with this:
+ *
+ *     Kedarnath → Badrinath   217 km of road across a  41 km gap   (5.3×)   ROUTER DISCARDED
+ *     Gangotri  → Kedarnath   327 km of road across a  31 km gap  (10.5×)   ROUTER DISCARDED
+ *     Gangotri  → Badrinath   465 km of road across a  60 km gap   (7.8×)   ROUTER DISCARDED
+ *
+ * EVERY ONE OF THOSE ROADS IS REAL. Gangotri and Kedarnath are 31 km apart across a mountain
+ * wall, and the only road between them runs all the way DOWN one valley to Rishikesh and all the
+ * way back UP the next. It is about 330 km and it is a two-day drive. That is not a detour. It
+ * is the only road there is.
+ *
+ * And when the ceiling fired, the controller threw away the true 217 km and substituted
+ * crow × 1.3 = 53 km at a flat 45 km/h — SEVENTY-ONE MINUTES. So a ten-hour Himalayan ordeal was
+ * handed to a 68-year-old couple looking like an hour's hop, AND THE BODY GATE READ THE
+ * SEVENTY-ONE MINUTES AND WAVED IT THROUGH. The original 1,878 km bug made a journey look
+ * HARDER, which is the safe direction to be wrong in. THIS ONE MADE THE HIMALAYA LOOK TRIVIAL.
+ *
+ * SO THE CEILING STANDS DOWN IN THE MOUNTAINS, AND IT SAYS SO OUT LOUD.
+ * Above HILL_M (1,200 m — the engine's own threshold on the EARTH, not a tuning knob) a ratio
+ * simply cannot tell a long-but-true road from a wrong one, and we will not pretend otherwise.
+ * What still binds up there is THE FLOOR, which is geometry and cannot be argued with, and
+ * CORRECT COORDINATES — which is the real defence against the wrong-town class of bug, and which
+ * US-823 gave us (the standing check now returns zero rows).
+ *
+ * ⚠️ THIS NUMBER IS MINE, NOT THE FOUNDER'S. It is deliberately absurd so that it can only ever
+ * fire on an absurdity. See the handoff, OWED TO THE FOUNDER.
+ */
+export const ROAD_MAX_RATIO_MOUNTAIN = 12.0;
+
+export function roadKmIsImpossible(
+  km: number | null | undefined, a: LatLng, b: LatLng,
+  elevA?: number | null, elevB?: number | null,
+): string | null {
   const crow = haversineKm(a, b);
   if (crow <= 20) return null;                          // too short to reason about
   if (km == null || !(km > 0)) return `no distance at all for a ${Math.round(crow)} km gap`;
@@ -98,10 +138,53 @@ export function roadKmIsImpossible(km: number | null | undefined, a: LatLng, b: 
   if (ratio < ROAD_MIN_RATIO) {
     return `${Math.round(km)} km of road across a ${Math.round(crow)} km gap — A ROAD CANNOT BE SHORTER THAN THE CROW FLIES`;
   }
-  if (ratio > ROAD_MAX_RATIO) {
-    return `${Math.round(km)} km of road across a ${Math.round(crow)} km gap (${ratio.toFixed(1)}× the straight line) — no road in India detours that far`;
+  const inTheMountains = Math.max(elevA ?? 0, elevB ?? 0) >= HILL_M;
+  const ceiling = inTheMountains ? ROAD_MAX_RATIO_MOUNTAIN : ROAD_MAX_RATIO;
+  if (ratio > ceiling) {
+    return `${Math.round(km)} km of road across a ${Math.round(crow)} km gap (${ratio.toFixed(1)}× the straight line)`
+      + (inTheMountains ? ' — even in the mountains no road detours that far' : ' — no road in India detours that far');
   }
   return null;
+}
+
+/**
+ * ⚠️ US-842 — THE LAW MUST FILTER THE OPTIONS, NOT ONLY THE FINISHED PLAN.
+ *
+ * The exit gate refused the whole Golden Triangle — Delhi, Agra, Jaipur, the most ordinary trip
+ * in India — because ONE train claimed 204 km across a 223 km gap. The refusal was correct and
+ * it was also absurd: an honest road and an honest flight were sitting in the pool right beside
+ * that train, and we killed the man's holiday rather than simply decline to put him on the one
+ * service whose numbers we could not prove.
+ *
+ * A LIE IS A PROPERTY OF AN OPTION, NOT OF A TRIP. So the law now runs where the options are
+ * born: an option that cannot be true is never offered to the engine, and the engine quietly
+ * picks one that can. The exit gate stays exactly where it is, as the backstop — because a gate
+ * that guards one entrance while another stands open is a decoration, and we have built that
+ * decoration twice already.
+ */
+export function optionIsImpossible(
+  o: { mode: string; distanceKm?: number | null; durationMin?: number | null },
+  a: LatLng, b: LatLng, elevA?: number | null, elevB?: number | null,
+): string | null {
+  const below = legKmBelowCrow(o.distanceKm, a, b);
+  if (below) return below;
+  if (o.mode === 'ROAD') {
+    const bad = roadKmIsImpossible(o.distanceKm, a, b, elevA, elevB);
+    if (bad) return bad;
+  }
+  return legSpeedIsImpossible(o.distanceKm, o.durationMin, a, b, o.mode);
+}
+
+/** Keep only the options we can prove. Returns [kept, discarded-with-reason]. */
+export function honestOptions<T extends { mode: string; distanceKm?: number | null; durationMin?: number | null; identifier?: string | null }>(
+  opts: T[], a: LatLng, b: LatLng, elevA?: number | null, elevB?: number | null,
+): { kept: T[]; dropped: { opt: T; why: string }[] } {
+  const kept: T[] = [], dropped: { opt: T; why: string }[] = [];
+  for (const o of opts) {
+    const why = optionIsImpossible(o, a, b, elevA, elevB);
+    if (why) dropped.push({ opt: o, why }); else kept.push(o);
+  }
+  return { kept, dropped };
 }
 
 // ---- L1, APPLIED TO EVERY MODE — THE CROW-FLY FLOOR -----------------------------------------

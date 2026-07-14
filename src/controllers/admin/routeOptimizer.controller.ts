@@ -14,7 +14,7 @@ import { weightsForObjective, type LegCtx } from '@/services/route-optimizer/ddc
 import { applyTPP } from '@/services/route-optimizer/tpp';
 import type { OrdealParty } from '@/services/route-optimizer/ordeal';
 import { anchorValueFromCounts, type AnchorCandidate } from '@/services/route-optimizer/anchors';
-import { roadKmIsImpossible, checkPlanTruth, TruthViolationError, type TruthViolation } from '@/services/route-optimizer/truth';
+import { roadKmIsImpossible, checkPlanTruth, honestOptions, TruthViolationError, type TruthViolation } from '@/services/route-optimizer/truth';
 import { honestPlansOnly, truthCtxFor } from '@/services/route-optimizer/optimize';
 import { repeatedCities } from '@/services/route-optimizer/sequence';
 import { toPlannerPayload } from '@/services/route-optimizer/plannerPayload';
@@ -239,7 +239,14 @@ export class RouteOptimizerController {
           // USE THE ROUTER'S NUMBER. We fall back to the honest model (crow-fly x 1.3) and we
           // LABEL IT as a model, never as a measurement. An honest estimate beats a confident lie.
           const routed = r?.km ?? null;
-          const impossible = routed != null ? roadKmIsImpossible(routed, nodes[i].coord, nodes[j].coord) : null;
+          // ⚠️ US-841 — the ceiling now knows a mountain when it sees one. Gangotri and Kedarnath
+          // are 31 km apart and the only road between them is 330 km long, because it runs all the
+          // way down one valley and back up the next. The old ceiling called that road a lie and
+          // replaced it with 53 km at 45 km/h — 71 minutes — and handed the Himalaya to a
+          // 68-year-old couple looking like an hour's hop.
+          const impossible = routed != null
+            ? roadKmIsImpossible(routed, nodes[i].coord, nodes[j].coord, nodes[i].elevationM, nodes[j].elevationM)
+            : null;
           if (impossible) {
             console.error(`[IRON LAW L1] ${nodes[i].name} -> ${nodes[j].name}: ${impossible}. Router number DISCARDED.`);
           }
@@ -296,7 +303,22 @@ export class RouteOptimizerController {
           } catch (e) {
             console.error('roadTerrainFor failed (non-fatal, keeping router time):', e);
           }
-          pool.set(`${nodes[i].name}||${nodes[j].name}`, [roadOpt, ...mm]);
+          // ⚠️ US-842 — THE LAW FILTERS THE OPTIONS, NOT ONLY THE FINISHED PLAN.
+          //
+          // The exit gate refused the entire Golden Triangle — Delhi, Agra, Jaipur — because ONE
+          // train claimed 204 km across a 223 km gap. Correct, and absurd: an honest road and an
+          // honest flight were sitting in the pool right beside it. A LIE IS A PROPERTY OF AN
+          // OPTION, NOT OF A TRIP. So we decline to offer the one service we cannot prove, and the
+          // engine quietly picks one we can. The exit gate stays exactly where it is, as the
+          // backstop — because we have now twice built a gate that guarded one door and left
+          // another standing open.
+          const { kept, dropped } = honestOptions(
+            [roadOpt, ...mm], nodes[i].coord, nodes[j].coord, nodes[i].elevationM, nodes[j].elevationM);
+          for (const d of dropped) {
+            console.error(`[IRON LAW — OPTION REFUSED] ${nodes[i].name} -> ${nodes[j].name} ` +
+              `${d.opt.mode}${d.opt.identifier ? ' ' + d.opt.identifier : ''}: ${d.why}`);
+          }
+          pool.set(`${nodes[i].name}||${nodes[j].name}`, kept);
         }
       }
 

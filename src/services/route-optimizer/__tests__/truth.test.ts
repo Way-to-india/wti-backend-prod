@@ -8,7 +8,7 @@
  *
  *   bun run src/services/route-optimizer/__tests__/truth.test.ts
  */
-import { checkPlanTruth, legKmBelowCrow, legSpeedIsImpossible, roadKmIsImpossible, MAX_AVG_KMH, type TruthCtx } from '../truth';
+import { checkPlanTruth, legKmBelowCrow, legSpeedIsImpossible, roadKmIsImpossible, honestOptions, MAX_AVG_KMH, ROAD_MAX_RATIO, ROAD_MAX_RATIO_MOUNTAIN, type TruthCtx } from '../truth';
 import type { Plan, PlanLeg, LatLng } from '../types';
 
 let pass = 0, fail = 0;
@@ -124,6 +124,51 @@ trueQuote.warnings = ['You told us "we hate flying" so we kept you off the plane
 check('...and his REAL words are left alone',
   checkPlanTruth(trueQuote, ctx({ request: 'We want to see Agra but we hate flying.' }))
     .every((v) => v.law !== 'L5_INVENTED_QUOTE'));
+
+// ── US-841 — THE CEILING STANDS DOWN IN THE MOUNTAINS ───────────────────────────────────────
+console.log('\nUS-841 — the ceiling was a plains intuition, and in the Himalaya it manufactured a lie');
+
+const GANGOTRI: LatLng = [30.9946, 78.9398];   // 3,056 m
+const KEDARNATH: LatLng = [30.7346, 79.0669];  // 3,549 m
+const JAIPUR: LatLng = [26.9196, 75.7878];     //   438 m
+const UDAIPUR: LatLng = [24.5858, 73.7135];    //   567 m
+
+// The road from Gangotri to Kedarnath runs all the way DOWN one valley to Rishikesh and all the
+// way back UP the next. It is ~330 km across a 31 km gap — 10.5x — AND IT IS THE ONLY ROAD.
+check('a REAL Himalayan road (Gangotri → Kedarnath, 327 km across 31 km) is no longer called a lie',
+  roadKmIsImpossible(327, GANGOTRI, KEDARNATH, 3056, 3549) === null,
+  'the old ceiling discarded it and substituted 40 km at 45 km/h — an hour, for a two-day drive');
+
+check('Kedarnath → Badrinath, 217 km across 41 km, survives too',
+  roadKmIsImpossible(217, KEDARNATH, [30.7433, 79.4938], 3549, 3127) === null);
+
+// ...and the ceiling has NOT simply been switched off. On the plains it is exactly where the
+// founder put it, and it still catches the lie it was built for.
+check('THE PLAINS CEILING IS UNTOUCHED — Jaipur → Udaipur, 1,878 km across ~400 km, still caught',
+  roadKmIsImpossible(1878, JAIPUR, UDAIPUR, 438, 567) !== null);
+
+check('an honest Jaipur → Udaipur road (432 km) still passes',
+  roadKmIsImpossible(432, JAIPUR, UDAIPUR, 438, 567) === null);
+
+check('the floor still binds in the mountains — geometry is not negotiable at altitude',
+  roadKmIsImpossible(20, GANGOTRI, KEDARNATH, 3056, 3549) !== null);
+
+check('the mountain ceiling is deliberately absurd, and the plains ceiling is the founder\'s',
+  ROAD_MAX_RATIO === 2.2 && ROAD_MAX_RATIO_MOUNTAIN === 12.0);
+
+// ── US-842 — A LIE IS A PROPERTY OF AN OPTION, NOT OF A TRIP ────────────────────────────────
+console.log('\nUS-842 — we decline the one service we cannot prove; we do not cancel his holiday');
+
+// This is the real pool that made the Iron Law refuse the whole Golden Triangle.
+const opts = [
+  { mode: 'ROAD', identifier: null, distanceKm: 245, durationMin: 300 },        // honest
+  { mode: 'RAIL', identifier: '12036 SHATABDI', distanceKm: 204, durationMin: 120 }, // 204 km across a 223 km gap
+];
+const { kept, dropped } = honestOptions(opts, JAIPUR, AGRA, 438, 169);
+check('the impossible train is refused...', dropped.length === 1 && dropped[0].opt.mode === 'RAIL');
+check('...the honest road survives, and he still gets his trip', kept.length === 1 && kept[0].mode === 'ROAD',
+  'the exit gate killed the whole Golden Triangle over this one train');
+check('and the reason names the geometry, in words', /CROW FLIES/.test(dropped[0].why));
 
 console.log(`\n${pass} passed, ${fail} failed\n`);
 if (fail) process.exit(1);
