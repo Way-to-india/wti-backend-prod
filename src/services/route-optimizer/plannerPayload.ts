@@ -63,6 +63,12 @@ export interface PlannerTransit {
   identifier?: string | null; dep?: string | null; arr?: string | null;
   durationMin?: number | null; distanceKm?: number | null;
   frequency?: string; overnight?: boolean; verifyFlag?: boolean; positioning?: boolean;
+  /** US-844's register, delivered: the consultant's sentence about this leg. When it
+   *  begins "You asked to fly…" it is a CONFIRMATION of his own preference, not a
+   *  warning — the page renders it in the positive register. */
+  note?: string;
+  /** true only when the leg genuinely breaks his stated contract (forced substitution). */
+  contractBreach?: boolean;
   pearlSplit?: { anchor: string; detourPct: number; subHrs?: [number, number]; why?: string | null };
   decisionRecord?: DecisionRecord;
 }
@@ -161,6 +167,11 @@ function hydrateTransit(transit: NonNullable<DayItem['transit']>, leg: PlanLeg |
   if (leg.positioning != null) out.positioning = leg.positioning;
   // verifyFlag is carried through even when false — the UI's verify rule depends on it
   out.verifyFlag = leg.verifyFlag === true;
+  // US-844 delivered to the page: the engine writes the confirmation/breach sentence on
+  // the leg, and until today the adapter dropped it here — a sentence we computed and
+  // did not show is a sentence we did not say. Facts only; nothing invented.
+  if (typeof leg.note === 'string' && leg.note) out.note = leg.note;
+  if (leg.contractBreach === true) out.contractBreach = true;
   if (leg.pearlSplit) out.pearlSplit = leg.pearlSplit;
   if (leg.decisionRecord) out.decisionRecord = leg.decisionRecord;
   return out;

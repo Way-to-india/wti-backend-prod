@@ -35,7 +35,7 @@ import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb'
 import { foodFor } from '@/services/route-optimizer/foodDb';
 import { foodNeedFromWords } from '@/services/route-optimizer/food';
 import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
-import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, cityWasNamed, frameFromText, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
+import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, cityWasNamed, frameFromText, heSaid, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 import { mergeDuplicateCities } from '@/services/route-optimizer/optimize';
@@ -359,6 +359,10 @@ export interface UnderstoodField {
   why?: string;
 }
 
+/** For the he_said month quote when the month arrives as a FIELD (a pressed chip). */
+const MONTH_WORDS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+  'August', 'September', 'October', 'November', 'December'] as const;
+
 export class PublicPlannerController {
   /** POST /planner/plan — anonymous, rate-limited, sanitized. */
   static async plan(req: Request, res: Response) {
@@ -403,6 +407,10 @@ export class PublicPlannerController {
       // sentence is an ASSUMPTION, not his word — and it must be labelled as one.
       const paxFromField = Number.isFinite(Number(body.pax));
       const monthFromField = Number.isInteger(body.month) && body.month >= 1 && body.month <= 12;
+      // SPRINT B — the origin box and the nights stepper answer our questions with FIELDS.
+      const startFromField = typeof body.start === 'string' && !!body.start.trim();
+      const nightsFromField = Number.isInteger(body.nights) && body.nights >= 1 && body.nights <= 60
+        ? Number(body.nights) : null;
       let paxFromText = false, monthFromText = false;
 
       // Free-text ask → candidate structure + the traveller's INTENT (validated below).
@@ -467,6 +475,33 @@ export class PublicPlannerController {
           }
           if (!['standard', 'family', 'senior'].includes(body.profile) && parsed.profile) profile = parsed.profile;
           if (month === undefined && parsed.month) { month = parsed.month; monthFromText = true; }
+        }
+      }
+
+      // ---- SPRINT B — AN ANSWER TYPED INTO THE BOX IS HIS WORD --------------------------
+      //
+      // The origin box and the nights stepper (FRONTEND-ADAPTATION-SPEC §1) answer our
+      // counter-questions with FIELDS. The intent was compiled from his TEXT alone, so a
+      // man who answered "Lucknow" was shown `origin — we need it` and asked for his city
+      // AGAIN while the plan quietly began at Lucknow (live payload, 2026-07-14) — one
+      // screen arguing with itself, the US-845c bug wearing its field-shaped hat. Worse:
+      // an answered nights could never bind the days gate, because the gate rightly
+      // trusts only a number HE gave — and he GAVE this one, in the box we drew for him.
+      // An answer to our own question is his word. Patch it into the intent as he_said,
+      // quoting what he typed. Fields merge OVER text — the standing doctrine.
+      if (intent && (startFromField || nightsFromField || monthFromField)) {
+        if (startFromField && start) {
+          const v = await verifyCity(start.trim());
+          if (v.ok && v.name) {
+            start = v.name;
+            intent = { ...intent, origin: heSaid(v.name, String(body.start).trim()) };
+          }
+        }
+        if (nightsFromField) {
+          intent = { ...intent, nights: heSaid(nightsFromField, `${nightsFromField} nights`) };
+        }
+        if (monthFromField && month) {
+          intent = { ...intent, month: heSaid(month, MONTH_WORDS[month - 1]) };
         }
       }
 
