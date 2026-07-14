@@ -14,6 +14,7 @@ import { weightsForObjective, type LegCtx } from '@/services/route-optimizer/ddc
 import { applyTPP } from '@/services/route-optimizer/tpp';
 import type { OrdealParty } from '@/services/route-optimizer/ordeal';
 import { anchorValueFromCounts, type AnchorCandidate } from '@/services/route-optimizer/anchors';
+import { roadKmIsImpossible } from '@/services/route-optimizer/truth';
 import { repeatedCities } from '@/services/route-optimizer/sequence';
 import { toPlannerPayload } from '@/services/route-optimizer/plannerPayload';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
@@ -222,12 +223,32 @@ export class RouteOptimizerController {
             osrmCached(nodes[i].coord, nodes[j].coord, nodes[i].name, nodes[j].name),
             multimodalOptions(nodes[i], nodes[j], { pax }),  // concurrent rail + air
           ]);
-          const km = r?.km ?? Math.round(haversineKm(nodes[i].coord, nodes[j].coord) * 1.3);
-          const min = r?.min ?? Math.round((km / 45) * 60);
+          // ⚠️ IRON LAW L1 — GEOGRAPHY CANNOT BE ARGUED WITH. (truth.ts, 14 Jul 2026)
+          //
+          // The geography gate already existed -- in roadTerrainDb, guarding the terrain CACHE.
+          // So it caught the stale Rameswaram row and NEVER SAW the 1,878 km "road" from Jaipur
+          // to Udaipur, because that number came in through THIS door: the router. A gate that
+          // guards one entrance while another stands open is not a gate. It is a decoration.
+          //
+          // Jaipur to Udaipur is about 400 km as the crow flies. The router handed back 1,878 --
+          // 5.3× the straight line -- and the engine stamped it `osrm`, which is precisely what
+          // it has been taught to trust without question. We shipped it to a traveller.
+          //
+          // NOW: if the router's number cannot be the road between these two points, WE DO NOT
+          // USE THE ROUTER'S NUMBER. We fall back to the honest model (crow-fly x 1.3) and we
+          // LABEL IT as a model, never as a measurement. An honest estimate beats a confident lie.
+          const routed = r?.km ?? null;
+          const impossible = routed != null ? roadKmIsImpossible(routed, nodes[i].coord, nodes[j].coord) : null;
+          if (impossible) {
+            console.error(`[IRON LAW L1] ${nodes[i].name} -> ${nodes[j].name}: ${impossible}. Router number DISCARDED.`);
+          }
+          const useRouted = routed != null && !impossible;
+          const km = useRouted ? routed : Math.round(haversineKm(nodes[i].coord, nodes[j].coord) * 1.3);
+          const min = useRouted && r?.min != null ? r.min : Math.round((km / 45) * 60);
           const roadOpt: LegOption = {
             from: nodes[i].name, to: nodes[j].name, mode: 'ROAD',
             distanceKm: km, durationMin: min, operatingDays: 127, reliability: 4,
-            source: r ? 'osrm' : 'haversine', verifiedAt: new Date().toISOString(),
+            source: useRouted ? 'osrm' : 'haversine', verifiedAt: new Date().toISOString(),
           };
           // ---- US-803d: THE ROAD THE TRAVELLER WILL ACTUALLY DRIVE -------------------------
           //
@@ -291,6 +312,12 @@ export class RouteOptimizerController {
       // desk and the public planner get them. Absent-safe: {} means the engine keeps its
       // existing safe default, and the plan is no worse than yesterday's.
       const elevations = await loadElevations(nodes.map((n) => n.name));
+      // ⚠️ IRON LAW L2 — the height goes ONTO THE NODE, so the airport catchment can be measured
+      // in HOURS instead of in a straight line across a mountain range. (truth.ts, 14 Jul 2026)
+      for (const n of nodes) {
+        const m = elevations[n.name] ?? elevations[n.name.toLowerCase()];
+        if (m != null && Number.isFinite(Number(m))) n.elevationM = Number(m);
+      }
 
       // ---- Stage C–F: run the engine ----------------------------------------
       const input: OptimizeInput = {

@@ -13,6 +13,8 @@
 import prisma from '@/config/db';
 import type { CityNode, LegOption } from './types';
 import { haversineKm } from './geo';
+import { terrainSpeedKmh } from './physiology';
+import { AIRPORT_TRANSFER_MAX_HRS } from './truth';
 import { fmtMin } from './constraints';
 import { railJunctionOptions } from './railGraph';
 import { railRoadHybridOptions } from './fallback';
@@ -112,16 +114,46 @@ export async function airOptions(a: CityNode, b: CityNode, _ctx: FindCtx): Promi
     const opts: LegOption[] = [];
 
     for (const r of rows) {
-      // THE TRUE TEST, not the box. Would he actually drive this far to the plane?
+      // ⚠️ IRON LAW L2 — A FLIGHT NEEDS AN AIRPORT, AND THE DRIVE TO IT IS MEASURED IN HOURS.
+      //
+      // THE BUG, shipped to a real-looking traveller on 14 July 2026:
+      //     "flight Jaipur → YAMUNOTRI"      Yamunotri is a Himalayan trek town. IT HAS NO AIRPORT.
+      //     "flight Chennai → CHERRAPUNJI"   Nor does Cherrapunji.
+      //
+      // The catchment test was a STRAIGHT LINE — 160 km, priced at a flat 45 km/h. In Rajasthan
+      // that is roughly true. In the Himalaya it is a fantasy: Dehradun is about 100 km from
+      // Yamunotri as the crow flies and the best part of a DAY away up a mountain road. So the
+      // engine sold a 68-year-old couple a flight to a village with no runway, and the number it
+      // used to justify it was a straight line drawn across the Garhwal Himalaya.
+      //
+      // THE FOUNDER'S OWN LAW, FROM THE RING: MEASURE IT IN HOURS. Then it shrinks by itself in
+      // the mountains and holds its value on the plains, and nobody has to remember to think.
+      // The speed comes from terrainSpeedKmh(), the same founder-locked model the body gates use.
+      //
+      // A TRANSFER THAT EATS A DAY IS NOT AN AIRPORT TRANSFER. It is a road day wearing a
+      // boarding pass, and the traveller is entitled to know which one he is buying.
       const fromKm = haversineKm(a.coord, [Number(r.o_lat), Number(r.o_lng)]) * 1.25;
       const toKm   = haversineKm([Number(r.d_lat), Number(r.d_lng)], b.coord) * 1.25;
+
+      // The terrain each transfer actually crosses. An airport in the hills is not an airport
+      // next door. Where we have no elevation we assume a normal highway — never a better one.
+      const aHigh = (a.elevationM ?? 0) > 1200 || (b.elevationM ?? 0) > 1200;
+      const accessKmh = terrainSpeedKmh(aHigh ? 2 : 4, null);   // ghat/hill = 30 km/h; NH = 55
+      const fromHrs = fromKm / accessKmh;
+      const toHrs   = toKm / accessKmh;
+      if (fromHrs > AIRPORT_TRANSFER_MAX_HRS || toHrs > AIRPORT_TRANSFER_MAX_HRS) {
+        // NOT a flight to this town. Not by any honest reading of the map.
+        continue;
+      }
       if (fromKm > AIRPORT_REACH_KM || toKm > AIRPORT_REACH_KM) continue;
 
       const key = `${r.flight_no}|${r.dep_min}`;
       if (seen.has(key)) continue; seen.add(key);
 
-      const fromMin = Math.round((fromKm / ACCESS_ROAD_KMH) * 60);
-      const toMin   = Math.round((toKm   / ACCESS_ROAD_KMH) * 60);
+      // ...and the transfer is CHARGED at the honest speed too, not at a flat 45 km/h. A clock
+      // the engine trusts must not be a clock we flattered.
+      const fromMin = Math.round(fromHrs * 60);
+      const toMin   = Math.round(toHrs * 60);
       const sameCityFrom = fromKm < 25, sameCityTo = toKm < 25;
 
       opts.push({

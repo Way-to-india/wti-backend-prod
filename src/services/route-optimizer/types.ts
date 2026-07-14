@@ -36,6 +36,11 @@ export interface CityNode {
   profile?: CityProfile;
   /** true when we had to fall back to a road-only node (no profile row). */
   degraded?: boolean;
+  /** ⚠️ IRON LAW L2 — metres above sea level. An airport 100 km from Yamunotri AS THE CROW FLIES
+   *  is the best part of a day away UP A MOUNTAIN. Without this, the airport catchment is a
+   *  straight line drawn across the Garhwal Himalaya, and that is how we came to sell a
+   *  68-year-old couple a "flight to Yamunotri" — a village with no runway. */
+  elevationM?: number | null;
 }
 
 export interface CityProfile {
