@@ -42,6 +42,7 @@ import { ddcv, ddcvScalar, indicativeFarePp, type DDCV, type LegCtx, type Weight
 import { ordeal, ceilingBreach, BAND_EPS, type Ordeal, type OrdealParty } from './ordeal';
 import { sayRejection, spokenDuration, type RejectionCause } from './explain';
 import type { PlanContract } from './intent';
+import { groundChainBlock } from './chain';
 
 export interface ConsultantCandidate {
   opt: LegOption;
@@ -78,6 +79,10 @@ export interface ConsultantChoice {
   rejected: RejectedOption[];
   /** every candidate was refused by a gate, a ceiling, or his own word. */
   infeasible: boolean;
+  /** US-827 — every option was blocked, and the graph still has to be connected. THE LEAST
+   *  ORDEAL, never the least fare. If every road hurts we take the one that hurts least, and
+   *  we say so. Law 3: a marginal saving may never buy a traveller's discomfort. */
+  leastBad: LegOption | null;
   /** his refusal, and nothing else, emptied this leg → the consultant must SPEAK (US-607). */
   refusedAll: boolean;
 }
@@ -169,6 +174,27 @@ export function consultantChoose(cands: ConsultantCandidate[], opts: ConsultantO
       continue;
     }
 
+    // ---- LEVEL 0b — US-827: THE GROUND CHAIN GATE. STRUCTURAL, NOT A WEIGHT. -------
+    //
+    // Two towns more than one comfortable day apart BY GROUND cannot be chained by ground.
+    // The 20-hour overnight from Tirupati to Kanyakumari is not offered, and cannot be
+    // outvoted, because it never reaches the sort.
+    //
+    // AN OVERNIGHT IS HONEST ONLY WHEN IT IS MOSTLY NIGHT. The berth buys him the NIGHT; it
+    // does not buy him the DAY. So the hours he spends AWAKE in the vehicle must still fit
+    // inside one comfortable day for his body — and a 20-hour train is a night AND a full
+    // waking day, whatever the rolling stock. LAW 2: THE DIAL IS THE ORDEAL.
+    //
+    // A real 12-hour overnight (20:00 -> 08:00) is 4 waking hours and passes cleanly. We are
+    // not banning the Indian overnight train. We are banning the pretence that a day on one
+    // is a night's sleep.
+    const gcb = groundChainBlock(o, party, Number.isFinite(v.T) ? v.T : null);
+    if (gcb.blocked) {
+      const cause: RejectionCause = { kind: 'body', reasons: [gcb.reason], alsoBeyondHisCeiling: false };
+      rejected.push({ opt: o, cause, reason: sayRejection(o, cause, d2dMin), ordeal: ord.total });
+      continue;
+    }
+
     // ---- LEVEL 2 — THE ORDEAL. His ceilings: "no long road journeys", given a number.
     const breach = ceilingBreach(o, ord.total, tighten);
     if (breach) {
@@ -231,10 +257,27 @@ export function consultantChoose(cands: ConsultantCandidate[], opts: ConsultantO
     });
   }
 
+  // ---- US-827 — WHEN NOTHING HONOURS HIS BRIEF, WE STILL MAY NOT SELL HIM THRIFT. ----------
+  //
+  // The solve has to connect the graph even when every option on a leg is blocked. Until now it
+  // fell back to `ranked[0]` OF THE RAW DDCV ORDER -- the money-weighted scalar -- which is the
+  // exact ranking that put a luxury honeymooner on a nine-hour overnight train to save a hotel
+  // night. So the engine would BLOCK the 20-hour train, and then SHIP IT, because it was the
+  // cheapest of the blocked options.
+  //
+  // LAW 3: A MARGINAL SAVING MAY NEVER BUY A TRAVELLER'S DISCOMFORT. NOT BY A RUPEE. NOT EVER.
+  // If every road hurts, we take the one that hurts LEAST -- by the ORDEAL, which is the thing
+  // that hurts -- and we say out loud that we had to (Law 4). We do not quietly pick the cheap
+  // one and call it a plan.
+  const leastBad = rejected.length
+    ? rejected.slice().sort((a, b) => a.ordeal - b.ordeal)[0].opt
+    : null;
+
   return {
     winner,
     ranked,
     rejected,
+    leastBad,
     infeasible: ranked.length === 0,
     // His word, and nothing else, emptied this leg. That is not a licence to overrule him
     // in silence: it is the moment the consultant is supposed to speak (Law 4, US-607).

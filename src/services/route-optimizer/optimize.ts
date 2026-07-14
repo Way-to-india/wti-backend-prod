@@ -340,8 +340,21 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
         order = [...won, ...alsoRan];
       } else {
         // NOTHING here honours his brief. We still have to connect the graph — but we do NOT
-        // do it in silence. The least-bad option is used, and the paragraph is written.
+        // do it in silence, AND WE DO NOT DO IT BY PRICE.
+        //
+        // US-827. This branch used to leave `order` as the raw DDCV ranking — the money-weighted
+        // scalar — so on the Tirupati → Kanyakumari leg the engine BLOCKED the 20-hour overnight
+        // train for a luxury traveller and then SHIPPED IT ANYWAY, because among the blocked
+        // options it was the cheapest. It blocked the thing and sold it to him in the same breath.
+        //
+        // LAW 3: A MARGINAL SAVING MAY NEVER BUY A TRAVELLER'S DISCOMFORT. If every road hurts,
+        // we take the one that HURTS LEAST — measured by the ordeal, which is the thing that
+        // hurts — and the consultant's paragraph says we had to (Law 4).
         breached = true;
+        if (court.leastBad) {
+          const rest = ranked.filter((o) => o !== court.leastBad);
+          order = [court.leastBad, ...rest];
+        }
       }
     }
 
