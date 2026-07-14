@@ -457,6 +457,30 @@ export function intentFromRaw(raw: RawIntent | null | undefined, text: string): 
   return { purpose, comfortTier, budgetStance, modeStances, interests, mainChips, alsoHappyToSee, pace, party, nights, month, origin, destinations };
 }
 
+/** US-833 — his PURPOSE, spoken in the eight-chip vocabulary the index uses.
+ *
+ *  The chips he pressed are his word and come first. Where he typed prose instead, we map the
+ *  purpose the parser found — and ONLY the purposes that have an honest chip. `leisure`,
+ *  `family_holiday`, `wellness` and `business` map to NOTHING, deliberately: there is no chip
+ *  for them, and inventing one so the code has something to work with is exactly the class of
+ *  lie this whole file exists to prevent. An empty list means we do not know, and the halt is
+ *  then chosen on merit alone. AN HONEST EMPTY BEATS AN INVENTED CHIP. */
+const PURPOSE_CHIP: Partial<Record<Purpose, Chip>> = {
+  pilgrimage: 'Pilgrimage',
+  honeymoon: 'Honeymoon & Romance',
+  heritage: 'Heritage & Forts',
+  wildlife: 'Wildlife & Nature',
+  adventure: 'Trekking & Adventure',
+};
+
+export function chipsOf(intent: TravellerIntent): string[] {
+  const out = new Set<string>();
+  for (const c of intent.mainChips) if (c.value) out.add(c.value);
+  const p = intent.purpose.value;
+  if (p && PURPOSE_CHIP[p]) out.add(PURPOSE_CHIP[p] as string);
+  return [...out];
+}
+
 /** The gateway step's one legal way to fill an origin we had to work out ourselves. */
 export function withInferredOrigin(intent: TravellerIntent, city: string, basis: string): TravellerIntent {
   if (intent.origin.provenance === 'he_said') return intent;
@@ -696,6 +720,10 @@ export interface PlanContract {
    *  ordeal band — inside which comfort is equal by construction. So a saving can never
    *  buy discomfort. Not by a rupee. Not ever. */
   moneyRule: 'normal' | 'tiebreak_only';
+  /** US-833 — THE REASON HE TRAVELS, in the vocabulary the index speaks. Only these chips may
+   *  pull the chain, and only these may justify a halt. Empty = he told us nothing, and we
+   *  choose a halt on merit alone rather than pretending to know what he wanted. */
+  chips: string[];
   /** what money MEANS to him — the ordeal function needs it, because the same berth is a
    *  bargain to one mind and an ordeal to another. */
   budgetStance: BudgetStance | null;
@@ -820,6 +848,7 @@ export function compileContract(intent: TravellerIntent): PlanContract {
     // luxury setting would have made the engine love the overnight train MORE (F4).
     rewardSwitches: { hotelNightSaving: !comfortFirst },
     moneyRule: comfortFirst ? 'tiebreak_only' : 'normal',
+    chips: chipsOf(intent),
     budgetStance: intent.budgetStance.value ?? (comfortFirst ? 'comfort_first' : null),
     tpp,
     voice: {

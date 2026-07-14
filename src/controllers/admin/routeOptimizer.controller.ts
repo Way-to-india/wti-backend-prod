@@ -13,7 +13,7 @@ import { toleranceForProfile } from '@/services/route-optimizer/physiology';
 import { weightsForObjective, type LegCtx } from '@/services/route-optimizer/ddcv';
 import { applyTPP } from '@/services/route-optimizer/tpp';
 import type { OrdealParty } from '@/services/route-optimizer/ordeal';
-import type { AnchorCandidate } from '@/services/route-optimizer/anchors';
+import { anchorValueFromCounts, type AnchorCandidate } from '@/services/route-optimizer/anchors';
 import { repeatedCities } from '@/services/route-optimizer/sequence';
 import { toPlannerPayload } from '@/services/route-optimizer/plannerPayload';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
@@ -318,7 +318,7 @@ export class RouteOptimizerController {
       };
       // §4.4 curated en-route anchors per leg (both directions) so pearl-split
       // reasoning fires on over-cap road legs. One query; absent-safe.
-      const anchorsByLeg = await RouteOptimizerController.loadAnchorsByLeg(nodes);
+      const anchorsByLeg = await RouteOptimizerController.loadAnchorsByLeg(nodes, body.contract?.chips ?? []);
       const result = optimize(input, { nodes, pool, anchorsByLeg });
 
       // ---- Stage E+: opt-in halt suggestions, road corridors (A/B), comparison
@@ -398,7 +398,7 @@ export class RouteOptimizerController {
    * en_route_anchors table (the authoritative source); lean for the 2 GB box and
    * fully absent-safe (returns an empty map on any error).
    */
-  static async loadAnchorsByLeg(nodes: CityNode[]): Promise<Map<string, AnchorCandidate[]>> {
+  static async loadAnchorsByLeg(nodes: CityNode[], chips: string[] = []): Promise<Map<string, AnchorCandidate[]>> {
     const byLeg = new Map<string, AnchorCandidate[]>();
     if (nodes.length < 2) return byLeg;
     const names = nodes.map((n) => n.name);
