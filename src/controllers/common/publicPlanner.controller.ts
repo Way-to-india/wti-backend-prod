@@ -38,6 +38,13 @@ import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
 import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
+import { mergeDuplicateCities } from '@/services/route-optimizer/optimize';
+import { poolForChips, scopedDesignerMemory, originFactsFor, flightSectorExists, flightOneStopExists, nearestAirportTo } from '@/services/route-optimizer/themePool';
+import { gateProposals, buildShape, type EntryFact, type GateFacts } from '@/services/route-optimizer/proposalGates';
+import { loadSeasonFacts, loadAccessFacts } from '@/services/route-optimizer/placeFactsDb';
+import { loadElevations } from '@/services/route-optimizer/spineDb';
+import { haversineKm } from '@/services/route-optimizer/geo';
+import type { DesignerMemory } from '@/services/route-optimizer/designerMemory';
 
 // ---- per-IP rate limit (in-memory; nginx sits in front, single process) ----
 const HOUR = 60 * 60 * 1000;
@@ -133,6 +140,32 @@ function briefFrom(intent: TravellerIntent | null, request: string): DesignerBri
 }
 
 /**
+ * US-840 — the one personal sentence on each offer card. Easy English, second person,
+ * built ONLY from things he actually gave us — a chip he pressed (or a purpose he wrote)
+ * and a mode he preferred. Nothing here may assert a preference he never expressed.
+ */
+function whyForYou(chips: string[], intent: TravellerIntent | null): string {
+  const parts: string[] = [];
+  const CHIP_WHY: Record<string, string> = {
+    'Pilgrimage': 'Temple towns, because you asked for a pilgrimage',
+    'Beaches': 'Beach towns, because you asked for the sea',
+    'Honeymoon & Romance': 'Quiet, romantic places, because this trip is for the two of you',
+    'Culture & Festivals': 'Towns with living culture, because that is what you asked for',
+    'Heritage & Forts': 'Forts and heritage towns, because that is what you asked for',
+    'Hill Stations & Mountains': 'Hill towns, because you asked for the mountains',
+    'Trekking & Adventure': 'Places built for adventure, because you asked for it',
+    'Wildlife & Nature': 'Parks and wild country, because you asked for wildlife',
+  };
+  for (const c of chips) if (CHIP_WHY[c]) { parts.push(CHIP_WHY[c]); break; }
+  const prefersAir = (intent?.modeStances ?? []).some((s) => s.mode === 'AIR' && s.stance === 'prefer');
+  const prefersRail = (intent?.modeStances ?? []).some((s) => s.mode === 'RAIL' && s.stance === 'prefer');
+  if (prefersAir) parts.push('and we will fly you wherever it truly helps, as you asked');
+  else if (prefersRail) parts.push('and we will use trains wherever they serve you well, as you asked');
+  if (!parts.length) return 'Chosen from journeys our own designers have built and sold.';
+  return parts.join(', ') + '.';
+}
+
+/**
  * US-805 -- THE DESIGNER, WIRED.
  *
  * US-800b stopped the region being a dead end, but it handed him a LIST: eight states and
@@ -144,9 +177,12 @@ function briefFrom(intent: TravellerIntent | null, request: string): DesignerBri
  */
 async function proposeForRegion(
   nodes: StayNode[], intent: TravellerIntent | null, request: string,
+  injectedMemory?: DesignerMemory,
 ): Promise<Proposal[]> {
   if (!nodes.length) return [];
-  const memory = await loadDesignerMemory();
+  // US-840 — the memory may be THEME-SCOPED (see themePool.scopedDesignerMemory: the
+  // unscoped memory sells the Golden Triangle as a pilgrimage). Absent = old behaviour.
+  const memory = injectedMemory ?? await loadDesignerMemory();
 
   // THE BORDER NEIGHBOUR (founder ruling). Our designers build Gangtok with Darjeeling, and
   // Darjeeling is West Bengal. A strict region filter would drop the very town our own
@@ -412,6 +448,13 @@ export class PublicPlannerController {
         }
       }
 
+      // ---- US-839 (input class) — A CITY NAMED TWICE IS ONE CITY -----------------------
+      // T5 listed Delhi twice; the engine built two nodes with one name, the matrix and the
+      // nights map tripped over each other, and an EMPTY plan shipped with easeScore 94.
+      // A repeated name is merged and its nights are summed — the traveller asked for more
+      // time there, not for the town to exist twice.
+      cities = mergeDuplicateCities(cities);
+
       // ---- the starting city (founder ruling 2026-07-11) --------------------
       // He may have TYPED it ("from Mumbai"). Claude already pulls it out; until now
       // we threw it away. Keep it, verify it like any other place, and make it a real
@@ -475,17 +518,50 @@ export class PublicPlannerController {
       // keeps the shipped golden-honeymoon plan byte for byte as it is.
       const regionMatch: RegionMatch | null = resolveRegion(request);
 
-      if (cities.length < 1 && regionIsUsable(regionMatch, cities.length)) {
-        const m = regionMatch as RegionMatch;
-        // THE TOWNS ARE REAL OR THERE ARE NONE. Every one of these is a StayNode we have
-        // either SOLD or WRITTEN ABOUT, read from the spine, with its state named and its
-        // tier declared. NOT ONE IS PROPOSED BY A MODEL. If the spine is empty for a
-        // region, we say we have nothing there -- we do not fill the silence.
+      // ---- US-840 — A THEME WITH NO TOWN NAMED MUST STILL GET A TRIP -------------------
+      //
+      // THE BAR ITSELF GOT A 400. The founder's definition-of-done traveller — "a
+      // comfortable pilgrimage… we would prefer flights… up to 8 days… luxury hotels" —
+      // named a THEME, and the proposal machine fired only on a REGION word. The 504-row
+      // founder-ticked theme index was queried by nothing. This is the wire: his chips
+      // (pressed, or honestly mapped from his stated purpose — chipsOf) open the same
+      // shortlist the region branch already knows how to serve. Law 1 stands untouched:
+      // a named, resolvable city always wins, and this branch never sees it.
+      const chips = intent ? chipsOf(intent) : [];
+
+      if (cities.length < 1 && (regionIsUsable(regionMatch, cities.length) || chips.length > 0)) {
+        const m: RegionMatch | null = regionMatch;
+
+        // FOUNDER, 13 July 2026: "once we know where he wants to START his journey and the
+        // THEME of his journey — other things start becoming clear." The gates (days from
+        // his door, honest reachability) cannot run without the origin, so the origin
+        // question comes FIRST. We do not propose blind and re-propose later — that is two
+        // different answers from one consultant.
+        if (!startWasStated || !start) {
+          const q0 = intent ? counterQuestions(intent) : [];
+          return res.status(200).json({
+            status: false,
+            need: 'origin',
+            echo: intent ? buildEcho(intent) : [],
+            questions: q0.length ? q0 : [{
+              key: 'origin',
+              risk: 1,
+              text: 'Where does your journey start from? Tell us your city and we will plan from your door, not from somebody else\'s.',
+            }],
+            message: 'Before we suggest anywhere, tell us the city you are starting from. It decides which of these journeys your days can actually reach.',
+          });
+        }
+
+        // THE TOWNS ARE REAL OR THERE ARE NONE. Every one is a StayNode we have SOLD or
+        // WRITTEN ABOUT — the theme pool reads the founder-ticked intent_place index, the
+        // region pool reads the spine. NOT ONE IS PROPOSED BY A MODEL. When he named BOTH
+        // a theme and a region, the theme pool is fenced to the region's states.
         let nodes: StayNode[] = [];
         try {
-          nodes = await stayNodesInStates(statesOf(m));
+          if (chips.length) nodes = await poolForChips(chips, m ? statesOf(m) : []);
+          if (!nodes.length && m) nodes = await stayNodesInStates(statesOf(m));
         } catch (e) {
-          console.error('stayNodesInStates failed (non-fatal):', e);
+          console.error('shortlist pool failed (non-fatal):', e);
         }
         // Strongest first: a town our designers have sold outranks one we have only visited.
         nodes.sort((a, b) => (b.tourCount - a.tourCount) || a.name.localeCompare(b.name));
@@ -507,28 +583,120 @@ export class PublicPlannerController {
         // EVERY REAL TRIP IN THE REGION, strongest first — not one and a footnote.
         // (Founder, 2026-07-13.) The North East is TWO trips: Guwahati/Kaziranga/Shillong in
         // through GHY, and Gangtok/Darjeeling in through New Jalpaiguri. He chooses.
+        //
+        // US-840: the memory is THEME-SCOPED where he gave a theme. Proven on production:
+        // the unscoped memory pairs Delhi–Jaipur 41 times among Pilgrimage-chip towns — the
+        // Golden Triangle wearing a tilak. tour_themes is the honest scope.
         let proposals: Proposal[] = [];
         try {
-          proposals = await proposeForRegion(nodes, intent, request);
+          const mem = chips.length ? (await scopedDesignerMemory(chips)).memory : undefined;
+          proposals = await proposeForRegion(nodes, intent, request, mem);
         } catch (e) {
           // He still gets the towns. A thinner answer, never a wrong one.
           console.error('designer failed (non-fatal):', e);
         }
-        const proposal: Proposal | null = proposals[0] ?? null;
+
+        // ---- US-840 — THE FOUR GATES: days, origin, season, body -----------------------
+        // A circuit is not offerable because it is popular; it is offerable because HE can
+        // do it. Every fact the gates read is loaded here and injected; the gates are pure.
+        let offered: ReturnType<typeof gateProposals>['offered'] = proposals.map((p) => ({
+          proposal: p, gates: { days: 'pass', origin: 'unknown', season: 'unknown', body: 'pass' }, gateNotes: [],
+        }));
+        let refusedProposals: { stops: string[]; gate: string; reason: string }[] = [];
+        const brief = briefFrom(intent, request);
+        try {
+          const nodeByName = new Map(nodes.map((n) => [n.name.trim().toLowerCase(), n] as const));
+          const stopNames = [...new Set(proposals.flatMap((p) => p.stops.map((s) => s.name)))];
+          const [seasons, access, elevations, origin] = await Promise.all([
+            loadSeasonFacts(stopNames), loadAccessFacts(stopNames),
+            loadElevations(stopNames), originFactsFor(start),
+          ]);
+          const coords = new Map(nodes.map((n) => [n.name.trim().toLowerCase(), [n.lat, n.lng] as [number, number]]));
+
+          // Entry facts: EXISTENCE-checked, honestly estimated, per proposal anchor.
+          const entry = new Map<string, EntryFact | null>();
+          for (const p of proposals) {
+            const anchor = p.stops[0]?.name;
+            if (!anchor) continue;
+            const key = anchor.trim().toLowerCase();
+            const node = nodeByName.get(key);
+            if (!node || !origin) { entry.set(key, null); continue; }
+            const crow = haversineKm(origin.coord, [node.lat, node.lng]);
+            let fact: EntryFact | null = null;
+            const anchorAirport = origin.nearestAirport ? await nearestAirportTo([node.lat, node.lng]) : null;
+            if (origin.nearestAirport && anchorAirport) {
+              if (await flightSectorExists(origin.nearestAirport.city, anchorAirport.city)) {
+                fact = { hours: 4.5 + anchorAirport.km / 60, how: 'AIR',
+                  basis: `a scheduled ${origin.nearestAirport.city} → ${anchorAirport.city} flight exists` };
+              } else if (await flightOneStopExists(origin.nearestAirport.city, anchorAirport.city)) {
+                fact = { hours: 7.5 + anchorAirport.km / 60, how: 'AIR',
+                  basis: `${origin.nearestAirport.city} → ${anchorAirport.city} is flyable with one change of plane` };
+              }
+            }
+            if (!fact) {
+              fact = { hours: (crow * 1.3) / 55, how: 'ROAD',
+                basis: 'estimated by road until we can prove a better way' };
+            }
+            entry.set(key, fact);
+          }
+
+          const facts: GateFacts = {
+            nightsCeiling: brief.nights,
+            month: month ?? null,
+            profile: (['standard', 'family', 'senior'].includes(profile) ? profile : 'standard') as GateFacts['profile'],
+            coords, elevations, seasons, access, entry,
+            originName: start,
+          };
+          const gated = gateProposals(proposals, facts);
+          offered = gated.offered;
+          refusedProposals = gated.refused.map((r) => ({
+            stops: r.proposal.stops.map((s) => s.name), gate: r.gate, reason: r.reason,
+          }));
+
+          // The shape and the personal sentence ride on each offer.
+          for (const g of offered as (typeof offered[number] & { shape?: unknown; whyForYou?: string })[]) {
+            const anchorKey = g.proposal.stops[0]?.name.trim().toLowerCase() ?? '';
+            (g as any).shape = buildShape(entry.get(anchorKey) ?? null, g.proposal.gateway);
+            (g as any).whyForYou = whyForYou(chips, intent);
+          }
+        } catch (e) {
+          console.error('proposal gates failed (non-fatal — ungated proposals still shown):', e);
+        }
+
+        // Flatten for the page: each offer is the Proposal the frontend already renders,
+        // plus its gates, notes, shape and the personal sentence.
+        const shaped = (offered as (typeof offered[number] & { shape?: unknown; whyForYou?: string })[])
+          .map((g) => ({ ...g.proposal, gates: g.gates, gateNotes: g.gateNotes, shape: (g as any).shape ?? null, whyForYou: (g as any).whyForYou ?? null }));
+        const proposal = (shaped[0] as Proposal | undefined) ?? null;
+        const shapedProposals = shaped as unknown as Proposal[];
         const stopWords = proposal
           ? proposal.stops.map((s) => s.name).reduce((acc, n, i, a) =>
               i === 0 ? n : i === a.length - 1 ? `${acc} and ${n}` : `${acc}, ${n}`, '')
           : '';
 
+        // What we may quote back: his region words, or his stated purpose. NEVER a phrase
+        // he did not write — where he pressed chips instead, we name the chips as ours.
+        const youSaid = m?.quote
+          ?? (intent?.purpose.provenance === 'he_said' && intent.purpose.quote ? intent.purpose.quote : null);
+        // THE MODE SENTENCE WAS A HARDCODED LIE-IN-WAITING: it always said "With trains
+        // rather than flights" — written for the North-East rail traveller and shown to
+        // everyone, including the man who asked to FLY. His brief decides the sentence now.
+        const prefersAir = (intent?.modeStances ?? []).some((s) => s.mode === 'AIR' && s.stance === 'prefer');
+        const modeWord = brief.railPreferred ? 'With trains rather than flights, '
+          : prefersAir ? 'Flying wherever it truly helps, ' : '';
+
         return res.status(200).json({
           status: false,          // not a plan yet — a question, and a real one
           need: 'destinations',
-          region: {
+          region: m ? {
             key: m.region.key,
             label: m.region.label,
             quote: m.quote,               // HIS words. We may only say "you said" if he did.
             states: stateNamesOf(m),      // never a code. He is a person, not a database.
-          },
+          } : null,
+          // US-840 — the theme block: which chips opened this shortlist, and his own words
+          // for the reason he travels, when he gave us words.
+          theme: chips.length ? { chips, quote: youSaid } : null,
           towns,
           // US-811 — THE CHIPS. He is entitled to see what we heard, BEFORE we build on it,
           // and each chip must say whether HE said it, WE guessed it, or we still need it.
@@ -537,10 +705,16 @@ export class PublicPlannerController {
           echo: intent ? buildEcho(intent) : [],
           questions: intent ? counterQuestions(intent) : [],
           // THE PROPOSALS. Every stop carries its state, its tier, its night count and the
-          // grade of the evidence behind it. Every rejection carries a HUMAN reason.
+          // grade of the evidence behind it. Every rejection carries a HUMAN reason. Each
+          // offer now also carries its GATE verdicts, its transport SHAPE (existence facts
+          // only, declared provisional) and the personal sentence.
           // `proposal` is proposals[0] and is kept so nothing downstream breaks.
           proposal,
-          proposals,
+          proposals: shapedProposals,
+          // US-840 — circuits we found and REFUSED, each with the gate that killed it and
+          // the human reason. A consultant who found three answers and hid one is not being
+          // straight; one who explains why December rules out the Char Dham is.
+          refusedProposals,
           // THE OPENING SENTENCE, AND NOTHING ELSE.
           //
           // It used to carry the food paragraph, the shortfall AND the signal voice inline —
@@ -551,21 +725,27 @@ export class PublicPlannerController {
           // Each part now lives where it belongs: signalVoice under its own trip card, the
           // food warning in the food box, the shortfall in the shortfall box.
           message: proposal
-            ? `You said ${m.quote}, and I have kept everything else you told me too. `
-              + `With trains rather than flights, I would give you ${stopWords} — `
+            ? `${youSaid ? `You said ${youSaid}, and I have kept everything else you told me too. ` : ''}`
+              + `${modeWord}I would give you ${stopWords} — `
               + `${proposal.totalNights} nights of stay, well inside the `
-              + `${briefFrom(intent, request).nights} you allowed, and the journey either side.`
-              + (proposals.length > 1
+              + `${brief.nights} you allowed, and the journey either side.`
+              + (shapedProposals.length > 1
                   ? ` And this is not the only way to do it. I have laid out `
-                    + `${proposals.length} real circuits our designers have built. Look at them `
+                    + `${shapedProposals.length} real journeys. Look at them `
                     + 'side by side and tell me which one is yours.'
                   : '')
+              + (refusedProposals.length
+                  ? ` There ${refusedProposals.length === 1 ? 'is one journey' : 'are journeys'} I looked at and ruled out for you — the reasons are below, in plain words.`
+                  : '')
+            : refusedProposals.length
+            ? 'I found real journeys for what you asked — and I have had to rule them out for you. '
+              + refusedProposals.map((r) => r.reason).join(' ')
             : towns.length
-            ? `${m.region.label} is ${stateNamesOf(m).length} states, and they are a long way `
-              + 'apart. These are the towns we know there — tell me which of them appeals to '
-              + 'you, or say "you choose", and I will build the rest of the trip around it.'
-            : `You said ${m.quote}, and I have kept that. But I do not yet have towns I can `
-              + 'stand behind in that region, and I will not invent them. Name one place you '
+            ? `${m ? m.region.label : 'That'} is a wide ask, and I would rather lead than hand you a menu. `
+              + 'These are the towns we know — tell me which of them appeals to you, or say '
+              + '"you choose", and I will build the rest of the trip around it.'
+            : `${youSaid ? `You said ${youSaid}, and I have kept that. ` : ''}But I do not yet have towns I can `
+              + 'stand behind for that, and I will not invent them. Name one place you '
               + 'have in mind and I will build the trip around it.',
         });
       }
@@ -745,6 +925,12 @@ export class PublicPlannerController {
         tpp: contract?.tpp,
         planner: true,
         enrich: 'fast',
+        // US-821c — the tier must reach the HOTEL dimension, not only the party. The
+        // enrichment layer already speaks 'standard'|'3'|'4'|'5'; his word picks which.
+        hotelTier: intent?.comfortTier.value === 'luxury' ? '5'
+                 : intent?.comfortTier.value === 'premium' ? '4'
+                 : intent?.comfortTier.value === 'budget' ? 'standard'
+                 : '3',
         request,
       };
 
@@ -805,11 +991,31 @@ export class PublicPlannerController {
             : month ? 'We read this from your message — tap to correct it'
             : 'Tell us the month and we will use the right trains and the right season',
         },
-        {
-          key: 'hotel', label: 'Hotels', value: '3 star',
-          source: 'we_guessed',
-          why: 'Our costs assume a 3 star hotel. The real cost varies with the hotel and category you choose.',
-        },
+        // ---- US-821c — HE SAID LUXURY AND WE STILL QUOTED HIM A 3-STAR -------------------
+        //
+        // This row was a CONSTANT. The echo panel beside it said `comfortTier = luxury
+        // (he_said)` while this said `hotel = 3 star (we_guessed)` — two panels
+        // contradicting each other ON THE SAME SCREEN. The tier reached the party and never
+        // the hotel dimension. His word decides this row now; only where he said nothing do
+        // we keep the old 3-star assumption, labelled as ours.
+        (() => {
+          const tier = intent?.comfortTier.value ?? null;
+          const heSaidTier = intent?.comfortTier.provenance === 'he_said';
+          const HOTEL_WORD: Record<string, string> = {
+            luxury: '5 star (luxury)', premium: '4 star (premium)',
+            standard: '3 star', budget: 'budget (2–3 star)',
+          };
+          return {
+            key: 'hotel' as const, label: 'Hotels',
+            value: tier ? HOTEL_WORD[tier] : '3 star',
+            source: (tier ? (heSaidTier ? 'you_said' : 'we_guessed') : 'we_guessed') as StartSource,
+            why: tier && heSaidTier
+              ? `You told us "${intent!.comfortTier.quote ?? tier}", and the plan is costed for that.`
+              : tier
+              ? 'We read this from your message — tap to correct it.'
+              : 'Our costs assume a 3 star hotel. The real cost varies with the hotel and category you choose.',
+          };
+        })(),
       ];
 
       // ---- US-609: WHAT WE UNDERSTOOD, AND WHAT WE STILL NEED TO ASK ----------

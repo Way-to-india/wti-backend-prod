@@ -1,6 +1,6 @@
 import prisma from '@/config/db';
 import type { Request, Response } from 'express';
-import { optimize, planFromSequence, estCostPp } from '@/services/route-optimizer/optimize';
+import { optimize, planFromSequence, estCostPp, mergeDuplicateCities } from '@/services/route-optimizer/optimize';
 import { haversineKm, osrmDriving, osrmRouteGeometry, osrmRouteAlternatives, pointAtKmAlong, fmtDuration, type RouteGeometry } from '@/services/route-optimizer/geo';
 import { multimodalOptions } from '@/services/route-optimizer/providers';
 import { freqLabel } from '@/services/route-optimizer/dayExpand';
@@ -108,7 +108,11 @@ export class RouteOptimizerController {
   static async optimize(req: Request, res: Response) {
     try {
       const body = req.body || {};
-      const cities: InputCity[] = Array.isArray(body.cities) ? body.cities : [];
+      // US-839 (input class) — a city named twice is ONE city; its nights are summed. Two
+      // nodes with one name corrupt the matrix and the nights map (T5: Delhi listed twice →
+      // an empty route shipped wearing easeScore 94). Merged at the single door, so the CRM
+      // desk and the public planner are both covered.
+      const cities: InputCity[] = mergeDuplicateCities(Array.isArray(body.cities) ? body.cities : []);
       if (cities.length < 2) return res.deliver(400, false, undefined, 'Provide at least 2 cities.');
 
       // ---- Stage A: resolve coordinates -------------------------------------
@@ -427,6 +431,23 @@ export class RouteOptimizerController {
       const truthCtx = { ...truthCtxFor(input, { nodes, pool }), request: typeof body.request === 'string' ? body.request : null };
       for (const p of result.plans) p.truthViolations = checkPlanTruth(p, truthCtx);
       result.plans = honestPlansOnly(result.plans);   // throws TruthViolationError if none survive
+
+      // ---- US-839 — AN EMPTY PLAN IS NEVER SHIPPED WITH A HAPPY SCORE -----------------
+      //
+      // T5 returned `ROUTE: (blank)`, `days: []`, `hotelNights: 0` — and easeScore 94,
+      // HTTP 200. scorePlan on zero legs is vacuous perfection: nothing was hard because
+      // nothing was there. A plan with nothing in it is not a plan; it is a refusal that
+      // forgot to say so. So it says so, here at the product exit, whatever door the
+      // emptiness came in by.
+      const first = result.plans[0];
+      if (first && nodes.length >= 2
+          && ((first.legs?.length ?? 0) === 0 || (first.days?.length ?? 0) === 0)) {
+        console.error('US-839 — hollow plan refused at the exit:',
+          JSON.stringify({ cities: names, sequence: first.sequence }));
+        return res.deliver(422, false, undefined,
+          'We could not build this trip properly, and we will not hand you an empty page dressed up as a plan. '
+          + 'Please check the places and days, or tell us a little more, and we will try again.');
+      }
 
       // ---- AI enrichment layer (cache-first; live fares each time) ----------
       // Attaches real fares, hotels, govt-recognised guides, city content and a

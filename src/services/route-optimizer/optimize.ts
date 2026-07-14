@@ -40,6 +40,30 @@ const legKey = (a: string, b: string) => `${a}||${b}`;
 const BIG = 1e7;
 
 /**
+ * US-839 (input class) — A CITY NAMED TWICE IS ONE CITY.
+ *
+ * T5 (Seniors, Char Dham) listed Delhi twice. The engine built two nodes with one name, the
+ * cost matrix and the nights map tripped over each other, and an EMPTY plan shipped with an
+ * easeScore of 94. A repeated name is merged and its nights are SUMMED — the traveller asked
+ * for more time in the town, not for the town to exist twice. The first occurrence keeps its
+ * coordinates (a custom stop's lat/lng is not thrown away).
+ *
+ * Exported and used by BOTH doors (admin/CRM and the public planner), because a gate that
+ * guards one entrance while another stands open is a decoration — we have built that twice.
+ */
+export function mergeDuplicateCities<T extends { name: string; nights?: number }>(cities: T[]): T[] {
+  const merged = new Map<string, T>();
+  for (const c of cities) {
+    const k = String(c.name || '').trim().toLowerCase();
+    if (!k) continue;
+    const hit = merged.get(k);
+    if (hit) hit.nights = (Number(hit.nights) || 0) + (Number(c.nights) || 0);
+    else merged.set(k, { ...c });
+  }
+  return [...merged.values()];
+}
+
+/**
  * The sentence for the moment we could not honour him. Three parts, as Law 4 requires: what we
  * looked for, what we found, and what we are therefore doing — plus an offer, because a
  * consultant who can only apologise is not much of a consultant.
@@ -467,6 +491,23 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
   for (const leg of exp.legs) {
     const key = legKey(leg.from, leg.to);
     if (!refusedLegs.has(key)) continue;
+
+    // ---- US-844 — WE APOLOGISED FOR GIVING HIM WHAT HE ASKED FOR ---------------------
+    //
+    // The forced-substitution paragraph fired whenever only one mode survived, WITHOUT EVER
+    // ASKING WHETHER THAT MODE WAS THE ONE HE ASKED FOR. A luxury honeymooner who wrote
+    // "no trains, no long road journeys" was told his flight was "harder than we would
+    // normally plan for you… if you would rather not take it, tell us". A FLIGHT IS EXACTLY
+    // WHAT HE WANTED. When the only survivor is a mode he PREFERS, the correct register is
+    // a plain confirmation, not an apology — and it is not a contract breach, because the
+    // contract is the thing being honoured.
+    if ((input.contract?.preferences?.preferModes ?? []).includes(leg.mode)) {
+      const w = leg.mode === 'AIR' ? 'fly' : leg.mode === 'RAIL' ? 'take the train' : 'travel by road';
+      const confirmation = `You asked to ${w} where we can manage it, and this leg does exactly that.`;
+      leg.note = leg.note ? leg.note : confirmation;
+      continue;
+    }
+
     const line = sayForcedSubstitution(leg.from, leg.to, leg.mode, leg.identifier ?? null, input.contract);
     leg.note = leg.note ? `${leg.note} ${line}` : line;
     (leg as PlanLeg & { contractBreach?: boolean }).contractBreach = true;
