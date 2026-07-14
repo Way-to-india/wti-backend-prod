@@ -13,7 +13,7 @@
  * plan is scored, and guardrails attach the verify list.
  */
 
-import type { CityNode, LegOption, OptimizeInput, OptimizeResult, Plan, PlanLeg, Objective, MapRoute, MapRouteLeg, Mode } from './types';
+import type { CityNode, LatLng, LegOption, OptimizeInput, OptimizeResult, Plan, PlanLeg, Objective, MapRoute, MapRouteLeg, Mode } from './types';
 import { rqiForLeg, type ElevationIndex } from './terrain';
 import type { PlanContract } from './intent';
 import { isTrueOvernight } from './constraints';
@@ -28,6 +28,7 @@ import { applyTPP } from './tpp';
 import { buildLegExplain, optionKey } from './explain';
 import { toleranceForProfile, type Tolerance } from './physiology';
 import { hybridAccessHours } from './fallback';
+import { checkPlanTruth, TruthViolationError, type TruthViolation, type TruthCtx } from './truth';
 import type { AnchorCandidate } from './anchors';
 import { runFatigueLedger, dayLoadsFromDays, projectComfort, rhythmHeadline } from './fatigue';
 import { consultantChoose } from './consultant';
@@ -490,7 +491,7 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
   if (exp.infeasible) warnings.unshift('Plan contains a hard-constraint violation (gate/daylight/permit) — a day was flagged infeasible and must be rerouted.');
   void nodeMap;
 
-  return {
+  const plan: Plan = {
     sequence: names,
     weekdayLock: lock,
     legs: exp.legs,
@@ -507,6 +508,42 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
     ...(contractNotes.length ? { contractNotes } : {}),
     phaseShift: phase ? { aligned: phase.aligned, shiftDays: phase.shiftDays, startWeekday: phase.startWeekday != null ? ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'][phase.startWeekday] : null, reason: phase.reason } : undefined,
   };
+
+  // ⚠️ US-835 — THE IRON LAW IS NOW INSTALLED, AND THIS IS THE DOOR.
+  //
+  // `truth.ts` was written on 14 July, committed with the words "a plan containing one
+  // unprovable fact IS NOT DELIVERED", and then CALLED FROM NOWHERE. `assertPlanTruth()` was
+  // dead code for a whole day. We wrote the law, hung it on the wall, and hired no policeman —
+  // so the very next sweep shipped a 460 km train across a 1,476 km gap, a plan with Delhi in
+  // it twice, and an empty itinerary carrying a 94/100 ease score.
+  //
+  // buildPlan() is the ONE function in this engine that constructs a Plan. Best, both
+  // alternates, every archetype card and planFromSequence() are all born here. So the gate goes
+  // HERE, and there is no second door to leave open. Every plan is now stamped with its own
+  // violations at birth; optimize() refuses to hand out a plan that carries any.
+  plan.truthViolations = checkPlanTruth(plan, truthCtxFor(input, deps));
+  return plan;
+}
+
+/**
+ * The Iron Law needs three things, and buildPlan already holds all three: the coordinate we
+ * ACTUALLY used for every stop (not the one we wish we had used), the set of towns that
+ * resolved, and whether the traveller asked to come home.
+ *
+ * L3 (a city must exist) and L5 (we may not quote a man who did not speak) cannot fire here and
+ * are not meant to: inside the engine every stop is a node BY CONSTRUCTION, and the engine has
+ * never seen his sentence. Those two are enforced at the controller, where the gazetteer and
+ * his own words are in scope. This is not a gap — it is the same law, checked where the evidence
+ * lives.
+ */
+export function truthCtxFor(input: OptimizeInput, deps: OptimizeDeps): TruthCtx {
+  const coords = new Map<string, LatLng>();
+  const known = new Set<string>();
+  for (const n of deps.nodes) {
+    coords.set(n.name.trim().toLowerCase(), n.coord);
+    known.add(n.name.trim().toLowerCase());
+  }
+  return { coords, known, roundTrip: input.tripType !== 'oneway' };
 }
 
 /**
@@ -559,6 +596,12 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
   const alt2 = buildPlan(alt2Order, names0, input, { ...deps, pool: roadOnlyDeps.pool, dailyOnly: true }, 'Alternate (date-flexible, no weekday lock)');
   alt2.dateFlexible = true;
 
+  // ⚠️ US-835 — every plan is STAMPED with the Iron Law's verdict at birth (see buildPlan).
+  // The engine does not refuse here, and that is deliberate: optimize() is a pure kernel and a
+  // unit test is entitled to drive it with a synthetic pool. THE REFUSAL LIVES AT THE PRODUCT
+  // EXIT — RouteOptimizerController.optimize(), the single door through which every real
+  // traveller passes, CRM and public planner alike (the public controller literally calls it).
+  // No door is left open for a human being; and the kernel stays a kernel.
   const plans = dedupePlans([best, alt1, alt2]);
   // §8 additive: Swift/Balanced/Gentle archetype cards (each a full solve under a
   // fixed objective). plans[] stays present + unchanged — loadFromOptimizer is safe.
@@ -570,6 +613,28 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
     ? negotiate(input, deps, { dayBudget: input.dayBudget })
     : undefined;
   return { plans, cards, ...(negotiation && negotiation.length ? { negotiation } : {}) };
+}
+
+/**
+ * THE IRON LAW'S TURNSTILE. Keeps every plan that can prove itself; throws only when NOT ONE
+ * survives — because at that point we have nothing true to say, and saying nothing true is the
+ * only remaining honest act. Called by the CONTROLLER (the product exit), not by the kernel.
+ *
+ * If a lie is confined to one alternate we simply drop that alternate and the traveller never
+ * learns it existed. If EVERY plan we can build is a lie, we say so out loud — an honest
+ * "we could not build this" beats a beautiful, confident fiction, because the fiction is the
+ * one he would have acted on.
+ */
+export function honestPlansOnly(plans: Plan[]): Plan[] {
+  const clean = plans.filter((p) => !(p.truthViolations?.length));
+  if (clean.length) return clean;
+  const all: TruthViolation[] = [];
+  const seen = new Set<string>();
+  for (const p of plans) for (const v of (p.truthViolations ?? []) as TruthViolation[]) {
+    const k = `${v.law}|${v.what}|${v.detail}`;
+    if (!seen.has(k)) { seen.add(k); all.push(v); }
+  }
+  throw new TruthViolationError(all);
 }
 
 /**

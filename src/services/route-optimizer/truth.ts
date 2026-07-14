@@ -72,7 +72,7 @@ import { haversineKm } from './geo';
 import type { LatLng, LegOption, Plan } from './types';
 
 export interface TruthViolation {
-  law: 'L1_GEOGRAPHY' | 'L2_NO_AIRPORT' | 'L2_NO_STATION' | 'L3_UNKNOWN_CITY' | 'L4_CITY_TWICE' | 'L5_INVENTED_QUOTE';
+  law: 'L1_GEOGRAPHY' | 'L2_NO_AIRPORT' | 'L2_NO_STATION' | 'L3_UNKNOWN_CITY' | 'L4_CITY_TWICE' | 'L5_INVENTED_QUOTE' | 'L6_IMPOSSIBLE_SPEED';
   what: string;
   detail: string;
 }
@@ -100,6 +100,86 @@ export function roadKmIsImpossible(km: number | null | undefined, a: LatLng, b: 
   }
   if (ratio > ROAD_MAX_RATIO) {
     return `${Math.round(km)} km of road across a ${Math.round(crow)} km gap (${ratio.toFixed(1)}× the straight line) — no road in India detours that far`;
+  }
+  return null;
+}
+
+// ---- L1, APPLIED TO EVERY MODE — THE CROW-FLY FLOOR -----------------------------------------
+/**
+ * ⚠️ 15 JULY 2026 — THE GATE GUARDED THE ROAD DOOR AND LEFT THE RAIL DOOR STANDING OPEN.
+ *
+ * `roadKmIsImpossible()` was written the day after a 1,878 km ROAD leg shipped, and it tests
+ * `leg.mode === 'ROAD'`. So the very next sweep shipped this, to a 56-year-old man:
+ *
+ *     Lucknow → Tirupati.  RAIL.  460 km.  10 h 35 m.
+ *
+ * The two towns are ~1,476 km apart AS THE CROW FLIES. A train cannot cover a shorter distance
+ * than the straight line between its endpoints — no vehicle can, on any planet. The number was
+ * not merely wrong; it was a third of a lower bound fixed by geometry.
+ *
+ * WE WROTE DOWN THE LESSON — "a gate that guards one entrance while another stands open is a
+ * decoration" — AND THEN BUILT THE SAME DECORATION AGAIN, in the same file, on the same day.
+ *
+ * THE FLOOR IS NOT A POLICY. IT IS GEOMETRY. It needs no founder ruling, it can never be wrong,
+ * and it applies to ROAD, RAIL, AIR and FERRY alike. The CEILING is mode-specific and stays
+ * where the founder put it (roads only, 2.2×) — a rail path through a junction may legitimately
+ * wander, and we do not yet have a ruling on how far.
+ */
+export function legKmBelowCrow(km: number | null | undefined, a: LatLng, b: LatLng): string | null {
+  const crow = haversineKm(a, b);
+  if (crow <= 20) return null;                          // too short to reason about
+  if (km == null || !(km > 0)) return null;             // absent is a different sin; see L6
+  if (km / crow < ROAD_MIN_RATIO) {
+    return `${Math.round(km)} km across a ${Math.round(crow)} km gap — NOTHING TRAVELS A SHORTER DISTANCE THAN THE CROW FLIES`;
+  }
+  return null;
+}
+
+// ---- L6 — A DURATION MUST BE POSSIBLE -------------------------------------------------------
+/**
+ * ⚠️ THE TWENTY-HOUR TRAIN IS NOT DEAD. IT WAS WEARING A TEN-HOUR COSTUME.
+ *
+ * US-827 killed the twenty-hour train by gating on its DURATION. So the very next sweep sold a
+ * ~30-hour Lucknow → Tirupati train to a 56-year-old and his wife — and walked it straight
+ * through the ordeal gate, because the leg claimed 635 minutes. 1,476 km in 635 minutes is an
+ * average of 140 km/h. NO TRAIN IN INDIA AVERAGES THAT. Not one.
+ *
+ * A GATE ON A NUMBER IS ONLY AS HONEST AS THE NUMBER. Every comfort gate we own — the ordeal
+ * gate, the body gate, the fatigue ledger, the arrival-hour rule — reads a duration and trusts
+ * it. So a false duration does not merely mis-inform the traveller: IT SWITCHES OFF EVERY
+ * PROTECTION HE HAS. That is why this belongs in the Iron Law and not in a comfort gate.
+ *
+ * A claimed duration implies an average speed. If that speed is impossible, the duration is a
+ * lie, whatever stamped it.
+ *
+ * ⚠️ THESE CEILINGS ARE MINE, NOT THE FOUNDER'S — see the handoff, OWED TO THE FOUNDER.
+ * They are deliberately GENEROUS: they are impossibility bounds, chosen so they can never fire
+ * on a true fact and only ever catch a fabrication. India's fastest scheduled train averages
+ * ~85 km/h end-to-end; 110 leaves a wide margin. A jet cruises ~800-900 km/h; 950 leaves room
+ * for a short sector measured gate-to-gate. The road ceiling sits above the engine's own
+ * founder-locked terrain model, whose best road (rqi 5) is 75 km/h.
+ */
+export const MAX_AVG_KMH: Record<string, number> = { ROAD: 90, RAIL: 110, AIR: 950, FERRY: 60 };
+
+export function legSpeedIsImpossible(
+  km: number | null | undefined,
+  durationMin: number | null | undefined,
+  a: LatLng,
+  b: LatLng,
+  mode: string,
+): string | null {
+  if (durationMin == null || !(durationMin > 0)) return null;
+  // Measure against the HONEST distance: whatever the leg claims, it cannot be less than the
+  // straight line. A leg that under-states its distance AND its time would otherwise conspire
+  // to look perfectly reasonable.
+  const crow = haversineKm(a, b);
+  if (crow <= 20) return null;
+  const honestKm = Math.max(km ?? 0, crow);
+  const kmh = honestKm / (durationMin / 60);
+  const ceiling = MAX_AVG_KMH[mode] ?? 950;
+  if (kmh > ceiling) {
+    const h = Math.floor(durationMin / 60), m = Math.round(durationMin % 60);
+    return `${Math.round(honestKm)} km in ${h}h${String(m).padStart(2, '0')} is an average of ${Math.round(kmh)} km/h by ${mode} — nothing on this route travels that fast, so the time is not true`;
   }
   return null;
 }
@@ -152,23 +232,49 @@ export function checkPlanTruth(plan: Plan, ctx: TruthCtx): TruthViolation[] {
 
     if (!a || !b) continue;
 
-    // L1 — geography cannot be argued with.
-    if (leg.mode === 'ROAD') {
+    // L1 — GEOGRAPHY CANNOT BE ARGUED WITH.
+    // The FLOOR is geometry and binds EVERY mode. The CEILING is a founder ruling about roads.
+    const belowCrow = legKmBelowCrow(leg.distanceKm, a, b);
+    if (belowCrow) {
+      v.push({ law: 'L1_GEOGRAPHY', what: `${leg.from} → ${leg.to} (${leg.mode})`, detail: belowCrow });
+    } else if (leg.mode === 'ROAD') {
       const bad = roadKmIsImpossible(leg.distanceKm, a, b);
       if (bad) v.push({ law: 'L1_GEOGRAPHY', what: `${leg.from} → ${leg.to}`, detail: bad });
+    }
+
+    // L6 — A DURATION MUST BE POSSIBLE. A false clock disarms every comfort gate downstream.
+    const tooFast = legSpeedIsImpossible(leg.distanceKm, leg.durationMin, a, b, leg.mode);
+    if (tooFast) {
+      v.push({ law: 'L6_IMPOSSIBLE_SPEED', what: `${leg.from} → ${leg.to} (${leg.mode})`, detail: tooFast });
     }
   }
 
   // ---- L4 — NO CITY TWICE ----
-  if (!ctx.roundTrip) {
-    const stops = legs.length ? [legs[0].from, ...legs.map((l) => l.to)] : [];
-    const seen = new Map<string, number>();
-    for (const s of stops) seen.set(norm(s), (seen.get(norm(s)) ?? 0) + 1);
-    for (const [city, n] of seen) {
-      if (n > 1) {
-        v.push({ law: 'L4_CITY_TWICE', what: city,
-          detail: `appears ${n} times on a one-way trip. A repeated stop is not an itinerary, it is a bug with a hotel booking.` });
-      }
+  //
+  // The first version of this law switched itself OFF whenever `roundTrip` was set — and
+  // `tripType` DEFAULTS to 'roundtrip' and no frontend has ever sent the field. So the law was
+  // disarmed for every traveller who has ever used the planner, and this shipped:
+  //
+  //     Kolkata → Darjeeling → KOLKATA → Bodh Gaya → Varanasi
+  //
+  // That is not a round trip. That is a man paying for a hotel in Kolkata twice and losing a day
+  // to a city he has already seen. A GENUINE round trip ENDS where it began — the origin is the
+  // FIRST stop and the LAST stop, and nothing else repeats, ever. That is the whole of the
+  // exception, and it is checked by POSITION, not merely by count.
+  const stops = legs.length ? [legs[0].from, ...legs.map((l) => l.to)] : [];
+  if (stops.length > 1) {
+    const first = norm(stops[0]), last = norm(stops[stops.length - 1]);
+    const seen = new Map<string, number[]>();
+    stops.forEach((s, i) => { const k = norm(s); (seen.get(k) ?? seen.set(k, []).get(k)!).push(i); });
+    for (const [city, at] of seen) {
+      if (at.length < 2) continue;
+      // the ONE honourable repeat: he asked to come home, and home is the first stop and the last.
+      const isTheReturnHome =
+        ctx.roundTrip && at.length === 2 && city === first && city === last
+        && at[0] === 0 && at[1] === stops.length - 1;
+      if (isTheReturnHome) continue;
+      v.push({ law: 'L4_CITY_TWICE', what: city,
+        detail: `appears ${at.length} times (at stops ${at.map((i) => i + 1).join(', ')} of ${stops.length}). A repeated stop is not an itinerary, it is a bug with a hotel booking.` });
     }
   }
 

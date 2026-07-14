@@ -14,7 +14,8 @@ import { weightsForObjective, type LegCtx } from '@/services/route-optimizer/ddc
 import { applyTPP } from '@/services/route-optimizer/tpp';
 import type { OrdealParty } from '@/services/route-optimizer/ordeal';
 import { anchorValueFromCounts, type AnchorCandidate } from '@/services/route-optimizer/anchors';
-import { roadKmIsImpossible } from '@/services/route-optimizer/truth';
+import { roadKmIsImpossible, checkPlanTruth, TruthViolationError, type TruthViolation } from '@/services/route-optimizer/truth';
+import { honestPlansOnly, truthCtxFor } from '@/services/route-optimizer/optimize';
 import { repeatedCities } from '@/services/route-optimizer/sequence';
 import { toPlannerPayload } from '@/services/route-optimizer/plannerPayload';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
@@ -372,6 +373,39 @@ export class RouteOptimizerController {
       }
       result.plans = finalized;
 
+      // ══════════════════════════════════════════════════════════════════════════════════════
+      //  ⚠️  US-835 — THE IRON LAW. THE EXIT. THIS IS THE DOOR.
+      // ══════════════════════════════════════════════════════════════════════════════════════
+      //
+      // `truth.ts` was written on 14 July and committed with the words "a plan containing one
+      // unprovable fact IS NOT DELIVERED". IT WAS THEN CALLED FROM NOWHERE. `assertPlanTruth()`
+      // was dead code for a full day: L3, L4 and L5 had NEVER ONCE RUN, and L1 ran only on road
+      // legs, only inside the distance matrix. WE WROTE THE LAW, HUNG IT ON THE WALL, AND HIRED
+      // NO POLICEMAN. The 15 July sweep collected the bill:
+      //
+      //   🚂 Lucknow → Tirupati, RAIL, 460 km, 10 h 35 m.   They are ~1,476 km apart AS THE CROW
+      //      FLIES, and the real train takes about thirty hours. NOTHING covers less ground than
+      //      the straight line. And because every comfort gate we own READS A DURATION AND TRUSTS
+      //      IT, a false clock does not merely misinform him — IT SWITCHES OFF EVERY PROTECTION
+      //      HE HAS. The twenty-hour train US-827 killed came back wearing a ten-hour costume.
+      //
+      //   🔁 Kolkata → Darjeeling → KOLKATA → Bodh Gaya.    L4 was disarmed for every traveller
+      //      who has ever used this planner, because `tripType` DEFAULTS to 'roundtrip'.
+      //
+      // IT RUNS HERE, AND NOT IN THE ENGINE, FOR ONE REASON: this is the LAST line before the
+      // response, AFTER finalizePlan() has inserted its halts and corridors. A gate placed before
+      // the mutation would guard a plan that no longer exists. It is also the ONE door every real
+      // traveller passes through — the public planner literally calls this controller. The engine
+      // stays a pure kernel that a unit test may drive with a synthetic pool; the PRODUCT is what
+      // must never lie.
+      //
+      // A lie in one alternate → we drop that alternate and he never learns it existed.
+      // A lie in every plan we can build → WE SAY SO. An honest "we could not build this" beats a
+      // beautiful, confident fiction, because the fiction is the one he would have acted on.
+      const truthCtx = { ...truthCtxFor(input, { nodes, pool }), request: typeof body.request === 'string' ? body.request : null };
+      for (const p of result.plans) p.truthViolations = checkPlanTruth(p, truthCtx);
+      result.plans = honestPlansOnly(result.plans);   // throws TruthViolationError if none survive
+
       // ---- AI enrichment layer (cache-first; live fares each time) ----------
       // Attaches real fares, hotels, govt-recognised guides, city content and a
       // website-model trip cost. Fail-safe: never blocks the plan on error.
@@ -413,6 +447,15 @@ export class RouteOptimizerController {
         meta: { registered, missing },
       });
     } catch (e) {
+      // ⚠️ THE IRON LAW SPEAKING. Not a crash — a REFUSAL, and it is deliberate. We could not
+      // prove something we were about to tell him, so we do not tell him anything. He gets an
+      // honest failure and we get the violations in the log, in plain words, every time.
+      if (e instanceof TruthViolationError) {
+        console.error('IRON LAW — plan NOT delivered:\n' + e.message);
+        return res.deliver(422, false, { violations: e.violations }, 
+          'We could not build a trip we are certain about, so we are not going to guess. ' +
+          'Please tell us a little more and we will try again.');
+      }
       console.error('route optimize failed:', e);
       return res.deliver(500, false, undefined, 'Route optimization failed');
     }

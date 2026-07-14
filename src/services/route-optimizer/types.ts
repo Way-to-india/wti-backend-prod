@@ -361,6 +361,9 @@ export interface PlanComparison {
 }
 
 export interface Plan {
+  /** ⚠️ US-835 — the Iron Law's verdict on THIS plan, stamped at birth in buildPlan().
+   *  Non-empty = the plan contains a fact we cannot prove, and optimize() will not hand it out. */
+  truthViolations?: { law: string; what: string; detail: string }[];
   sequence: string[];
   weekdayLock: string | null;
   legs: PlanLeg[];
