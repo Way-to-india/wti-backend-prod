@@ -88,8 +88,17 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
   let clock = DEFAULT_DEPART_MIN;
 
   // First city — arrival + its sightseeing nights.
+  //
+  // US-866 — A 0-NIGHT START IS HIS OWN FRONT DOOR (founder's live tests, 15 Jul 2026:
+  // "Arrive Delhi" with a billed hotel night at HOME for a man who lives in Delhi; the
+  // same for Hyderabad; then "Arrive Lucknow" on the Kerala plan). A man does not arrive
+  // at his own city and he does not rest a day there before leaving: when the start node
+  // carries ZERO nights (his door, or a gateway he only passes through), there is no
+  // arrive-day at all — Day 1 IS the departure leg. The old behaviour stands untouched
+  // wherever he actually sleeps at the first stop.
   const first = inp.sequence[0];
-  if (first) {
+  let firstLegOpensTheTrip = !!first && (inp.nights.get(first) ?? 1) === 0 && inp.sequence.length > 1;
+  if (first && !firstLegOpensTheTrip) {
     const n = inp.nights.get(first) ?? 1;
     days.push({ day: dayIdx + 1, weekday: stamp(dayIdx), city: first, activity: `Arrive ${first}${n ? ' — sightseeing' : ''}`, transit: null, roadKm: 0, transitMin: 0 });
     for (let k = 1; k < Math.max(1, n); k++) {
@@ -97,6 +106,12 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
       days.push({ day: dayIdx + 1, weekday: stamp(dayIdx), city: first, activity: `${first} — full day`, transit: null, roadKm: 0, transitMin: 0 });
     }
   }
+  /** US-866 — the opening leg does not turn the calendar: with no arrive-day before it,
+   *  the departure itself is Day 1. Every later leg advances exactly as before. */
+  const advanceCalendar = (units: number) => {
+    if (firstLegOpensTheTrip) { firstLegOpensTheTrip = false; dayIdx += Math.max(0, units - 1); }
+    else dayIdx += units;
+  };
 
   for (let i = 1; i < inp.sequence.length; i++) {
     const from = inp.sequence[i - 1];
@@ -108,7 +123,7 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     if (!opt) {
       // no curated option and no road fallback resolved — surface as VERIFY
       legs.push({ from, to, mode: 'ROAD', identifier: null, verifyFlag: true, note: 'VERIFY — no curated option; treat as road and confirm.' });
-      dayIdx++;
+      advanceCalendar(1);
       days.push({ day: dayIdx + 1, weekday: stamp(dayIdx), city: to, activity: `Travel ${from} → ${to} (verify)`, transit: { from, to, mode: 'ROAD' }, roadKm: 0, transitMin: 0 });
       continue;
     }
@@ -259,7 +274,7 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
 
     // advance calendar: overnight rail lands next day; otherwise same/next per arrDayOffset
     const dayAdvance = overnight ? 1 : Math.max((opt.arrDayOffset ?? 0), nightsAtTo > 0 ? 1 : 0);
-    dayIdx += Math.max(1, dayAdvance);
+    advanceCalendar(Math.max(1, dayAdvance));
 
     const isHalt = inp.haltNames?.has(to) ?? false;
     const verb = opt.mode === 'AIR' ? 'Fly' : opt.mode === 'RAIL' ? 'Train' : opt.mode === 'FERRY' ? 'Ferry' : 'Drive';
