@@ -211,6 +211,15 @@ export function hardFacets(b: BranchLite, q: QueryFacets): HardResult {
     const overlap = q.regionStates.some((s) => bs.has(s.toLowerCase()));
     if (!overlap) fails.push(`outside ${q.regionKey ?? 'the region you named'}`);
   }
+  // MAIN-MOTIVATION COVERAGE as a gate (§4b.2): when he named interests, a branch that
+  // anchors NONE of them is not an answer to HIS ask — a pilgrimage circuit is not a
+  // wildlife trip, however popular. (A branch that covers some is kept and scored.)
+  if (q.chips.length) {
+    const branchChips = new Set(b.chips);
+    if (!q.chips.some((c) => branchChips.has(c))) {
+      fails.push(`covers none of your interests (${q.chips.join(', ')})`);
+    }
+  }
   // season window admits his month
   if (!monthInMask(q.monthIndex0, b.seasonMask)) {
     fails.push('the season does not admit your month');

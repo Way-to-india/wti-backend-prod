@@ -109,8 +109,14 @@ export async function buildLibraryCards(opts: {
         }
       }
 
+      // C1 has NO Tailor yet (that is C2, §10.2). So the DAYS ceiling must not REFUSE a
+      // real journey merely for running a night or two longer than he stated — that is the
+      // "refuses too much" failure (§9.1). We gate on the branch's OWN length (so season,
+      // body and honest reachability still bind) and SPEAK the night-fit instead.
+      const branchNights = proposal.totalNights;
+      const nightsCeiling = Math.max(saidNights ?? 0, branchNights);
       const gated = gateProposals([proposal], {
-        nightsCeiling: saidNights ?? 99,
+        nightsCeiling,
         month: month ?? null,           // 1..12 integer (GateFacts.month), same as circuit path
         profile,
         coords, elevations, seasons, access, entry, originName: measuredFrom,
@@ -122,6 +128,14 @@ export async function buildLibraryCards(opts: {
         continue;
       }
       const g = gated.offered[0];
+      // the honest night-fit note (the Tailor will do the actual trimming in C2)
+      if (saidNights != null && branchNights !== saidNights) {
+        const dir = branchNights > saidNights ? 'longer' : 'shorter';
+        g.gateNotes = [
+          ...(g.gateNotes ?? []),
+          `This journey runs ${branchNights} nights; you mentioned ${saidNights}. It is ${dir} than you asked — tell us and we will fit it to your days.`,
+        ];
+      }
       const pick = {
         request,
         cities: g.proposal.stops.map((s) => ({ name: s.name, nights: s.nights })),

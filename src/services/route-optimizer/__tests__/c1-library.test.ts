@@ -133,6 +133,16 @@ describe('C1 — STAGE 1 hard facets', () => {
     const b = branch({ nightsMin: 12, nightsMax: 14 });
     expect(hardFacets(b, facets({ saidNights: 7 })).pass).toBe(false);
   });
+  test('a branch that anchors NONE of his named interests is excluded (§4b.2 coverage)', () => {
+    const pilgrimage = branch({ chips: ['Pilgrimage'], states: ['Madhya Pradesh'], entryRegion: 'central_india' });
+    const r = hardFacets(pilgrimage, facets({ chips: ['Wildlife & Nature', 'Trekking & Adventure'], regionStates: ['Madhya Pradesh'], regionKey: 'central_india' }));
+    expect(r.pass).toBe(false);
+    expect(r.fails.some((f) => f.includes('covers none of your interests'))).toBe(true);
+  });
+  test('a branch covering at least one named interest is kept', () => {
+    const wild = branch({ chips: ['Wildlife & Nature'], states: ['Madhya Pradesh'], entryRegion: 'central_india' });
+    expect(hardFacets(wild, facets({ chips: ['Wildlife & Nature', 'Trekking & Adventure'], regionStates: ['Madhya Pradesh'], regionKey: 'central_india' })).pass).toBe(true);
+  });
 });
 
 describe('C1 — STAGE 2.5 scoring (100 minus NAMED penalties)', () => {

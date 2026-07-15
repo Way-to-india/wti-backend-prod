@@ -35,7 +35,7 @@ import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb'
 import { foodFor } from '@/services/route-optimizer/foodDb';
 import { foodNeedFromWords, foodStatus, foodParagraph } from '@/services/route-optimizer/food';
 import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
-import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, cityWasNamed, frameFromText, heSaid, isStatedCityList, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
+import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, chipKeywordHits, cityWasNamed, frameFromText, heSaid, isStatedCityList, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import { deterministicParse, deterministicallyComplete, originFromText, type FieldFacts } from '@/services/route-optimizer/deterministicParse';
 import { parseCacheKey, parseCacheHash, readStoredParse, bumpParseHit, writeStoredParse } from '@/services/route-optimizer/parseCacheDb';
 import prisma from '@/config/db';
@@ -832,8 +832,13 @@ export class PublicPlannerController {
             const saidNightsLib = (intent?.nights.provenance === 'he_said' ? intent.nights.value : null)
               ?? nightsFromWords(request ?? '')?.maxNights ?? null;
             const libProfile = (['standard', 'family', 'senior'].includes(profile) ? profile : 'standard') as 'standard' | 'family' | 'senior';
+            // Deterministic chip reader as a floor: if the parse produced no chips, read
+            // the eight-chip interest table straight off his sentence (zero tokens), so
+            // "wildlife and adventure" reaches the facets as coverage requirements and a
+            // pilgrimage circuit cannot rank into a wildlife ask.
+            const libChips = chips.length ? chips : [...new Set(chipKeywordHits(request).map((h) => h.chip))];
             const facets: QueryFacets = {
-              chips,
+              chips: libChips,
               regionStates: m ? stateNamesOf(m) : null,
               regionKey: m ? m.region.key : null,
               measuredFrom,
@@ -879,7 +884,7 @@ export class PublicPlannerController {
                     ? { key: circuitHit.circuit.key, label: circuitHit.circuit.label, quote: circuitHit.quote, confidence: circuitHit.confidence, tourId: circuitHit.circuit.tourId }
                     : null,
                   region: m ? { key: m.region.key, label: m.region.label } : null,
-                  theme: chips.length ? { chips, quote: null } : null,
+                  theme: libChips.length ? { chips: libChips, quote: null } : null,
                   frame: (frame.entry || frame.exit || startWasStated)
                     ? { home: startWasStated ? start : null, entry: frame.entry, exit: frame.exit }
                     : null,
