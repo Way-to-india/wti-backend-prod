@@ -35,7 +35,7 @@ import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb'
 import { foodFor } from '@/services/route-optimizer/foodDb';
 import { foodNeedFromWords, foodStatus, foodParagraph } from '@/services/route-optimizer/food';
 import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
-import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, chipKeywordHits, cityWasNamed, frameFromText, heSaid, isStatedCityList, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
+import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, chipKeywordHits, cityWasNamed, frameFromText, startGatewaySpan, heSaid, isStatedCityList, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import { deterministicParse, deterministicallyComplete, originFromText, type FieldFacts } from '@/services/route-optimizer/deterministicParse';
 import { parseCacheKey, parseCacheHash, readStoredParse, bumpParseHit, writeStoredParse } from '@/services/route-optimizer/parseCacheDb';
 import prisma from '@/config/db';
@@ -713,6 +713,28 @@ export class PublicPlannerController {
       // A repeated name is merged and its nights are summed — the traveller asked for more
       // time there, not for the town to exist twice.
       cities = mergeDuplicateCities(cities);
+
+      // ---- A STARTING GATEWAY IS NOT A DESTINATION (founder live test, 15 Jul 2026) ----
+      // "I can start my journey from Chennai or Madurai" names starting POINTS, not stops.
+      // The model extracted both as destinations, which made cities≥1 and skipped the
+      // library — building a two-city plan of the gateways instead of the South-India
+      // pilgrimage he asked for. Drop any destination that sits inside a "start … from …"
+      // span (bounded so "and visit Agra" is never swallowed). If that empties the list,
+      // his region + interest carry the ask into the library, exactly as intended.
+      const gwSpan = startGatewaySpan(request);
+      if (gwSpan) {
+        const span = gwSpan.toLowerCase();
+        const before = cities.length;
+        cities = cities.filter((c) => {
+          const nm = c.name.trim().toLowerCase();
+          // a gateway name inside the span, and NOT one he also asked to end at
+          const isGateway = span.includes(nm) && !(end && end.trim().toLowerCase() === nm);
+          return !isGateway;
+        });
+        if (cities.length !== before) {
+          console.warn(`start-gateway: dropped ${before - cities.length} destination(s) that are starting points inside "${gwSpan}".`);
+        }
+      }
 
       // ---- the starting city (founder ruling 2026-07-11) --------------------
       // He may have TYPED it ("from Mumbai"). Claude already pulls it out; until now

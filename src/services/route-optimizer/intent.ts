@@ -290,6 +290,24 @@ export function isStatedCityList(v: unknown): boolean {
   return Array.isArray(v) && v.length > 0;
 }
 
+/**
+ * A STARTING GATEWAY IS NOT A DESTINATION (founder live test, 15 Jul 2026).
+ * "I can start my journey from Chennai or Madurai" names two STARTING POINTS, not two
+ * places to visit — but the model happily extracted Chennai and Madurai as destination
+ * cities, which pushed cities≥1 and skipped the library, building a plan of the two
+ * gateways. This returns the bounded text span of a "start/begin … from X [or Y]" phrase,
+ * stopping BEFORE any destination verb ("and visit Agra" must not be swallowed), so the
+ * controller can drop those gateway names from the destination list. PURE.
+ */
+export function startGatewaySpan(text: string | null | undefined): string | null {
+  if (!text || typeof text !== 'string') return null;
+  // start/starting/begin … [journey/trip/tour/yatra] … from|at  <SPAN> up to a sentence
+  // end OR a destination verb (visit/see/explore/cover/reach/go to/travel to).
+  const re = /\b(?:start|starting|begin|beginning|commence|commencing)\b[^.?!]{0,40}?\bfrom\s+([^.?!]*?)(?:$|[.?!]|,?\s+(?:and\s+)?(?:then\s+)?(?:visit|see|explore|cover|reach|go\s+to|travel\s+to|head\s+to|and\s+go|and\s+see)\b)/i;
+  const m = re.exec(text);
+  return m && m[1] ? m[1].trim() : null;
+}
+
 /** Days are not nights. Ten days is nine nights. */
 const toNights = (n: number, unit: string): number => (/^day/i.test(unit) ? n - 1 : n);
 

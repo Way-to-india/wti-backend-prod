@@ -9,6 +9,23 @@ import {
   assignRoles, deriveBranchChips, hardFacets, scoreBranch, retrieve,
   type RawStop, type BranchLite, type QueryFacets,
 } from '../library';
+import { startGatewaySpan } from '../intent';
+
+describe('C1 — a starting gateway is not a destination', () => {
+  test('"start my journey from Chennai or Madurai" → both are in the gateway span', () => {
+    const span = (startGatewaySpan('I want a pilgrimage of south India. I can start my journey from Chennai or Madurai. Provide me ideas.') ?? '').toLowerCase();
+    expect(span).toContain('chennai');
+    expect(span).toContain('madurai');
+  });
+  test('a destination verb ends the span — "and visit Agra" is NOT swallowed', () => {
+    const span = (startGatewaySpan('start my journey from Delhi and visit Agra') ?? '').toLowerCase();
+    expect(span).toContain('delhi');
+    expect(span).not.toContain('agra');
+  });
+  test('a plain origin phrase without start/begin does not match', () => {
+    expect(startGatewaySpan('four friends from Pune, we love beaches')).toBeNull();
+  });
+});
 
 describe('C1 — normalisation', () => {
   test('drops non-alnum and the letter h (spelling drift)', () => {
