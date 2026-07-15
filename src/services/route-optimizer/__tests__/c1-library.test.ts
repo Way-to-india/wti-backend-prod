@@ -10,7 +10,31 @@ import {
   type RawStop, type BranchLite, type QueryFacets,
 } from '../library';
 import { startGatewaySpan } from '../intent';
-import { stripHtml } from '../namedCircuits';
+import { stripHtml, overlayTourDays, type TourDayText } from '../namedCircuits';
+
+describe('C1 — overlay never puts a DEPARTURE day on a mid-plan rest day', () => {
+  const itin: TourDayText[] = [
+    { day: 1, title: 'Shillong', description: 'Arrive and check in at Shillong. Evening at leisure.' },
+    { day: 2, title: 'Shillong', description: 'Drive to Cherrapunjee, the wettest place, and back.' },
+    { day: 3, title: 'Guwahati', description: 'Sightseeing of Shillong, then drive to Guwahati and Brahmaputra cruise.' },
+    { day: 4, title: 'Guwahati', description: 'After breakfast check out and transfer to the airport/railway station for your onward destination.' },
+  ];
+  test('the Guwahati checkout text does not land on a non-final Guwahati rest day', () => {
+    const days: any[] = [
+      { city: 'Shillong', activity: 'full day', transit: null },
+      { city: 'Shillong', activity: 'full day', transit: null },
+      { city: 'Guwahati', activity: 'full day', transit: null },
+      { city: 'Guwahati', activity: 'full day', transit: null },   // rest day, NOT last
+      { city: 'Kaziranga', activity: 'full day', transit: null },  // the real last stop
+    ];
+    overlayTourDays(days, itin);
+    // the mid-plan Guwahati day must NOT read as a checkout/onward-transfer
+    expect(days[3].activity.toLowerCase()).not.toContain('onward destination');
+    expect(days[3].activity.toLowerCase()).not.toContain('transfer to the airport');
+    // but the real experience days still overlay
+    expect(days[0].activity.toLowerCase()).toContain('shillong');
+  });
+});
 
 describe('C1 — day text is plain prose, never CMS HTML', () => {
   test('tags removed, entities decoded, whitespace collapsed', () => {

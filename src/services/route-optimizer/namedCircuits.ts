@@ -228,10 +228,22 @@ export function overlayTourDays(
     }
   }
   if (matches.length < 2) return 0;
+  // A DEPARTURE DAY IS NOT A MIDDLE DAY (founder live test, 15 Jul 2026). The source tour's
+  // LAST day is a checkout — "transfer to the airport/railway for your onward destination".
+  // Overlaid onto a plan REST day that is not the plan's last, it tells a traveller the trip
+  // is ending at Guwahati while the route map carries him on to Kaziranga. So a departure-
+  // shaped tour day is never written onto a plan day that is not the plan's final day; the
+  // engine's own words (and the US-864 way-home note) speak the real ending.
+  const DEPARTURE = /\b(transfer(?:red)? to (?:the )?(?:airport|railway|station)|onward (?:destination|journey)|drop(?:ped)? (?:at |to )?(?:the )?(?:airport|station)|board your (?:flight|train)|departure transfer|for your onward)\b/i;
+  const lastDi = days.length - 1;
+  let applied = 0;
   for (const { di, ti } of matches) {
     const d = days[di];
     const text = clipSentence(itin[ti].description ?? itin[ti].title);
     if (!text) continue;
+    const raw = `${itin[ti].title ?? ''} ${itin[ti].description ?? ''}`;
+    if (di !== lastDi && DEPARTURE.test(raw) && !d.transit) continue;  // a mid-plan rest day is not a checkout
+    applied++;
     d.activity = d.transit
       ? `${String(d.activity ?? '').trim()} — ${text}`   // keep the transport truth, add the day's purpose
       : `${String(d.city ?? '').trim()} — ${text}`;       // the "full day" finally says what the day is FOR
