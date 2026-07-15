@@ -159,6 +159,25 @@ describe('C1 — STAGE 2.5 scoring (100 minus NAMED penalties)', () => {
     expect(s.penalties.some((p) => p.reason.includes('Trekking & Adventure'))).toBe(true);
     expect(s.score).toBeLessThan(90);
   });
+  test('theme FOCUS — a temple circuit beats a wildlife tour that passes one shrine', () => {
+    const pil = { chip: 'Pilgrimage', strength: 'anchor' as const };
+    const wild = { chip: 'Wildlife & Nature', strength: 'anchor' as const };
+    // every stop a temple (a real pilgrimage circuit)
+    const circuit = branch({ id: 'temples', chips: ['Pilgrimage'], states: ['Tamil Nadu'], stops: [
+      { name: 'Mahabalipuram', nights: 3, role: 'ANCHOR', themes: [pil] },
+      { name: 'Madurai', nights: 2, role: 'ANCHOR', themes: [pil] },
+    ] });
+    // a wildlife tour where only one stop (of 10 nights) also anchors pilgrimage
+    const wildlifeTour = branch({ id: 'wild', chips: ['Pilgrimage', 'Wildlife & Nature'], states: ['Karnataka'], stops: [
+      { name: 'Bangalore', nights: 2, role: 'ANCHOR', themes: [pil, wild] },
+      { name: 'Bandipur', nights: 8, role: 'ANCHOR', themes: [wild] },
+    ] });
+    const q = facets({ chips: ['Pilgrimage'], regionStates: ['Tamil Nadu', 'Karnataka'], regionKey: 'south_india' });
+    const sc = scoreBranch(circuit, q).score;
+    const sw = scoreBranch(wildlifeTour, q).score;
+    expect(sc).toBeGreaterThan(sw);
+    expect(scoreBranch(wildlifeTour, q).penalties.some((p) => p.reason.includes('% of the nights serve Pilgrimage'))).toBe(true);
+  });
 });
 
 describe('C1 — retrieve() + PROOF OBJECT (§10.3)', () => {

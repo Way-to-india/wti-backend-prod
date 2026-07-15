@@ -268,7 +268,31 @@ export function scoreBranch(b: BranchLite, q: QueryFacets): ScoredBranch {
       penalties.push({ reason: 'part of this journey leaves the region you named', points: 6 });
     }
   }
-  let score = 100 - penalties.reduce((s, p) => s + p.points, 0);
+  // THEME FOCUS / DOMINANCE (§4b.1). The coverage gate only asks whether his theme is
+  // PRESENT; it cannot tell a temple circuit from a wildlife tour that passes one shrine.
+  // Our own index anchors Srisailam as Pilgrimage AND Wildlife, and Bangalore as
+  // Pilgrimage too — so a South Karnataka wildlife tour "covers pilgrimage" on a single
+  // stop. So we score by the SHARE OF NIGHTS that actually serve his motivation, and give
+  // a small breadth reward to a real circuit over a lone shrine. A journey mostly about
+  // other interests is demoted, in words we can speak.
+  let focusBonus = 0;
+  if (q.chips.length && b.stops.length) {
+    const his = new Set(q.chips);
+    let onNights = 0, total = 0, onStops = 0;
+    for (const s of b.stops) {
+      const n = Math.max(1, s.nights); total += n;
+      if (s.themes.some((t) => t.strength === 'anchor' && his.has(t.chip))) { onNights += n; onStops++; }
+    }
+    const onShare = total ? onNights / total : 0;
+    if (onShare < 1) {
+      penalties.push({
+        reason: `only ${Math.round(onShare * 100)}% of the nights serve ${q.chips.join('/')} — the rest is other interests`,
+        points: Math.round((1 - onShare) * 35),
+      });
+    }
+    focusBonus = Math.min(6, Math.max(0, onStops - 1) * 2);   // a circuit beats a single shrine (never opens a gate)
+  }
+  let score = 100 - penalties.reduce((s, p) => s + p.points, 0) + focusBonus;
   // evidence tie-break ONLY (never opens a gate): a fraction of a point per corroboration.
   score += Math.min(3, (b.evidenceCount - 1) * 0.5);
   return { branch: b, score, matchedChips, missingChips, penalties };
