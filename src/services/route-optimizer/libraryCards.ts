@@ -109,14 +109,16 @@ export async function buildLibraryCards(opts: {
         }
       }
 
-      // C1 has NO Tailor yet (that is C2, §10.2). So the DAYS ceiling must not REFUSE a
-      // real journey merely for running a night or two longer than he stated — that is the
-      // "refuses too much" failure (§9.1). We gate on the branch's OWN length (so season,
-      // body and honest reachability still bind) and SPEAK the night-fit instead.
+      // C1 has NO Tailor yet (that is C2, §10.2). The library's job is to SHOW the real
+      // journeys we run for the region/interest he named; length-fitting and reachability
+      // are the Tailor's and the pick's job. So the DAYS/ORIGIN-length ceiling must not
+      // REFUSE a Kerala journey because he is in Lucknow or because it runs a night longer
+      // than he asked — that is the "refuses too much" failure (§9.1). We lift the ceiling
+      // and SPEAK the night-fit; SEASON and BODY (the real safety gates — a shut temple, a
+      // senior at altitude) still bind because they do not read nightsCeiling.
       const branchNights = proposal.totalNights;
-      const nightsCeiling = Math.max(saidNights ?? 0, branchNights);
       const gated = gateProposals([proposal], {
-        nightsCeiling,
+        nightsCeiling: 99,
         month: month ?? null,           // 1..12 integer (GateFacts.month), same as circuit path
         profile,
         coords, elevations, seasons, access, entry, originName: measuredFrom,
