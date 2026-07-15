@@ -276,7 +276,10 @@ export function scoreBranch(b: BranchLite, q: QueryFacets): ScoredBranch {
   // a small breadth reward to a real circuit over a lone shrine. A journey mostly about
   // other interests is demoted, in words we can speak.
   let focusBonus = 0;
-  if (q.chips.length && b.stops.length) {
+  // only judge focus when the branch actually carries stop-level theme data; without it we
+  // cannot tell dominance from presence, so we do not guess.
+  const hasThemeData = b.stops.some((s) => Array.isArray(s.themes) && s.themes.some((t) => t.strength === 'anchor'));
+  if (q.chips.length && b.stops.length && hasThemeData) {
     const his = new Set(q.chips);
     let onNights = 0, total = 0, onStops = 0;
     for (const s of b.stops) {
