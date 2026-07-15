@@ -658,16 +658,17 @@ export class PublicPlannerController {
       // the heritage skipped. The frame is read deterministically from his own words,
       // verified against the gazetteer, and its cities leave the destination list — BUT
       // ONLY when a theme or a region exists to fill the middle. Otherwise nothing changes.
-      const frame: { entry: string | null; exit: string | null } = { entry: null, exit: null };
+      const frame: { entry: string | null; entryQuote: string | null; exit: string | null; exitQuote: string | null } =
+        { entry: null, entryQuote: null, exit: null, exitQuote: null };
       if (request && !statedCities) {
         const f = frameFromText(request);
         if (f.entry) {
           const v = await verifyCity(f.entry);
-          if (v.ok && v.name) frame.entry = v.name;
+          if (v.ok && v.name) { frame.entry = v.name; frame.entryQuote = f.entryQuote; }
         }
         if (f.exit) {
           const v = await verifyCity(f.exit);
-          if (v.ok && v.name) frame.exit = v.name;
+          if (v.ok && v.name) { frame.exit = v.name; frame.exitQuote = f.exitQuote; }
         }
         if (frame.exit && !end) end = frame.exit;
         const canFillMiddle = ((intent ? chipsOf(intent).length : 0) > 0 || !!resolveRegion(request));
@@ -796,6 +797,19 @@ export class PublicPlannerController {
       // side, never a wall in front of the circuit he named.
       const measuredFrom: string | null = frame.entry ?? ((startWasStated && start) ? start : null);
 
+      // US-872 — THE ENTRY GATE IS SPOKEN. The Nau Devi group said "arriving at Delhi
+      // Airport" and the echo panel never mentioned Delhi — a man who reads his own
+      // chips back and finds his landing gate missing concludes we were not listening.
+      // His arrival rides the echo like every other fact, with his own words as the quote.
+      const askEcho: EchoRow[] = intent ? buildEcho(intent) : [];
+      if (frame.entry) {
+        askEcho.push({
+          key: 'entry', label: 'Arriving at', value: frame.entry,
+          provenance: frame.entryQuote ? 'he_said' : 'we_inferred',
+          ...(frame.entryQuote ? { quote: frame.entryQuote } : { why: 'read from your message' }),
+        });
+      }
+
       if (cities.length < 1 && (circuitHit || regionIsUsable(regionMatch, cities.length) || chips.length > 0)) {
         const m: RegionMatch | null = regionMatch;
 
@@ -901,13 +915,16 @@ export class PublicPlannerController {
                   need: 'destinations',
                   circuit: { key: circuitHit.circuit.key, label: circuitHit.circuit.label, quote: circuitHit.quote, confidence: circuitHit.confidence, tourId: circuitHit.circuit.tourId },
                   region: null, theme: chips.length ? { chips, quote: null } : null,
+                  frame: (frame.entry || frame.exit || startWasStated)
+                    ? { home: startWasStated ? start : null, entry: frame.entry, exit: frame.exit }
+                    : null,
                   towns: [],
-                  echo: intent ? buildEcho(intent) : [],
+                  echo: askEcho,
                   questions,
                   proposal: shapedCircuit,
                   proposals: [shapedCircuit],
                   refusedProposals: [],
-                  message: `${reading}That is a journey we run ourselves — ${tour.title}, `
+                  message: `${reading}${frame.entry ? `You land at ${frame.entry}, and the journey is planned from there. ` : ''}That is a journey we run ourselves — ${tour.title}, `
                     + `${g.proposal.totalNights} nights: ${stopWords}. ${circuitHit.circuit.note}.`
                     + (g.gateNotes.length ? ` ${g.gateNotes.join(' ')}` : '')
                     + askOrigin,
@@ -920,7 +937,10 @@ export class PublicPlannerController {
                 need: 'destinations',
                 circuit: { key: circuitHit.circuit.key, label: circuitHit.circuit.label, quote: circuitHit.quote, confidence: circuitHit.confidence, tourId: circuitHit.circuit.tourId },
                 region: null, theme: chips.length ? { chips, quote: null } : null,
-                towns: [], echo: intent ? buildEcho(intent) : [], questions,
+                  frame: (frame.entry || frame.exit || startWasStated)
+                    ? { home: startWasStated ? start : null, entry: frame.entry, exit: frame.exit }
+                    : null,
+                towns: [], echo: askEcho, questions,
                 proposal: null, proposals: [],
                 refusedProposals: [{ stops: r.proposal.stops.map((s) => s.name), gate: r.gate, reason: r.reason }],
                 message: `${reading}${r.reason}`,
@@ -943,7 +963,7 @@ export class PublicPlannerController {
           return res.status(200).json({
             status: false,
             need: 'origin',
-            echo: intent ? buildEcho(intent) : [],
+            echo: askEcho,
             questions: q0.length ? q0 : [{
               key: 'origin',
               risk: 1,
@@ -1221,7 +1241,7 @@ export class PublicPlannerController {
           // and each chip must say whether HE said it, WE guessed it, or we still need it.
           // The echo has existed since Sprint 7 and the region branch never sent it. A
           // Designer that guesses in silence is worse than the dead end it replaced.
-          echo: intent ? buildEcho(intent) : [],
+          echo: askEcho,
           questions: intent ? counterQuestions(intent) : [],
           // THE PROPOSALS. Every stop carries its state, its tier, its night count and the
           // grade of the evidence behind it. Every rejection carries a HUMAN reason. Each
@@ -1502,6 +1522,29 @@ export class PublicPlannerController {
 
       await RouteOptimizerController.optimize(fakeReq, fakeRes);
 
+      // ---- US-872 — A ROUND TRIP THAT CANNOT COME HOME IS NOT A DEAD SCREEN. -----------
+      //
+      // The Nau Devi group asked to return to Delhi; the way home from Katra had lost
+      // every honest service (dirty timetable rows died on the Iron Law), the solver
+      // returned an EMPTY sequence, US-839 refused the hollow plan — and the traveller
+      // got "we could not build your plan just now". A consultant does not hang up the
+      // phone: he gives you the trip that IS honest and tells you plainly which leg he
+      // could not stand behind. So on a failed solve that carried an exit gate, we try
+      // ONCE more without the return leg — and if that succeeds, the drop is SPOKEN in
+      // the plan's own notes, never silent (and US-864 names the airport for the way
+      // home). His word is not overridden; it is answered out loud.
+      let returnLegDropped: string | null = null;
+      if ((!captured || !(captured as any).status) && innerBody.end) {
+        const onewayBody = { ...innerBody, end: null, tripType: 'oneway' as const };
+        await RouteOptimizerController.optimize(
+          { body: onewayBody, headers: {}, ip } as unknown as Request, fakeRes);
+        if (captured && (captured as any).status) {
+          returnLegDropped = String(innerBody.end);
+          end = null;   // the way-home note (US-864) now speaks on the last day
+          console.warn(`US-872 — return leg to ${returnLegDropped} could not be honestly built; delivered one-way with the drop spoken.`);
+        }
+      }
+
       if (!captured || !captured.status) {
         // US-861(a) — the public controller must never surface an admin-desk sentence.
         // "Provide at least 2 cities." is written for an operator with a form, not for a
@@ -1740,6 +1783,14 @@ export class PublicPlannerController {
         }
       } catch (e) {
         console.error('US-871 circuit-day overlay failed (non-fatal):', e);
+      }
+
+      // US-872 — the dropped return leg is CONFESSED in the plan he reads, first thing.
+      if (returnLegDropped && planner.plan) {
+        planner.plan.contractNotes = [
+          `You asked us to plan the journey back to ${returnLegDropped}. We checked the real services for that return and could not stand behind any of them within this trip, so this plan ends at the last stop — the note on the final day names the nearest airport. Tell us, and we will arrange the journey home to ${returnLegDropped} separately, with verified services.`,
+          ...(planner.plan.contractNotes ?? []),
+        ];
       }
 
       // ---- US-864 — A TRIP MUST SAY HOW IT ENDS. -----------------------------------------

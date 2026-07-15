@@ -821,8 +821,12 @@ export function counterQuestions(intent: TravellerIntent): CounterQuestion[] {
     {
       key: 'comfortTier',
       risk: risk(intent.comfortTier, 'comfortTier'),
-      text: 'What kind of stay do you have in mind — comfortable, or the best available? It decides the hotels and how we travel between them.',
-      provisional: 'we have assumed a comfortable, mid-range trip',
+      // US-872 — the founder: "should actually have been: category of hotels you need,
+      // 3*/4*/5*". A traveller answers a concrete question; "what kind of stay" is a
+      // consultant mumbling. The stars are also exactly the vocabulary the deterministic
+      // tier reader speaks, so his answer costs zero tokens to hear.
+      text: 'Which category of hotels shall we book — 3 star, 4 star, or 5 star luxury? It decides the stays and how we travel between them.',
+      provisional: 'we have assumed comfortable 3 star hotels',
     },
     {
       key: 'nights',
@@ -1074,10 +1078,16 @@ export function buildEcho(intent: TravellerIntent): EchoRow[] {
       ...(s.reading.basis ? { why: s.reading.basis } : {}),
     });
   }
-  if (intent.interests.length) {
-    const first = intent.interests[0];
+  // US-872 — "You love — our reading: pilgrimage, nau devi yatra" read like a machine
+  // talking about the traveller in front of him. The label is plain now, and an
+  // interest that merely repeats the purpose row above it is not shown twice.
+  const freshInterests = intent.interests.filter(
+    (i) => i.value && i.value !== intent.purpose.value,
+  );
+  if (freshInterests.length) {
+    const first = freshInterests[0];
     rows.push({
-      key: 'interests', label: 'You love', value: intent.interests.map((i) => i.value).join(', '),
+      key: 'interests', label: 'You mentioned', value: freshInterests.map((i) => i.value).join(', '),
       provenance: first.provenance,
       ...(first.quote ? { quote: first.quote } : {}),
     });
