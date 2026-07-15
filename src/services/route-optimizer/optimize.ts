@@ -265,13 +265,30 @@ export function estCostPp(o: LegOption): number {
 /** scalarize one option to a comparable cost under the objective (lower = better).
  *  preferDaily: when the travel date is unknown, penalise non-daily services so the
  *  plan stays date-flexible unless nothing daily exists. */
-function optionCost(o: LegOption, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights, contract?: PlanContract, elevations?: ElevationIndex): number {
+/** How many days a week a service runs, from its 7-bit operating-days mask (Mon..Sun). */
+export function operatingDayCount(mask: number | null | undefined): number {
+  const m = mask == null ? 127 : mask;
+  let c = 0;
+  for (let i = 0; i < 7; i++) if (m & (1 << i)) c++;
+  return c;
+}
+
+export function optionCost(o: LegOption, obj: Objective, pax: number, preferDaily = false, tol: Tolerance = DEFAULT_TOL, month?: number, w?: Weights, contract?: PlanContract, elevations?: ElevationIndex): number {
   // ALL mode comparisons now run on the Door-to-Door Cost Vector (spec §4.1): raw
   // durations never compete. A body-truth hard-blocked option (over hour cap,
   // chronotype breach, class-floor fail) is strongly deprioritised for LIVE
   // sequencing but still connects the graph — dayExpand surfaces the infeasibility.
-  const nonDaily = preferDaily && o.operatingDays != null && o.operatingDays !== 127;
-  const penalty = nonDaily ? 40 : 0;
+  //
+  // RADAR — PREFER THE MORE CONVENIENT SERVICE (founder, 15 Jul 2026: "suggest the most
+  // convenient and efficient mode"). The old penalty was BINARY — daily vs not — so a
+  // service running three days a week (Trivandrum → Chennai, Mon/Tue/Wed) scored exactly
+  // the same as one running two (Tuticorin → Chennai, Tue/Sun), and a tie fell to whatever
+  // sorted first. Now the frequency penalty is GRADED by how many days the service runs:
+  // daily is still strongly preferred (0), and among limited services the MORE frequent —
+  // the one easier to fit to the traveller's dates — is preferred. Efficiency (door-to-
+  // door) still lives in `base`; this only settles convenience.
+  const cnt = operatingDayCount(o.operatingDays);
+  const penalty = preferDaily && cnt < 7 ? Math.round(48 * (7 - cnt) / 6) : 0;   // 6d→8 … 3d→32 … 2d→40 … 1d→48
   const wts = w ?? weightsForObjective(obj);
   const v = ddcv(o, legCtx(o, tol, pax, month, contract, elevations));
   const scalar = ddcvScalar(v, wts);
