@@ -158,6 +158,7 @@ export const REGIONS: Region[] = [
       'north east india', 'north east indian', 'northeast india', 'north-east india',
       'north east', 'northeast', 'north-east', 'ne india',
       'seven sisters', 'seven sister states', 'eight sister states',
+      'assam', 'meghalaya', 'sikkim', 'arunachal', 'arunachal pradesh', 'nagaland', 'mizoram', 'manipur', 'tripura',
     ],
   },
   {
@@ -215,13 +216,18 @@ export const REGIONS: Region[] = [
     key: 'central_india',
     label: 'Central India',
     states: [S.MADHYA, S.CHHATTISGARH],
-    phrases: ['central india', 'the heart of india'],
+    // US-867 (founder's live test, 15 Jul 2026): a traveller wrote "Madhya Pradesh" and was
+    // offered JAIPUR — the region listened for 'central india' but not for the state's own
+    // name, so the theme pool ran unfenced across all of India. A state's name is the
+    // plainest region word a traveller can write; every region now carries its states'
+    // names as phrases.
+    phrases: ['central india', 'the heart of india', 'madhya pradesh', 'madhya-pradesh', 'madhyapradesh', 'chhattisgarh', 'chattisgarh'],
   },
   {
     key: 'east_india',
     label: 'East India',
     states: [S.WEST_BENGAL, S.ODISHA, S.BIHAR, S.JHARKHAND],
-    phrases: ['east india', 'eastern india', 'the east'],
+    phrases: ['east india', 'eastern india', 'the east', 'west bengal', 'bengal', 'odisha', 'orissa', 'jharkhand'],
   },
   {
     key: 'andamans',

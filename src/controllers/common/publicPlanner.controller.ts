@@ -1590,6 +1590,27 @@ export class PublicPlannerController {
                 + 'limited and must be reserved ahead; we will confirm the exact safari timings '
                 + 'and book your seats with the lodge before you pay anything.',
               ];
+              // US-863b — THE SAFARI LIVES IN THE DAY HE READS, NOT ONLY IN A FOOTNOTE.
+              // The founder's live test: a jungle-safari couple's Kanha days said "full
+              // day" — not one word about the safari they came for. A free day at a
+              // wildlife stop IS the safari day; the day line now says so, with the
+              // booking truth attached. No timing is invented.
+              const wildSet = new Set(wildStops.map((s) => s.trim().toLowerCase()));
+              for (const day of planner.plan.days ?? []) {
+                const cityName = String((day as any).city ?? '');
+                if (wildSet.has(cityName.trim().toLowerCase()) && /full day$/i.test(String((day as any).activity ?? ''))) {
+                  (day as any).activity = `${cityName} — jungle safari day (seats are limited and must be reserved ahead; we book them with your plan)`;
+                }
+              }
+              // And his ADVENTURE word gets an honest answer, not silence: today the
+              // safari IS the adventure we can stand behind on this route.
+              const saidAdventure = (intent ? chipsOf(intent) : []).some((c) => /adventure|trekking/i.test(c));
+              if (saidAdventure) {
+                planner.plan.contractNotes = [
+                  ...(planner.plan.contractNotes ?? []),
+                  'You also said adventure. On this route the jungle safaris are the adventure we can stand behind. If you want more — trekking, rafting, camping — tell us and we will re-plan around an adventure-first route.',
+                ];
+              }
             }
           }
         }
@@ -1618,6 +1639,14 @@ export class PublicPlannerController {
                 ? `Your trip ends at ${last}. The nearest airport with scheduled flights is ${aps[0].city}, roughly ${Math.round(aps[0].km * 1.3)} km by road. Tell us the city you want to return to and we will plan the journey home — flight, train or road — as part of this trip.`
                 : `Your trip ends at ${last}, which is not near an airport. Tell us the city you want to return to and we will plan the journey home — flight, train or road — as part of this trip.`;
               planner.plan.contractNotes = [...(planner.plan.contractNotes ?? []), note];
+              // US-864b — and it is said ON THE LAST DAY, where his eyes actually are
+              // (founder, mid-test: "leaves dead end at Kanha"). A footnote he must
+              // scroll for is a sentence we half-said.
+              const days2 = planner.plan.days ?? [];
+              const lastDay = days2[days2.length - 1] as any;
+              if (lastDay && String(lastDay.city ?? '').trim().toLowerCase() === last.trim().toLowerCase()) {
+                lastDay.activity = `${String(lastDay.activity ?? '').replace(/\s*$/, '')} · ${note}`;
+              }
             }
           }
         }
