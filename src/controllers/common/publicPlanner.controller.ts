@@ -44,8 +44,8 @@ import { mergeDuplicateCities } from '@/services/route-optimizer/optimize';
 import { poolForChips, scopedDesignerMemory, originFactsFor, flightSectorExists, flightOneStopExists, airportsNear } from '@/services/route-optimizer/themePool';
 import { gateProposals, buildShape, seasonBodyExitCheck, type EntryFact, type GateFacts } from '@/services/route-optimizer/proposalGates';
 import { loadSeasonFacts, loadAccessFacts } from '@/services/route-optimizer/placeFactsDb';
-import { resolveNamedCircuit } from '@/services/route-optimizer/namedCircuits';
-import { circuitStays, circuitTourFacts } from '@/services/route-optimizer/namedCircuitsDb';
+import { resolveNamedCircuit, overlayTourDays } from '@/services/route-optimizer/namedCircuits';
+import { circuitStays, circuitTourFacts, circuitItinerary } from '@/services/route-optimizer/namedCircuitsDb';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
 import { haversineKm } from '@/services/route-optimizer/geo';
 import type { DesignerMemory } from '@/services/route-optimizer/designerMemory';
@@ -1716,6 +1716,30 @@ export class PublicPlannerController {
         }
       } catch (e) {
         console.error('US-863 food/safari exit note failed (non-fatal):', e);
+      }
+
+      // ---- US-871 — A SOLD CIRCUIT'S DAYS SPEAK ITS OWN ITINERARY. ----------------------
+      //
+      // The founder's Nau Devi test: the picked plan said "Chandigarh — full day" to a
+      // pilgrim, while our own tour_itinerary knew it is the day of Mansa Devi at
+      // Panchkula and the three shrines en route to Dharamshala. When his sentence names
+      // a circuit WE SELL, the finished plan's days carry the tour's own words — matched
+      // city by city, in order, applied only when the plan convincingly IS that tour.
+      // Nothing is invented: every sentence is the published itinerary.
+      try {
+        const circuitOnPlan = resolveNamedCircuit(request);
+        if (circuitOnPlan && planner.plan?.days?.length) {
+          const itin = await circuitItinerary(circuitOnPlan.circuit.tourId);
+          const matched = itin.length ? overlayTourDays(planner.plan.days as any[], itin) : 0;
+          if (matched >= 2) {
+            planner.plan.contractNotes = [
+              ...(planner.plan.contractNotes ?? []),
+              `The day-by-day details come from our own ${circuitOnPlan.circuit.label} itinerary — the same journey we run ourselves.`,
+            ];
+          }
+        }
+      } catch (e) {
+        console.error('US-871 circuit-day overlay failed (non-fatal):', e);
       }
 
       // ---- US-864 — A TRIP MUST SAY HOW IT ENDS. -----------------------------------------

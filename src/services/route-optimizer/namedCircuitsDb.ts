@@ -66,3 +66,19 @@ export async function circuitTourFacts(tourId: string): Promise<CircuitTourFacts
     return null;
   }
 }
+
+/** US-871 — the tour's own day-by-day text, verbatim from tour_itinerary. */
+export async function circuitItinerary(tourId: string): Promise<import('./namedCircuits').TourDayText[]> {
+  try {
+    const rows = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT day, title, description FROM tour_itinerary WHERE "tourId" = $1 ORDER BY day`, tourId);
+    return rows.map((r) => ({
+      day: Number(r.day) || 0,
+      title: String(r.title ?? ''),
+      description: r.description == null ? null : String(r.description),
+    }));
+  } catch (e) {
+    console.error('circuitItinerary failed (non-fatal):', e);
+    return [];
+  }
+}

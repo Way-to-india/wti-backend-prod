@@ -135,3 +135,85 @@ export function resolveNamedCircuit(text: string | null | undefined): NamedCircu
   }
   return null;
 }
+
+// ==============================================================================
+// US-871 — A SOLD CIRCUIT'S DAYS SPEAK ITS OWN ITINERARY.
+//
+// The founder's Nau Devi test (15 Jul 2026): the picked plan told a pilgrim
+// "Chandigarh — full day", twice, with not one Devi temple named — while OUR OWN
+// tour_itinerary for that circuit knew the whole story: the dip at Har-ki-Pauri,
+// Mansa Devi at Panchkula, the three shrines en route to Dharamshala, Chamunda
+// Devi, Jwalaji and Kangra Devi from the Dharamshala base, Vaishno Devi at the
+// end. The engine planned the driving and forgot the pilgrimage.
+//
+// This overlays the tour's own day text onto the finished plan's days, matched
+// city by city IN ORDER. Nothing is invented: every sentence is the published
+// itinerary of a tour we run. Transit days KEEP the engine's transport truth
+// (train numbers, honest hours) and gain the tour's words beside it; free days
+// trade their generic "full day" for the day's real purpose. PURE.
+// ==============================================================================
+
+export interface TourDayText {
+  day: number;
+  title: string;
+  description: string | null;
+}
+
+/** Indian town spellings drift on the letter h (Dharamshala/Dharamsala,
+ *  Rishikesh/Hrishikesh). Normalise BOTH sides the same way and the drift is gone. */
+const normTown = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '').replace(/h/g, '');
+
+function clipSentence(s: string, max = 340): string {
+  const t = s.replace(/\s+/g, ' ').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '));
+  return end > 80 ? cut.slice(0, end + 1) : cut + '…';
+}
+
+/**
+ * Mutates `days` in place (the controller owns the payload). Returns how many days
+ * were given their tour text — 0 means the plan did not convincingly match the tour
+ * (fewer than two days aligned) and NOTHING was touched: a wrong overlay would be
+ * worse than a thin day, and his picked towns may legitimately differ from ours.
+ */
+export function overlayTourDays(
+  days: { city?: string | null; activity?: string | null; transit?: unknown }[],
+  itin: TourDayText[],
+): number {
+  if (!days.length || !itin.length) return 0;
+  const hay = itin.map((r) => normTown(`${r.title} ${r.description ?? ''}`));
+  const planCities = [...new Set(days.map((d) => normTown(String(d.city ?? ''))).filter((c) => c.length >= 4))];
+  // which plan towns each tour day names — a day that names NONE ("Vaishno Devi
+  // Temple") belongs to whichever base the tour was already sleeping at.
+  const namesAny = hay.map((h) => planCities.some((c) => h.includes(c)));
+  let cursor = 0;
+  let lastCity = '';
+  const matches: { di: number; ti: number }[] = [];
+  for (let di = 0; di < days.length; di++) {
+    const city = normTown(String(days[di].city ?? ''));
+    if (city.length < 4) continue;               // too short to trust a substring match
+    for (let ti = cursor; ti < itin.length; ti++) {
+      const namesThis = hay[ti].includes(city);
+      // the silent-day rule: taken only in strict sequence (ti === cursor), never
+      // pulled from deep ahead — order is the tour's own order.
+      const silentAtBase = ti === cursor && !namesAny[ti] && lastCity === city;
+      if (namesThis || silentAtBase) {
+        matches.push({ di, ti });
+        cursor = ti + 1;
+        lastCity = city;
+        break;
+      }
+    }
+  }
+  if (matches.length < 2) return 0;
+  for (const { di, ti } of matches) {
+    const d = days[di];
+    const text = clipSentence(itin[ti].description ?? itin[ti].title);
+    if (!text) continue;
+    d.activity = d.transit
+      ? `${String(d.activity ?? '').trim()} — ${text}`   // keep the transport truth, add the day's purpose
+      : `${String(d.city ?? '').trim()} — ${text}`;       // the "full day" finally says what the day is FOR
+  }
+  return matches.length;
+}
