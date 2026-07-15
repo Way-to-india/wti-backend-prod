@@ -163,6 +163,27 @@ export interface TourDayText {
  *  Rishikesh/Hrishikesh). Normalise BOTH sides the same way and the drift is gone. */
 const normTown = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '').replace(/h/g, '');
 
+/**
+ * tour_itinerary.description is CMS HTML ("<p class=…>…<strong>…</strong>"). Served raw,
+ * the tags show as literal text on the day-by-day (founder live test, 15 Jul 2026). This
+ * flattens it to the plain prose our voice actually speaks: tags removed, the common HTML
+ * entities decoded, whitespace collapsed. PURE.
+ */
+export function stripHtml(s: string | null | undefined): string {
+  if (!s) return '';
+  return String(s)
+    .replace(/<\s*br\s*\/?\s*>/gi, ' ')
+    .replace(/<\/(p|div|li|h[1-6])\s*>/gi, ' ')
+    .replace(/<[^>]*>/g, '')                 // every remaining tag
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+    .replace(/&#3[49];|&rsquo;|&lsquo;|&apos;/gi, "'")
+    .replace(/&quot;|&ldquo;|&rdquo;/gi, '"')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function clipSentence(s: string, max = 340): string {
   const t = s.replace(/\s+/g, ' ').trim();
   if (t.length <= max) return t;

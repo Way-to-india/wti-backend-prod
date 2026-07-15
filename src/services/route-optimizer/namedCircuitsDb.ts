@@ -67,15 +67,18 @@ export async function circuitTourFacts(tourId: string): Promise<CircuitTourFacts
   }
 }
 
-/** US-871 — the tour's own day-by-day text, verbatim from tour_itinerary. */
+/** US-871 — the tour's own day-by-day text from tour_itinerary. The CMS stores it as HTML
+ *  ("<p class=…>…<strong>…"); we flatten it to plain prose (stripHtml) so the tags never
+ *  reach the traveller's day-by-day (founder live test, 15 Jul 2026). */
 export async function circuitItinerary(tourId: string): Promise<import('./namedCircuits').TourDayText[]> {
   try {
+    const { stripHtml } = await import('./namedCircuits');
     const rows = await prisma.$queryRawUnsafe<any[]>(
       `SELECT day, title, description FROM tour_itinerary WHERE "tourId" = $1 ORDER BY day`, tourId);
     return rows.map((r) => ({
       day: Number(r.day) || 0,
-      title: String(r.title ?? ''),
-      description: r.description == null ? null : String(r.description),
+      title: stripHtml(r.title == null ? '' : String(r.title)),
+      description: r.description == null ? null : stripHtml(String(r.description)),
     }));
   } catch (e) {
     console.error('circuitItinerary failed (non-fatal):', e);

@@ -10,6 +10,18 @@ import {
   type RawStop, type BranchLite, type QueryFacets,
 } from '../library';
 import { startGatewaySpan } from '../intent';
+import { stripHtml } from '../namedCircuits';
+
+describe('C1 — day text is plain prose, never CMS HTML', () => {
+  test('tags removed, entities decoded, whitespace collapsed', () => {
+    const html = '<p class="min-h-[1.5em] mb-4">Visit <strong>Meenakshi Amman temple</strong> &amp; the ghats.</p>';
+    expect(stripHtml(html)).toBe('Visit Meenakshi Amman temple & the ghats.');
+  });
+  test('null/empty safe; plain text unchanged', () => {
+    expect(stripHtml(null)).toBe('');
+    expect(stripHtml('Just plain prose.')).toBe('Just plain prose.');
+  });
+});
 
 describe('C1 — a starting gateway is not a destination', () => {
   test('"start my journey from Chennai or Madurai" → both are in the gateway span', () => {
