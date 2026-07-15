@@ -743,6 +743,17 @@ export class PublicPlannerController {
       // resolved and we know where he is actually going) — and we say that we did.
       const startWasStated = !!(start && String(start).trim());
 
+      // US-864b — A TICKED RETURN BOX WITH NO CITY STILL MEANS "BRING ME HOME" (founder,
+      // 15 Jul 2026). The box is checked by default now; the frontend cannot know his
+      // origin (it lives in the free text), so it sends `wantReturn` and we default the
+      // EXIT to his origin — a round trip — UNLESS he stated an exit in his own words
+      // (frame.exit) or typed a return city (end). This is what stops a plan ending at a
+      // dead-end like Kaziranga when he left the box ticked and said nothing.
+      const wantReturn = req.body?.wantReturn === true;
+      if (wantReturn && !end && !frame.exit && start && String(start).trim()) {
+        end = start;
+      }
+
       // validation gate: only real places survive. Unresolved names are NOT
       // silently dropped — each gets the full verify ladder (exact → fuzzy
       // spelling fix → AI existence check + registration). Only a name that
