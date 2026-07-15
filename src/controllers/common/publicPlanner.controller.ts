@@ -560,7 +560,31 @@ export class PublicPlannerController {
             }
             cities = named;
           }
-          start = start || parsed.start || null;
+          // ---- US-870 — A DATE IS NOT A DOOR. -------------------------------------------
+          // The Nau Devi group's live test, 15 Jul 2026: the model returned
+          // `start: "20th November 2026"` — his ARRIVAL DATE — and because the string is
+          // verbatim in his sentence, the anti-fabrication lock blessed it as he_said.
+          // The origin looked answered, so the origin question was never asked, and the
+          // whole plan hung off a fact that is not a place. A MODEL MAY PROPOSE; ONLY THE
+          // GAZETTEER MAY CONFIRM — the same law every parsed CITY already obeys, applied
+          // at last to the parsed START. Anything date-shaped dies before it costs a
+          // verify call; anything the gazetteer cannot confirm is scrubbed from the raw
+          // and the intent is recompiled, so the echo says `origin — we need it` instead
+          // of quoting a calendar entry back at him.
+          if (!start && parsed.start) {
+            const cand = String(parsed.start).trim();
+            const v = /\d/.test(cand) ? null : await verifyCity(cand);
+            if (v?.ok && v.name) {
+              start = v.name;
+            } else {
+              console.warn(`US-870 — model start "${cand}" is not a city our gazetteer knows; dropped.`);
+              if (heard?.raw) {
+                heard.raw.start = null;
+                if (heard.raw.quotes) delete heard.raw.quotes.start;
+                intent = intentFromRaw(heard.raw, request);
+              }
+            }
+          }
           // US-831b — the model missed it. Read it ourselves. It still has to survive verifyCity
           // below, so nothing enters the plan that our own gazetteer cannot confirm.
           if (!start) {
@@ -765,6 +789,13 @@ export class PublicPlannerController {
       // may be shown, but the reading is said out loud and he can correct it (founder rule).
       const circuitHit = cities.length < 1 ? resolveNamedCircuit(request) : null;
 
+      // US-870 — THE ENTRY GATE IS A MEASURING POINT. The Nau Devi group told us where
+      // they LAND ("arriving at Delhi Airport") and were about to be interrogated for an
+      // origin anyway — or worse, planned from a date. When he declared an entry gate,
+      // the journey is measured from THERE; his home city stays an open question on the
+      // side, never a wall in front of the circuit he named.
+      const measuredFrom: string | null = frame.entry ?? ((startWasStated && start) ? start : null);
+
       if (cities.length < 1 && (circuitHit || regionIsUsable(regionMatch, cities.length) || chips.length > 0)) {
         const m: RegionMatch | null = regionMatch;
 
@@ -804,10 +835,10 @@ export class PublicPlannerController {
               const stayNames = stays.map((s) => s.name);
               const [seasons, access] = await Promise.all([loadSeasonFacts(stayNames), loadAccessFacts(stayNames)]);
 
-              // Entry facts from HIS door, when he has told us where that is.
+              // Entry facts from HIS door — or from his declared ENTRY GATE (US-870).
               const entry = new Map<string, import('@/services/route-optimizer/proposalGates').EntryFact | null>();
-              if (startWasStated && start && stays[0]) {
-                const origin = await originFactsFor(start);
+              if (measuredFrom && stays[0]) {
+                const origin = await originFactsFor(measuredFrom);
                 if (origin) {
                   const first = stays[0];
                   let fact: import('@/services/route-optimizer/proposalGates').EntryFact = {
@@ -831,13 +862,13 @@ export class PublicPlannerController {
                 nightsCeiling: saidNights ?? 99,
                 month: month ?? null,
                 profile: (['standard', 'family', 'senior'].includes(profile) ? profile : 'standard') as any,
-                coords, elevations, seasons, access, entry, originName: start ?? null,
+                coords, elevations, seasons, access, entry, originName: measuredFrom,
               }, { bodyEdits: false });
 
               const reading = circuitHit.confidence === 'variant'
                 ? `I read "${circuitHit.quote}" as ${circuitHit.circuit.label}. If you meant something else, tell me plainly and I will start again. `
                 : `You asked for ${circuitHit.circuit.label}. `;
-              const askOrigin = (!startWasStated || !start)
+              const askOrigin = !measuredFrom
                 ? ' Now tell me the city you are starting from, and I will fit the journey to your door — the right trains, the right flights, and honest days.'
                 : '';
               const originQ: CounterQuestion = {
@@ -845,7 +876,7 @@ export class PublicPlannerController {
                 text: 'Where does your journey start from? Tell us your city and we will plan from your door, not from somebody else\'s.',
               };
               const baseQs = intent ? counterQuestions(intent) : [];
-              const questions = (!startWasStated || !start)
+              const questions = !measuredFrom
                 ? [originQ, ...baseQs.filter((q) => q.key !== 'origin')].slice(0, 2)
                 : baseQs;
 
@@ -856,7 +887,7 @@ export class PublicPlannerController {
                 const pick = {
                   request,
                   cities: g.proposal.stops.map((s) => ({ name: s.name, nights: s.nights })),
-                  start: (startWasStated && start) ? start : null,
+                  start: measuredFrom,
                   end: end ?? null,
                   ...(month ? { month } : {}),
                   pax, profile,
@@ -905,7 +936,9 @@ export class PublicPlannerController {
         // his door, honest reachability) cannot run without the origin, so the origin
         // question comes FIRST. We do not propose blind and re-propose later — that is two
         // different answers from one consultant.
-        if (!startWasStated || !start) {
+        // US-870 — a declared ENTRY GATE answers this question's purpose: the gates can
+        // measure from where he lands. His home stays a side question, not a wall.
+        if (!measuredFrom) {
           const q0 = intent ? counterQuestions(intent) : [];
           return res.status(200).json({
             status: false,

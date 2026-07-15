@@ -514,13 +514,16 @@ const INTEREST_CHIP: [RegExp, Chip][] = [
  * carries the frame forward. PURE — verification against the gazetteer stays with the
  * caller.
  */
-const FRAME_STOP = /\b(?:we|i|they|and|with|for|to|who|that|all|after|before|via|on|by|would|will|want|wants|is|are|in|the)\b/i;
+const FRAME_STOP = /\b(?:we|i|they|and|with|for|to|who|that|all|after|before|via|on|by|would|will|want|wants|is|are|in|the|next|this|tomorrow|today|tonight|soon|month|week|year)\b/i;
 
 function cutCityCand(raw: string): string | null {
   let cand = raw.split(/[,.;:!?]/)[0].trim();
   const stop = FRAME_STOP.exec(cand);
   if (stop && stop.index > 0) cand = cand.slice(0, stop.index).trim();
   cand = cand.replace(/\s+/g, ' ').trim();
+  // US-870 — "arriving at Delhi Airport" means DELHI. The airport is how he arrives,
+  // not where he is going; the gazetteer knows the town, not the terminal.
+  cand = cand.replace(/\s+(?:international\s+)?(?:airport|airfield|aerodrome|railway\s+station|junction|station)\b.*$/i, '').trim();
   if (cand.length < 3 || cand.length > 28) return null;
   if (/^(the|a|an|there|here|home|india)$/i.test(cand)) return null;
   return cand;
@@ -539,11 +542,20 @@ export function frameFromText(text: string | null | undefined): TripFrame {
   const out: TripFrame = { entry: null, entryQuote: null, exit: null, exitQuote: null };
   if (!text || typeof text !== 'string') return out;
 
-  const entryRe = /\b(?:start|starting|begin|beginning)\s+(?:(?:the|our|this|my)\s+)?(?:tour|trip|journey|yatra)?\s*(?:from|at|in)\s+([A-Za-z][A-Za-z .'-]{2,32})/i;
-  const em = entryRe.exec(text);
-  if (em?.[1]) {
-    const c = cutCityCand(em[1]);
-    if (c) { out.entry = c; out.entryQuote = em[0].trim(); }
+  const entryRes = [
+    /\b(?:start|starting|begin|beginning)\s+(?:(?:the|our|this|my)\s+)?(?:tour|trip|journey|yatra)?\s*(?:from|at|in)\s+([A-Za-z][A-Za-z .'-]{2,32})/i,
+    // US-870 — "we would be arriving at Delhi Airport" IS his entry gate, and it went
+    // unheard: this reader only knew "starting from". The Nau Devi group's arrival
+    // airport then survived as a DESTINATION and one false city switched off the
+    // named-circuit branch. A man who says where he lands has declared his frame.
+    /\b(?:arriv(?:e|ing)|land(?:ing)?)\s+(?:at|in|into)\s+([A-Za-z][A-Za-z .'-]{2,32})/i,
+  ];
+  for (const re of entryRes) {
+    const em = re.exec(text);
+    if (em?.[1]) {
+      const c = cutCityCand(em[1]);
+      if (c) { out.entry = c; out.entryQuote = em[0].trim(); break; }
+    }
   }
 
   const exitRes = [
