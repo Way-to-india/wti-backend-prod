@@ -868,6 +868,13 @@ export class PublicPlannerController {
         try {
           if (chips.length) nodes = await poolForChips(chips, m ? statesOf(m) : []);
           if (!nodes.length && m) nodes = await stayNodesInStates(statesOf(m));
+          // US-853b, APPLIED TO THE POOL (found on the founder's live test, 15 Jul 2026):
+          // Hyderabad rides the Heritage chip, so a Hyderabadi asking for heritage was
+          // offered THREE HOTEL NIGHTS IN HIS OWN CITY — and the US-849 nearest-first sort
+          // then put that card on top, because his home is zero hours from his door. His
+          // home is not a destination; it leaves the pool before the designer ever sees it.
+          const homeName = (frame.entry ?? start ?? '').trim().toLowerCase();
+          if (homeName) nodes = nodes.filter((n) => n.name.trim().toLowerCase() !== homeName);
         } catch (e) {
           console.error('shortlist pool failed (non-fatal):', e);
         }
