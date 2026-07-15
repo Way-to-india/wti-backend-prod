@@ -484,13 +484,22 @@ function buildPlan(order: number[], names0: string[], input: OptimizeInput, deps
   const pass1 = expandDays({ sequence: names, nights, nodes: nodesByName, chosen, profile: input.profile ?? 'standard', maxRoadKmDay: input.maxRoadKmDay, startWeekday: null, haltNames: deps.haltNames, anchorsByLeg: deps.anchorsByLeg, month: input.month, praiseHotelNight });
   const constrained: WeekdayConstrainedLeg[] = [];
   {
-    let di = 0;
+    // ---- US-862 — THE FLIGHT WAS SCHEDULED ON A DAY IT DOES NOT FLY. -----------------------
+    //
+    // Found by the FOUNDER on a live plan, 15 July 2026: Day 1 locked to Wednesday, the
+    // Wed/Sun-only IX 2019 placed on Day 2 — a THURSDAY. The plan's own calendar
+    // contradicted its own flight, and a traveller who booked his hotels around it would
+    // have stood at the airport on a day the aeroplane does not come.
+    //
+    // The bug: this loop updated its running day index AFTER handling each day, so every
+    // constrained leg was registered one day EARLY — the lock solved the calendar for a
+    // flight on Day 1 that actually flies on Day 2. The day already knows its own index;
+    // we use it, and the off-by-one dance is deleted.
     for (const d of pass1.days) {
       if (d.transit) {
         const o = chosen.get(legKey(d.transit.from, d.transit.to));
-        if (o && o.operatingDays != null && o.operatingDays !== 127) constrained.push({ dayIndex: di, operatingDays: o.operatingDays, identifier: o.identifier });
+        if (o && o.operatingDays != null && o.operatingDays !== 127) constrained.push({ dayIndex: d.day - 1, operatingDays: o.operatingDays, identifier: o.identifier });
       }
-      di = d.day - 1;
     }
   }
   let { lock } = resolveWeekdayLock(constrained, input.startWeekday ?? null);

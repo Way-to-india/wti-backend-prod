@@ -33,7 +33,7 @@ import { nodeTier, nodeVoice, type StayNode } from '@/services/route-optimizer/s
 import { design, designAll, type Candidate, type DesignerBrief, type Proposal } from '@/services/route-optimizer/designer';
 import { loadDesignerMemory } from '@/services/route-optimizer/designerMemoryDb';
 import { foodFor } from '@/services/route-optimizer/foodDb';
-import { foodNeedFromWords } from '@/services/route-optimizer/food';
+import { foodNeedFromWords, foodStatus, foodParagraph } from '@/services/route-optimizer/food';
 import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
 import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, cityWasNamed, frameFromText, heSaid, isStatedCityList, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
 import prisma from '@/config/db';
@@ -1439,11 +1439,24 @@ export class PublicPlannerController {
           source: 'we_need_it' as StartSource,
           why: `You asked to finish at ${endDropped}, but we could not find that place on our map. Tell us the nearest big town and we will plan the route to end there.`,
         }] : []),
-        {
-          key: 'nights', label: 'Nights', value: String(totalNights),
-          source: request && !statedCities ? 'we_guessed' : 'you_said',
-          why: request && !statedCities ? 'We split your days across the places you named' : undefined,
-        },
+        // A RECEIPT MAY NOT LIE (founder's live test, 15 Jul 2026): the row said
+        // "7 nights (you said)" to a man who wrote "8-10 days". On a pick, the night split
+        // comes from the journey he CHOSE — that is a different truth from his own words,
+        // and the chip must say which one it is.
+        (() => {
+          const saidNights = intent?.nights.provenance === 'he_said' ? intent.nights.value : null;
+          const youSaidIt = nightsFromField != null || saidNights != null;
+          return {
+            key: 'nights' as const, label: 'Nights', value: String(totalNights),
+            source: (youSaidIt ? 'you_said' : 'we_guessed') as StartSource,
+            why: nightsFromField != null ? undefined
+              : saidNights != null && saidNights !== totalNights
+                ? `You allowed ${saidNights}; the journey you picked uses ${totalNights} nights — a ceiling is not a target`
+              : saidNights != null ? undefined
+              : statedCities ? 'The night split comes from the journey you picked'
+              : 'We split your days across the places you named',
+          };
+        })(),
         {
           key: 'travellers', label: 'Travellers', value: String(pax),
           source: paxFromField ? 'you_said' : 'we_guessed',
@@ -1532,6 +1545,77 @@ export class PublicPlannerController {
         }
       } catch (e) {
         console.error('US-850 exit season/body check failed (non-fatal):', e);
+      }
+
+      // ---- US-863 — HIS FOOD AND HIS SAFARI DO NOT VANISH AT THE PICK. ------------------
+      //
+      // Founder's live test, 15 July 2026: "vegetarian north indian food" and "jungle
+      // safari" appeared NOWHERE in the finished plan except inside his own stored
+      // sentence. The proposal cards carry a food paragraph; the picked plan dropped it on
+      // the floor. The whole food machine (needs, verified kitchens, the honest
+      // I-have-not-checked paragraph) existed and the exit never called it. It is called
+      // now, for every finished plan; same for the wildlife stop, which now says plainly
+      // that the safari must be reserved. Facts only: towns we have not checked are named
+      // as unchecked, and no safari timing is invented.
+      try {
+        if (planner.plan) {
+          const finalStops2 = cities.filter((c) => c.nights > 0).map((c) => c.name);
+          const need = foodNeedFromWords(request);
+          if (need) {
+            const stayRows = await stayNodesByNames(finalStops2);
+            const facts = await foodFor(stayRows.map((n) => n.id));
+            const towns = stayRows.map((n) => ({ name: n.name, status: foodStatus(facts.get(n.id), need.need) }));
+            const para = foodParagraph(need.need, need.quote, towns);
+            if (para) planner.plan.contractNotes = [...(planner.plan.contractNotes ?? []), para];
+          }
+          const chips2 = intent ? chipsOf(intent) : [];
+          const wildChip = chips2.find((c) => /wildlife/i.test(c));
+          if (wildChip) {
+            const wildPool = await poolForChips([wildChip]);
+            const wildNames = new Set(wildPool.map((n) => n.name.trim().toLowerCase()));
+            const wildStops = finalStops2.filter((s) => wildNames.has(s.trim().toLowerCase()));
+            if (wildStops.length) {
+              const saidSafari = /safari/i.test(request ?? '');
+              planner.plan.contractNotes = [
+                ...(planner.plan.contractNotes ?? []),
+                `${saidSafari ? 'You asked for jungle safaris' : 'You asked for wildlife'} — `
+                + `${wildStops.join(' and ')} is the wildlife stop on this plan. Safari seats are `
+                + 'limited and must be reserved ahead; we will confirm the exact safari timings '
+                + 'and book your seats with the lodge before you pay anything.',
+              ];
+            }
+          }
+        }
+      } catch (e) {
+        console.error('US-863 food/safari exit note failed (non-fatal):', e);
+      }
+
+      // ---- US-864 — A TRIP MUST SAY HOW IT ENDS. -----------------------------------------
+      //
+      // The founder's Kabini plan simply STOPPED, five hours by road from the nearest real
+      // airport, for a couple who prefer flights — and said nothing. When he gave us no
+      // exit city, the last stop's way home is now spoken: the nearest airport with real
+      // scheduled service, the honest road estimate to it, and the invitation to tell us
+      // his home city (the return-city box on the page posts it as `end`, which US-858
+      // already honours end-to-end).
+      try {
+        if (planner.plan && !end) {
+          const seq = planner.plan.sequence ?? [];
+          const last = seq[seq.length - 1];
+          const stop = (planner.mapStops ?? []).find((s: any) => s?.name === last && s?.lat != null && s?.lng != null) as any;
+          if (last && stop) {
+            const aps = await airportsNear([Number(stop.lat), Number(stop.lng)], 160, 1);
+            const nearEnough = aps.length && aps[0].km < 30;
+            if (!nearEnough) {
+              const note = aps.length
+                ? `Your trip ends at ${last}. The nearest airport with scheduled flights is ${aps[0].city}, roughly ${Math.round(aps[0].km * 1.3)} km by road. Tell us the city you want to return to and we will plan the journey home — flight, train or road — as part of this trip.`
+                : `Your trip ends at ${last}, which is not near an airport. Tell us the city you want to return to and we will plan the journey home — flight, train or road — as part of this trip.`;
+              planner.plan.contractNotes = [...(planner.plan.contractNotes ?? []), note];
+            }
+          }
+        }
+      } catch (e) {
+        console.error('US-864 way-home note failed (non-fatal):', e);
       }
 
       // THE PUBLIC GATE: only the scrubbed planner payload ever leaves.

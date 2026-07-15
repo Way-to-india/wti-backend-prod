@@ -205,11 +205,21 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
       if (opt.viaHub) {
         anatomyBits.push(`This is a one-stop flight — you change planes at ${opt.viaHub}. Both flights are real scheduled services; the connection timing must be confirmed at booking.`);
       }
+      // US-865 — "your flight lands at Bangalore — a 35 km road transfer to Bangalore" read
+      // like a machine talking to itself. When the airport and the town share a name, the
+      // honest sentence is that the airport sits OUTSIDE the city; the km and the clock
+      // do not change by one digit. Only the words do.
+      const sameName = (a?: string | null, b?: string | null) =>
+        !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
       if (opt.fromAirportCity && (opt.accessFromKm ?? 0) > 0) {
-        anatomyBits.push(`The drive from ${from} to ${opt.fromAirportCity} airport is ${opt.accessFromKm} km (about ${durTxt(opt.accessFromMin)}) and it is counted in your day.`);
+        anatomyBits.push(sameName(opt.fromAirportCity, from)
+          ? `${from}'s airport is ${opt.accessFromKm} km outside the city (about ${durTxt(opt.accessFromMin)} by road) and the drive is counted in your day.`
+          : `The drive from ${from} to ${opt.fromAirportCity} airport is ${opt.accessFromKm} km (about ${durTxt(opt.accessFromMin)}) and it is counted in your day.`);
       }
       if (opt.toAirportCity && (opt.accessToKm ?? 0) > 0) {
-        anatomyBits.push(`Your flight lands at ${opt.toAirportCity} — from there it is a ${opt.accessToKm} km road transfer to ${to} (about ${durTxt(opt.accessToMin)}), and it is counted in your day.`);
+        anatomyBits.push(sameName(opt.toAirportCity, to)
+          ? `${to}'s airport is ${opt.accessToKm} km outside the city (about ${durTxt(opt.accessToMin)} by road) and the drive into town is counted in your day.`
+          : `Your flight lands at ${opt.toAirportCity} — from there it is a ${opt.accessToKm} km road transfer to ${to} (about ${durTxt(opt.accessToMin)}), and it is counted in your day.`);
       }
     }
     // ---- THE RAIL-ORDEAL ADVISORY (founder ruling, 15 July 2026). --------------------------
@@ -255,8 +265,12 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     const verb = opt.mode === 'AIR' ? 'Fly' : opt.mode === 'RAIL' ? 'Train' : opt.mode === 'FERRY' ? 'Ferry' : 'Drive';
     const freq = opt.mode !== 'ROAD' ? freqLabel(opt.operatingDays) : 'daily';
     const idTxt = opt.identifier ? ` · ${opt.identifier}${opt.mode !== 'ROAD' && freq !== 'daily' ? ` (${freq})` : ''}` : '';
-    // US-847/US-860 — the day line tells him where the plane actually lands.
-    const flyVia = opt.mode === 'AIR' && opt.toAirportCity && (opt.accessToKm ?? 0) > 0
+    // US-847/US-860 — the day line tells him where the plane actually lands. US-865: when
+    // the airport and the town share a name there is nothing to disclose in the TITLE —
+    // the note above already counts the drive in from the airport.
+    const landsElsewhere = opt.mode === 'AIR' && opt.toAirportCity && (opt.accessToKm ?? 0) > 0
+      && opt.toAirportCity.trim().toLowerCase() !== to.trim().toLowerCase();
+    const flyVia = landsElsewhere
       ? `Fly ${from} → ${opt.toAirportCity}${idTxt}, then road to ${to} (${opt.accessToKm} km)`
       : null;
     days.push({
