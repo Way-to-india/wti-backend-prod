@@ -1586,7 +1586,7 @@ export class PublicPlannerController {
               planner.plan.contractNotes = [
                 ...(planner.plan.contractNotes ?? []),
                 `${saidSafari ? 'You asked for jungle safaris' : 'You asked for wildlife'} — `
-                + `${wildStops.join(' and ')} is the wildlife stop on this plan. Safari seats are `
+                + `${wildStops.join(' and ')} ${wildStops.length > 1 ? 'are the wildlife stops' : 'is the wildlife stop'} on this plan. Safari seats are `
                 + 'limited and must be reserved ahead; we will confirm the exact safari timings '
                 + 'and book your seats with the lodge before you pay anything.',
               ];
