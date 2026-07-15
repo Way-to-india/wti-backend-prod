@@ -46,6 +46,10 @@ import { gateProposals, buildShape, seasonBodyExitCheck, type EntryFact, type Ga
 import { loadSeasonFacts, loadAccessFacts } from '@/services/route-optimizer/placeFactsDb';
 import { resolveNamedCircuit, overlayTourDays } from '@/services/route-optimizer/namedCircuits';
 import { circuitStays, circuitTourFacts, circuitItinerary } from '@/services/route-optimizer/namedCircuitsDb';
+// SPRINT C1 — RUNG 2, the library (itinerary memory + faceted retrieval + proof objects).
+import { retrieve, type QueryFacets } from '@/services/route-optimizer/library';
+import { loadBranches, branchIdByTour, saveRetrievalProof } from '@/services/route-optimizer/libraryDb';
+import { buildLibraryCards, proofSummary } from '@/services/route-optimizer/libraryCards';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
 import { haversineKm } from '@/services/route-optimizer/geo';
 import type { DesignerMemory } from '@/services/route-optimizer/designerMemory';
@@ -812,6 +816,90 @@ export class PublicPlannerController {
 
       if (cities.length < 1 && (circuitHit || regionIsUsable(regionMatch, cities.length) || chips.length > 0)) {
         const m: RegionMatch | null = regionMatch;
+
+        // ============================================================================
+        // RUNG 2 — THE LIBRARY (Sprint C1). Before the single named-circuit card and the
+        // theme shortlist, ask the itinerary memory: does a REAL journey we run answer
+        // this brief? STAGE 0 alias (the famous circuit he named) → STAGE 1 hard facets
+        // (region · season · duration) → STAGE 2.5 constraint-satisfaction scoring → the
+        // existing serve-time gates (STAGE 4, inside buildLibraryCards). Every retrieval
+        // stores a PROOF OBJECT. NO model, NO embedding anywhere in C1. When the library
+        // is silent the request falls through to the pre-C1 circuit/theme code UNCHANGED.
+        // The rung fires ONLY where the brief is a named circuit or a USABLE region — the
+        // exact acceptance surface — so no shipped theme/region behaviour moves beneath it.
+        if (circuitHit || regionIsUsable(regionMatch, cities.length)) {
+          try {
+            const saidNightsLib = (intent?.nights.provenance === 'he_said' ? intent.nights.value : null)
+              ?? nightsFromWords(request ?? '')?.maxNights ?? null;
+            const libProfile = (['standard', 'family', 'senior'].includes(profile) ? profile : 'standard') as 'standard' | 'family' | 'senior';
+            const facets: QueryFacets = {
+              chips,
+              regionStates: m ? stateNamesOf(m) : null,
+              regionKey: m ? m.region.key : null,
+              measuredFrom,
+              monthIndex0: month != null ? month - 1 : null,
+              saidNights: saidNightsLib,
+              profile: libProfile,
+            };
+            let aliasBranchId: string | null = null;
+            const aliasQuote = circuitHit ? circuitHit.quote : null;
+            if (circuitHit) aliasBranchId = await branchIdByTour(circuitHit.circuit.tourId);
+            const branches = await loadBranches();
+            const { offered: scored, proof } = retrieve(branches, facets, { aliasBranchId, aliasQuote });
+            void saveRetrievalProof(request ?? '', proof, proof.served, proof.aliasHit);   // §10.3, fire-and-forget
+
+            if (scored.length) {
+              const { offered: cards, refused } = await buildLibraryCards({
+                offered: scored, request: request ?? '', measuredFrom, end,
+                month: month != null ? month : null, saidNights: saidNightsLib,
+                profile: libProfile, pax,
+              });
+              if (cards.length) {
+                const originQ: CounterQuestion = { key: 'origin', risk: 1,
+                  text: 'Where does your journey start from? Tell us your city and we will plan from your door, not from somebody else\'s.' };
+                const baseQs = intent ? counterQuestions(intent) : [];
+                const questions = !measuredFrom
+                  ? [originQ, ...baseQs.filter((q) => q.key !== 'origin')].slice(0, 2)
+                  : baseQs;
+                const lead = circuitHit
+                  ? (circuitHit.confidence === 'variant'
+                      ? `I read "${circuitHit.quote}" as ${circuitHit.circuit.label}. If you meant something else, tell me plainly and I will start again. `
+                      : `You asked for ${circuitHit.circuit.label}. `)
+                  : `From the journeys we run ourselves${m ? ` in ${m.region.label}` : ''}, here ${cards.length === 1 ? 'is one that fits' : `are ${cards.length} that fit`}. `;
+                const askOrigin = !measuredFrom
+                  ? ' Now tell me the city you are starting from, and I will fit the journey to your door — the right trains, the right flights, and honest days.'
+                  : '';
+                const proposals = cards.map((c) => ({ ...c.card, dayByDay: c.dayByDay }));
+                return res.status(200).json({
+                  status: false,
+                  need: 'destinations',
+                  library: { alias: proof.aliasHit, served: proof.served, reason: proof.reason },
+                  proof: proofSummary(proof),
+                  circuit: circuitHit
+                    ? { key: circuitHit.circuit.key, label: circuitHit.circuit.label, quote: circuitHit.quote, confidence: circuitHit.confidence, tourId: circuitHit.circuit.tourId }
+                    : null,
+                  region: m ? { key: m.region.key, label: m.region.label } : null,
+                  theme: chips.length ? { chips, quote: null } : null,
+                  frame: (frame.entry || frame.exit || startWasStated)
+                    ? { home: startWasStated ? start : null, entry: frame.entry, exit: frame.exit }
+                    : null,
+                  towns: [],
+                  echo: askEcho,
+                  questions,
+                  proposal: proposals[0],
+                  proposals,
+                  refusedProposals: refused,
+                  message: `${lead}${frame.entry ? `You land at ${frame.entry}, and the journey is planned from there. ` : ''}`
+                    + cards.map((c) => `${c.label} (${c.card.totalNights} nights)`).join('; ') + '.'
+                    + askOrigin,
+                });
+              }
+            }
+          } catch (e) {
+            console.error('RUNG 2 library retrieval failed (non-fatal — falls through to circuit/theme):', e);
+          }
+        }
+        // ============================================================================
 
         if (circuitHit) {
           try {
@@ -1770,14 +1858,21 @@ export class PublicPlannerController {
       // city by city, in order, applied only when the plan convincingly IS that tour.
       // Nothing is invented: every sentence is the published itinerary.
       try {
+        // C1 generalises US-871: a picked LIBRARY branch carries its own tourId, so any
+        // branch we run — not only the four named circuits — speaks its published day
+        // text on the finished plan. The named-circuit path is preserved as the fallback.
         const circuitOnPlan = resolveNamedCircuit(request);
-        if (circuitOnPlan && planner.plan?.days?.length) {
-          const itin = await circuitItinerary(circuitOnPlan.circuit.tourId);
+        const libraryTourId = typeof body.libraryTourId === 'string' && body.libraryTourId.trim()
+          ? body.libraryTourId.trim() : null;
+        const overlayTourId = libraryTourId ?? circuitOnPlan?.circuit.tourId ?? null;
+        const overlayLabel = circuitOnPlan?.circuit.label ?? 'the journey we run';
+        if (overlayTourId && planner.plan?.days?.length) {
+          const itin = await circuitItinerary(overlayTourId);
           const matched = itin.length ? overlayTourDays(planner.plan.days as any[], itin) : 0;
           if (matched >= 2) {
             planner.plan.contractNotes = [
               ...(planner.plan.contractNotes ?? []),
-              `The day-by-day details come from our own ${circuitOnPlan.circuit.label} itinerary — the same journey we run ourselves.`,
+              `The day-by-day details come from our own ${overlayLabel} itinerary — the same journey we run ourselves.`,
             ];
           }
         }
