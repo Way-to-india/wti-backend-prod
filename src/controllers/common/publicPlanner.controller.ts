@@ -36,6 +36,8 @@ import { foodFor } from '@/services/route-optimizer/foodDb';
 import { foodNeedFromWords, foodStatus, foodParagraph } from '@/services/route-optimizer/food';
 import { coDesignedWith } from '@/services/route-optimizer/designerMemory';
 import { intentFromRaw, compileContract, counterQuestions, buildEcho, nightsFromWords, chipsOf, cityWasNamed, frameFromText, heSaid, isStatedCityList, type RawIntent, type TravellerIntent, type CounterQuestion, type EchoRow } from '@/services/route-optimizer/intent';
+import { deterministicParse, deterministicallyComplete, originFromText, type FieldFacts } from '@/services/route-optimizer/deterministicParse';
+import { parseCacheKey, parseCacheHash, readStoredParse, bumpParseHit, writeStoredParse } from '@/services/route-optimizer/parseCacheDb';
 import prisma from '@/config/db';
 import { savePlan, getPlan, markShared, buildDemandRow, recordDemand, isUuid } from '@/services/route-optimizer/planStore';
 import { mergeDuplicateCities } from '@/services/route-optimizer/optimize';
@@ -238,9 +240,70 @@ const PARSE_CACHE_MAX = 500;
 const PARSE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const parseCache = new Map<string, { at: number; value: { trip: ParsedTrip; raw: RawIntent } | null }>();
 
-async function parseIntent(text: string): Promise<{ trip: ParsedTrip; raw: RawIntent } | null> {
+/** US-868 — the Law-1 fence's teeth: which of his words are actually towns we know?
+ *  The catalogue is the PRIMARY gazetteer (a name is not a key); Indian world_cities
+ *  back it up so a non-catalogue town he named still forces the model to read it. */
+async function catalogueTownsAmong(tokens: string[]): Promise<string[]> {
+  if (!tokens.length) return [];
+  try {
+    const rows = await prisma.$queryRaw<{ name: string }[]>`
+      SELECT name FROM stay_nodes WHERE lower(name) = ANY(${tokens})
+      UNION
+      SELECT name FROM world_cities WHERE lower(name) = ANY(${tokens}) AND "countryCode" = 'IN'`;
+    return rows.map((r) => r.name);
+  } catch (e) {
+    // If the fence cannot be checked, the fence FAILS CLOSED: report a phantom hit so the
+    // model still reads his sentence. A wasted parse is yesterday's price; a lost city is not.
+    console.error('US-868 town scan failed (failing closed — model will run):', e);
+    return ['__scan_failed__'];
+  }
+}
+
+async function parseIntent(text: string, fields: FieldFacts): Promise<{ trip: ParsedTrip; raw: RawIntent } | null> {
+  // ============================ US-868 — CODE FIRST, AI LAST ============================
+  //
+  // The deterministic readers run BEFORE the model, before either cache, before the
+  // API-key check — they cost nothing and they cannot hallucinate. When they fill
+  // ORIGIN + DURATION + (chips | stated cities | region | named circuit), Haiku is not
+  // called at all, SUBJECT to two DB checks that cannot live in the pure module:
+  //   1. THE TOWN SCAN (Law 1): if any word of his sentence is a town our catalogue or
+  //      the Indian gazetteer knows — beyond his origin, his frame and his region words —
+  //      then he may have NAMED A DESTINATION, and only the model reads those. It runs.
+  //   2. THE ORIGIN VERIFY: a regex may propose; only the gazetteer confirms. If his
+  //      text-read origin does not verify, the model gets its chance at the sentence.
+  // Every deterministic he_said quote is a verbatim matched substring, so the standing
+  // anti-fabrication lock (verifyQuote) blesses it unchanged.
+  try {
+    const det = deterministicParse(text);
+    if (deterministicallyComplete(det, fields)) {
+      // On the pick path his towns arrive as FIELDS (Law 1 already satisfied); prose
+      // tokens need no scan there. On the ask path the scan is mandatory.
+      const towns = fields.statedCities ? [] : await catalogueTownsAmong(det.townCandidates);
+      let originOk = true;
+      if (!fields.statedStart && det.origin) {
+        const v = await verifyCity(det.origin.name);
+        if (v.ok && v.name) det.raw.start = v.name;
+        else originOk = false;
+      }
+      if (!towns.length && originOk) {
+        const trip: ParsedTrip = {
+          cities: [],                                   // code never invents destinations
+          start: det.raw.start ?? null,
+          end: det.raw.end ?? null,
+          pax: det.raw.pax ?? undefined,
+          profile: (det.raw.profile === 'senior' || det.raw.profile === 'family') ? det.raw.profile : undefined,
+          month: det.raw.month ?? undefined,
+        };
+        return { trip, raw: det.raw };
+      }
+    }
+  } catch (e) {
+    console.error('US-868 deterministic parse failed (non-fatal — model path continues):', e);
+  }
+  // ======================================================================================
+
   if (!enrichmentEnabled()) return null;
-  const cacheKey = text.trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 1000);
+  const cacheKey = parseCacheKey(text);
   const hit = parseCache.get(cacheKey);
   if (hit && Date.now() - hit.at < PARSE_CACHE_TTL_MS) {
     return hit.value == null ? null : structuredClone(hit.value);
@@ -253,6 +316,18 @@ async function parseIntent(text: string): Promise<{ trip: ParsedTrip; raw: RawIn
     parseCache.set(cacheKey, { at: Date.now(), value: value == null ? null : structuredClone(value) });
     return value;
   };
+
+  // ---- US-869 — THE PERMANENT CACHE (L2). One sentence is paid for once, EVER. --------
+  // Read-through under the in-memory L1; a hit hydrates L1 so the pick that follows the
+  // ask never even reaches the disk. The hit counter is fire-and-forget bookkeeping.
+  const hash = parseCacheHash(cacheKey);
+  const stored = await readStoredParse<{ trip: ParsedTrip; raw: RawIntent }>(hash);
+  if (stored && stored.trip && Array.isArray(stored.trip.cities) && stored.raw) {
+    bumpParseHit(hash);
+    remember(stored);
+    return structuredClone(stored);
+  }
+
   try {
     const resp = await anthropic().messages.create({
       model: 'claude-haiku-4-5-20251001',
@@ -300,7 +375,10 @@ async function parseIntent(text: string): Promise<{ trip: ParsedTrip; raw: RawIn
     // ONLY a successful parse is remembered. A failed or empty parse is NOT cached: a model
     // hiccup must retry on the next request, not become the sticky truth about a good
     // sentence for 24 hours (US-861 is exactly the class of variance we refuse to pin).
-    return remember({ trip, raw: { ...j, cities: trip.cities } as RawIntent });
+    // US-869: and a successful MODEL parse goes to the permanent cache too — paid once, EVER.
+    const value = { trip, raw: { ...j, cities: trip.cities } as RawIntent };
+    void writeStoredParse(hash, cacheKey, value);
+    return remember(value);
   } catch (e) {
     console.error('planner parseIntent failed:', e);
     return null;
@@ -331,32 +409,8 @@ async function parseIntent(text: string): Promise<{ trip: ParsedTrip; raw: RawIn
  * The model stays. This runs only when the model came back with nothing, and it never overrides
  * a start the traveller typed into the form.
  */
-const ORIGIN_PATTERNS: RegExp[] = [
-  /\b(?:we|i|they|my parents|my wife and i)?\s*(?:are\s+)?(?:travelling|traveling|starting|departing|leaving|flying|coming)\s+(?:out\s+)?from\s+([A-Za-z][A-Za-z .'-]{2,28})/i,
-  /\b(?:we|i|they|my parents)\s+(?:live|are\s+based|reside)\s+in\s+([A-Za-z][A-Za-z .'-]{2,28})/i,
-  /\bbased\s+in\s+([A-Za-z][A-Za-z .'-]{2,28})/i,
-  /\bfrom\s+([A-Za-z][A-Za-z .'-]{2,28})\b/i,          // the plain one, last: "four friends from PUNE"
-];
-
-/** Words that follow a city name and mean the match has run off the end of it. */
-const ORIGIN_STOP = /\b(?:want|wants|wish|wishes|and|with|for|to|who|that|we|i|they|all|aged|in our|looking|would|will|plan|planning|travelling|traveling|is|are|has|have)\b/i;
-
-function originFromText(text: string): { name: string; quote: string } | null {
-  for (const re of ORIGIN_PATTERNS) {
-    const m = re.exec(text);
-    if (!m || !m[1]) continue;
-    // Cut the capture at the first word that cannot be part of a city name. "PUNE, all in our
-    // twenties" must yield "Pune", never "Pune all in our twenties".
-    let cand = m[1].split(/[,.;:!?]/)[0].trim();
-    const stop = ORIGIN_STOP.exec(cand);
-    if (stop && stop.index > 0) cand = cand.slice(0, stop.index).trim();
-    cand = cand.replace(/\s+/g, ' ').trim();
-    if (cand.length < 3 || cand.length > 28) continue;
-    if (/^(the|a|an|there|here|home|india)$/i.test(cand)) continue;
-    return { name: cand, quote: m[0].trim() };
-  }
-  return null;
-}
+// US-868 — originFromText and its patterns moved to deterministicParse.ts, where every
+// deterministic reader now lives in one testable place. Behaviour unchanged; imported above.
 
 /** Keep only cities world_cities can resolve — the anti-hallucination gate. */
 async function resolvable(names: string[]): Promise<Set<string>> {
@@ -480,7 +534,13 @@ export class PublicPlannerController {
       // carries it. (The parsed CITIES still merge only when he stated none — Law 1: towns
       // he posted as fields outrank anything a model reads.)
       if (request) {
-        const heard = await parseIntent(request);
+        // US-868 — the field facts ride into the parser: a fact he posted as a FIELD is
+        // already his word, and the deterministic skip rule counts it as filled.
+        const heard = await parseIntent(request, {
+          statedCities,
+          statedStart: startFromField,
+          statedNights: nightsFromField != null,
+        });
         const parsed = heard?.trip ?? null;
         if (heard) intent = intentFromRaw(heard.raw, request);
         if (parsed && cities.length < 2) {
@@ -1410,9 +1470,16 @@ export class PublicPlannerController {
       await RouteOptimizerController.optimize(fakeReq, fakeRes);
 
       if (!captured || !captured.status) {
+        // US-861(a) — the public controller must never surface an admin-desk sentence.
+        // "Provide at least 2 cities." is written for an operator with a form, not for a
+        // traveller who typed a paragraph. Map it to the honest ask.
+        const adminDesk = /provide at least \d+ cit/i;
+        const rawMessage = captured?.message || '';
         return res.status(captured?.code === 400 ? 400 : 500).json({
           status: false,
-          message: captured?.message || 'We could not build your plan just now. Please try again in a minute.',
+          message: adminDesk.test(rawMessage)
+            ? ASK_AGAIN
+            : rawMessage || 'We could not build your plan just now. Please try again in a minute.',
         });
       }
 

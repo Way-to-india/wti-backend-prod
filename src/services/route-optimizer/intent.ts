@@ -565,6 +565,21 @@ export function frameFromText(text: string | null | undefined): TripFrame {
   return out;
 }
 
+/** US-868 — the same eight-chip keyword table, read straight off his sentence. Each hit
+ *  carries the MATCHED SUBSTRING as its quote (the deterministic he_said discipline:
+ *  the quote is his word because it was cut from his sentence, never composed). Used by
+ *  the deterministic-first parser to decide whether a brief exists without the model. */
+export function chipKeywordHits(text: string | null | undefined): { chip: Chip; quote: string }[] {
+  if (!text) return [];
+  const out: { chip: Chip; quote: string }[] = [];
+  for (const [re, chip] of INTEREST_CHIP) {
+    if (out.some((h) => h.chip === chip)) continue;
+    const m = re.exec(text);
+    if (m) out.push({ chip, quote: m[0] });
+  }
+  return out;
+}
+
 export function chipsOf(intent: TravellerIntent): string[] {
   const out = new Set<string>();
   for (const c of intent.mainChips) if (c.value) out.add(c.value);
