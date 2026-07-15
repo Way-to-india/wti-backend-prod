@@ -224,8 +224,35 @@ async function proposeForRegion(
   return designAll(candidates, memory, briefFrom(intent, request));
 }
 
+// ---- THE PARSE CACHE (founder ruling, 15 July 2026: "we cannot endlessly spend money on
+// AI tokens"). -------------------------------------------------------------------------------
+//
+// The pick flow re-sends the EXACT sentence the ask flow already paid to parse — and since
+// `d74e655` every pick parses again, so one traveller choosing a journey was paying for the
+// same Haiku call twice (three times if he re-picks). The sentence is the key: same words,
+// same brief. In-memory, this process only (PM2 id 0 is a single process); 500 entries,
+// 24-hour life, oldest evicted first. A cache entry is returned as a DEEP COPY, because the
+// controller patches heard.raw in place (US-831b) and a shared object would let one
+// traveller's patch bleed into the next identical sentence.
+const PARSE_CACHE_MAX = 500;
+const PARSE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const parseCache = new Map<string, { at: number; value: { trip: ParsedTrip; raw: RawIntent } | null }>();
+
 async function parseIntent(text: string): Promise<{ trip: ParsedTrip; raw: RawIntent } | null> {
   if (!enrichmentEnabled()) return null;
+  const cacheKey = text.trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 1000);
+  const hit = parseCache.get(cacheKey);
+  if (hit && Date.now() - hit.at < PARSE_CACHE_TTL_MS) {
+    return hit.value == null ? null : structuredClone(hit.value);
+  }
+  const remember = (value: { trip: ParsedTrip; raw: RawIntent } | null) => {
+    if (parseCache.size >= PARSE_CACHE_MAX) {
+      const oldest = parseCache.keys().next().value;
+      if (oldest !== undefined) parseCache.delete(oldest);
+    }
+    parseCache.set(cacheKey, { at: Date.now(), value: value == null ? null : structuredClone(value) });
+    return value;
+  };
   try {
     const resp = await anthropic().messages.create({
       model: 'claude-haiku-4-5-20251001',
@@ -270,7 +297,10 @@ async function parseIntent(text: string): Promise<{ trip: ParsedTrip; raw: RawIn
       profile: ['standard', 'family', 'senior'].includes(j.profile) ? j.profile : undefined,
       month: Number.isInteger(j.month) && j.month >= 1 && j.month <= 12 ? j.month : undefined,
     };
-    return { trip, raw: { ...j, cities: trip.cities } as RawIntent };
+    // ONLY a successful parse is remembered. A failed or empty parse is NOT cached: a model
+    // hiccup must retry on the next request, not become the sticky truth about a good
+    // sentence for 24 hours (US-861 is exactly the class of variance we refuse to pin).
+    return remember({ trip, raw: { ...j, cities: trip.cities } as RawIntent });
   } catch (e) {
     console.error('planner parseIntent failed:', e);
     return null;
