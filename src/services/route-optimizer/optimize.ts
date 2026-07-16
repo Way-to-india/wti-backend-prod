@@ -669,7 +669,7 @@ export function truthCtxFor(input: OptimizeInput, deps: OptimizeDeps): TruthCtx 
  *
  * A DISTINCT onward city (≠ origin, ≠ any stop) still rides as a normal fixed end.
  */
-function sequenceOrder(matrix: number[][], startIdx: number | null, endIdx: number | null): number[] {
+export function sequenceOrder(matrix: number[][], startIdx: number | null, endIdx: number | null): number[] {
   const s = startIdx != null && startIdx >= 0 ? startIdx : null;
   const e = endIdx != null && endIdx >= 0 ? endIdx : null;
   if (s != null && e != null && e === s) {
