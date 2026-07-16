@@ -41,17 +41,18 @@ export async function railOptions(a: CityNode, b: CityNode, _ctx: FindCtx): Prom
   const [aLat, aLng] = a.coord, [bLat, bLng] = b.coord;
   try {
     const rows = await prisma.$queryRawUnsafe<any[]>(`
-      WITH a_st AS (SELECT code FROM train_stations WHERE lat BETWEEN ${aLat - BOX_RAIL} AND ${aLat + BOX_RAIL} AND lng BETWEEN ${aLng - BOX_RAIL} AND ${aLng + BOX_RAIL} AND code NOT IN (SELECT code FROM train_station_quality WHERE suspect = true)),
-           b_st AS (SELECT code FROM train_stations WHERE lat BETWEEN ${bLat - BOX_RAIL} AND ${bLat + BOX_RAIL} AND lng BETWEEN ${bLng - BOX_RAIL} AND ${bLng + BOX_RAIL} AND code NOT IN (SELECT code FROM train_station_quality WHERE suspect = true))
+      WITH a_st AS (SELECT code, lat, lng FROM train_stations WHERE lat BETWEEN ${aLat - BOX_RAIL} AND ${aLat + BOX_RAIL} AND lng BETWEEN ${aLng - BOX_RAIL} AND ${aLng + BOX_RAIL} AND code NOT IN (SELECT code FROM train_station_quality WHERE suspect = true)),
+           b_st AS (SELECT code, lat, lng FROM train_stations WHERE lat BETWEEN ${bLat - BOX_RAIL} AND ${bLat + BOX_RAIL} AND lng BETWEEN ${bLng - BOX_RAIL} AND ${bLng + BOX_RAIL} AND code NOT IN (SELECT code FROM train_station_quality WHERE suspect = true))
       SELECT da.train_no, sch.train_name, sch.running_days,
              da.dep_min AS a_dep, da.day_offset AS a_day, da.cum_km AS a_km, da.station_name AS a_station,
-             db.arr_min AS b_arr, db.day_offset AS b_day, db.cum_km AS b_km, db.station_name AS b_station
+             db.arr_min AS b_arr, db.day_offset AS b_day, db.cum_km AS b_km, db.station_name AS b_station,
+             astn.lat AS a_lat, astn.lng AS a_lng, bstn.lat AS b_lat, bstn.lng AS b_lng
       FROM train_stops da
       JOIN train_stops db ON db.train_no = da.train_no AND db.seq > da.seq
       JOIN train_schedules sch ON sch.train_no = da.train_no
-      WHERE da.station_code IN (SELECT code FROM a_st)
-        AND db.station_code IN (SELECT code FROM b_st)
-        AND da.dep_min IS NOT NULL AND db.arr_min IS NOT NULL
+      JOIN a_st astn ON astn.code = da.station_code
+      JOIN b_st bstn ON bstn.code = db.station_code
+      WHERE da.dep_min IS NOT NULL AND db.arr_min IS NOT NULL
       ORDER BY (db.cum_km - da.cum_km) ASC
       LIMIT 60`);
     // dedupe by train, keep shortest A→B; then prefer overnight + daily
@@ -62,9 +63,26 @@ export async function railOptions(a: CityNode, b: CityNode, _ctx: FindCtx): Prom
       const prev = byTrain.get(r.train_no);
       if (!prev || km < prev._km) byTrain.set(r.train_no, { ...r, _km: km });
     }
+    // ⚠️ A RAILHEAD IS NOT THE TOWN, AND THE DRIVE TO IT IS MEASURED (founder live test,
+    // 15 Jul 2026: "there is no direct train to Dalhousie"). Dalhousie has NO station; the
+    // Jhelum Express reaches PATHANKOT, ~40 km away. The air provider already charges and
+    // SPEAKS the airport transfer (US-822); rail did not, so a Delhi→Pathankot train was
+    // sold as "Delhi → Dalhousie by train". Now the drive from A to its departure station
+    // and from the arrival station to B is measured on the honest terrain speed, CHARGED
+    // into the door-to-door clock (ddcv already sums accFrom/accTo for RAIL), and SPOKEN
+    // by dayExpand. The station stays the truthful node; the town is reached by road.
+    const aHigh = (a.elevationM ?? 0) > 1200 || (b.elevationM ?? 0) > 1200;
+    const accessKmh = terrainSpeedKmh(aHigh ? 2 : 4, null);   // ghat/hill 30, NH 55
+    // "PATHANKOT CANTT - PTKC" → "Pathankot Cantt" for the traveller's eyes.
+    const prettyStation = (s: string) => String(s)
+      .replace(/\s*-\s*[A-Z0-9]{2,6}\s*$/, '').trim()
+      .toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
     const opts: LegOption[] = [...byTrain.values()].map((r) => {
       const dayOff = Math.max(0, (Number(r.b_day) || 0) - (Number(r.a_day) || 0));
       const durBase = (Number(r.b_arr) - Number(r.a_dep) + dayOff * 1440);
+      const fromKm = haversineKm(a.coord, [Number(r.a_lat), Number(r.a_lng)]) * 1.25;
+      const toKm = haversineKm([Number(r.b_lat), Number(r.b_lng)], b.coord) * 1.25;
+      const sameFrom = fromKm < 25, sameTo = toKm < 25;
       return {
         from: a.name, to: b.name, mode: 'RAIL' as const,
         identifier: `${r.train_no} ${String(r.train_name || '').trim()}`.trim(),
@@ -75,6 +93,15 @@ export async function railOptions(a: CityNode, b: CityNode, _ctx: FindCtx): Prom
         classes: ['3A', '2A', 'SL'], // dataset has no coach data — defaulted, verify at booking
         reliability: (Number(r.running_days) === 127) ? 5 : 3,
         source: 'ir-timetable', verifiedAt: null, // static snapshot ⇒ verify list flags it
+        // the drive to the departure station and from the arrival station to the town,
+        // charged into the door-to-door clock and spoken on the day (fromAirportCity /
+        // toAirportCity carry the RAILHEAD here; dayExpand renders it in rail words).
+        accessFromKm: sameFrom ? 0 : Math.round(fromKm),
+        accessFromMin: sameFrom ? 0 : Math.round((fromKm / accessKmh) * 60),
+        accessToKm: sameTo ? 0 : Math.round(toKm),
+        accessToMin: sameTo ? 0 : Math.round((toKm / accessKmh) * 60),
+        fromAirportCity: sameFrom ? null : prettyStation(r.a_station),
+        toAirportCity: sameTo ? null : prettyStation(r.b_station),
       };
     });
     // prefer overnight-window + daily, then shortest; cap 4

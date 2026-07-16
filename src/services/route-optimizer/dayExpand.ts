@@ -216,25 +216,27 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
       return h === 0 ? `${mm} min` : mm === 0 ? `${h} h` : `${h} h ${String(mm).padStart(2, '0')}`;
     };
     const anatomyBits: string[] = [];
-    if (opt.mode === 'AIR') {
-      if (opt.viaHub) {
+    // The access anatomy is charged and SPOKEN for both AIR and RAIL (US-822 / the Dalhousie
+    // rail-railhead fix, 15 Jul 2026). A railhead is not the town: the Jhelum Express reaches
+    // Pathankot, ~40 km from Dalhousie, and that drive is counted and named — not hidden
+    // behind a "train to Dalhousie" that no timetable actually runs.
+    if (opt.mode === 'AIR' || opt.mode === 'RAIL') {
+      if (opt.mode === 'AIR' && opt.viaHub) {
         anatomyBits.push(`This is a one-stop flight — you change planes at ${opt.viaHub}. Both flights are real scheduled services; the connection timing must be confirmed at booking.`);
       }
-      // US-865 — "your flight lands at Bangalore — a 35 km road transfer to Bangalore" read
-      // like a machine talking to itself. When the airport and the town share a name, the
-      // honest sentence is that the airport sits OUTSIDE the city; the km and the clock
-      // do not change by one digit. Only the words do.
+      const noun = opt.mode === 'RAIL' ? 'railhead' : 'airport';
+      const arriveVerb = opt.mode === 'RAIL' ? 'Your train reaches' : 'Your flight lands at';
       const sameName = (a?: string | null, b?: string | null) =>
         !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
       if (opt.fromAirportCity && (opt.accessFromKm ?? 0) > 0) {
         anatomyBits.push(sameName(opt.fromAirportCity, from)
-          ? `${from}'s airport is ${opt.accessFromKm} km outside the city (about ${durTxt(opt.accessFromMin)} by road) and the drive is counted in your day.`
-          : `The drive from ${from} to ${opt.fromAirportCity} airport is ${opt.accessFromKm} km (about ${durTxt(opt.accessFromMin)}) and it is counted in your day.`);
+          ? `${from}'s ${noun} is ${opt.accessFromKm} km outside the city (about ${durTxt(opt.accessFromMin)} by road) and the drive is counted in your day.`
+          : `The drive from ${from} to the ${opt.fromAirportCity} ${noun} is ${opt.accessFromKm} km (about ${durTxt(opt.accessFromMin)}) and it is counted in your day.`);
       }
       if (opt.toAirportCity && (opt.accessToKm ?? 0) > 0) {
         anatomyBits.push(sameName(opt.toAirportCity, to)
-          ? `${to}'s airport is ${opt.accessToKm} km outside the city (about ${durTxt(opt.accessToMin)} by road) and the drive into town is counted in your day.`
-          : `Your flight lands at ${opt.toAirportCity} — from there it is a ${opt.accessToKm} km road transfer to ${to} (about ${durTxt(opt.accessToMin)}), and it is counted in your day.`);
+          ? `${to}'s ${noun} is ${opt.accessToKm} km outside the city (about ${durTxt(opt.accessToMin)} by road) and the drive into town is counted in your day.`
+          : `${arriveVerb} ${opt.toAirportCity} — from there it is a ${opt.accessToKm} km road transfer to ${to} (about ${durTxt(opt.accessToMin)}), and it is counted in your day.`);
       }
     }
     // ---- THE RAIL-ORDEAL ADVISORY (founder ruling, 15 July 2026). --------------------------
@@ -283,16 +285,24 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     // US-847/US-860 — the day line tells him where the plane actually lands. US-865: when
     // the airport and the town share a name there is nothing to disclose in the TITLE —
     // the note above already counts the drive in from the airport.
-    const landsElsewhere = opt.mode === 'AIR' && opt.toAirportCity && (opt.accessToKm ?? 0) > 0
+    // Where the plane lands / the train reaches is NOT the town (US-847/860 for air; the
+    // Dalhousie rail-railhead fix for rail): say the railhead/airport and the onward road.
+    const reachesElsewhere = (opt.accessToKm ?? 0) > 0 && !!opt.toAirportCity
       && opt.toAirportCity.trim().toLowerCase() !== to.trim().toLowerCase();
-    const flyVia = landsElsewhere
-      ? `Fly ${from} → ${opt.toAirportCity}${idTxt}, then road to ${to} (${opt.accessToKm} km)`
-      : null;
+    const railhead = opt.toAirportCity ?? to;
+    const roadTail = reachesElsewhere ? `, then road to ${to} (${opt.accessToKm} km)` : '';
+    const flyVia = opt.mode === 'AIR' && reachesElsewhere
+      ? `Fly ${from} → ${railhead}${idTxt}${roadTail}` : null;
+    const activity = isHalt
+      ? `En-route overnight halt at ${to} (break the ${from} drive; sightseeing + hotel)`
+      : overnight
+        ? `Overnight train ${from} → ${reachesElsewhere ? railhead : to}${idTxt}${roadTail}${inp.praiseHotelNight === false ? '' : ' (saves a hotel night)'}`
+        : flyVia ?? (opt.mode === 'RAIL' && reachesElsewhere
+            ? `Train ${from} → ${railhead}${idTxt}${roadTail}`
+            : `${verb} ${from} → ${to}${idTxt}${positioning ? ' (positioning)' : ''}`);
     days.push({
       day: dayIdx + 1, weekday: stamp(dayIdx), city: to, halt: isHalt,
-      activity: isHalt ? `En-route overnight halt at ${to} (break the ${from} drive; sightseeing + hotel)`
-        : overnight ? `Overnight train ${from} → ${to}${idTxt}${inp.praiseHotelNight === false ? '' : ' (saves a hotel night)'}`
-        : flyVia ?? `${verb} ${from} → ${to}${idTxt}${positioning ? ' (positioning)' : ''}`,
+      activity,
       transit: { from, to, mode: opt.mode, identifier: opt.identifier ?? null, dep: opt.depTime ?? null, arr: opt.arrTime ?? null },
       roadKm: opt.mode === 'ROAD' ? km : 0,
       // the day's honest clock: the service PLUS the airport road transfers at both ends.
