@@ -4,13 +4,18 @@
  *   GET /api/common/sacred/tours?circuit=&page= → active tours reaching a temple (paged)
  */
 import type { Request, Response } from 'express';
-import { listSacredCircuits, toursCoveringSacred } from '@/services/common/sacred.service';
+import {
+  listSacredCircuits, toursCoveringSacred, listSacredSites, getSacredSite,
+  toursForSacredSite, circuitContentMap,
+} from '@/services/common/sacred.service';
 
 export class SacredController {
   static async getCircuits(_req: Request, res: Response) {
     try {
-      const circuits = await listSacredCircuits();
-      return res.deliver(200, true, { circuits });
+      const [circuits, content] = await Promise.all([listSacredCircuits(), circuitContentMap()]);
+      return res.deliver(200, true, {
+        circuits: circuits.map((c: any) => ({ ...c, content: content[c.circuit] ?? null })),
+      });
     } catch (error) {
       console.error('Sacred getCircuits error:', error);
       return res.deliver(200, true, { circuits: [] });
@@ -31,6 +36,31 @@ export class SacredController {
     } catch (error) {
       console.error('Sacred getTours error:', error);
       return res.deliver(200, true, { tours: [], pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } });
+    }
+  }
+
+  /** Every temple in the layer, with slug + tour count, for the collection landing. */
+  static async getSites(_req: Request, res: Response) {
+    try {
+      const sites = await listSacredSites();
+      const withTours = sites.filter((s) => s.tourCount > 0).length;
+      return res.deliver(200, true, { sites, summary: { total: sites.length, withTours } });
+    } catch (error) {
+      console.error('Sacred getSites error:', error);
+      return res.deliver(200, true, { sites: [], summary: { total: 0, withTours: 0 } });
+    }
+  }
+
+  /** One temple (with its GOLD content) + the tours that take a traveller there. */
+  static async getSiteTours(req: Request, res: Response) {
+    try {
+      const site = await getSacredSite(String(req.params.idOrSlug));
+      if (!site) return res.deliver(404, false, undefined, 'Sacred site not found');
+      const tours = await toursForSacredSite(site.id);
+      return res.deliver(200, true, { site, tours, total: tours.length });
+    } catch (error) {
+      console.error('Sacred getSiteTours error:', error);
+      return res.deliver(500, false, undefined, error instanceof Error ? error.message : 'Failed');
     }
   }
 }

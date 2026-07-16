@@ -247,14 +247,37 @@ export async function toursCoveringUnesco(page = 1, limit = 12): Promise<{ tours
   }
 }
 
-/** Resolve a site by numeric id or slug. */
+/** GOLD page content for a site, written in-session and founder reviewed. */
+export interface SiteContent {
+  metaTitle?: string;
+  metaDescription?: string;
+  heroIntro?: string;
+  sections?: { heading: string; body: string }[];
+  quickFacts?: Record<string, string | null>;
+  faqs?: { question: string; answer: string }[];
+  sources?: string[];
+}
+
+/** Resolve a site by numeric id or slug, with its GOLD content when it exists. */
 export async function getSite(idOrSlug: string): Promise<any | null> {
   try {
     const all = await listUnescoSites();
     if (!all.length) return null;
-    if (/^\d+$/.test(idOrSlug)) return all.find((s) => s.id === Number(idOrSlug)) ?? null;
-    const slug = siteSlug(idOrSlug);
-    return all.find((s) => s.slug === slug) ?? null;
+    const base = /^\d+$/.test(idOrSlug)
+      ? all.find((s) => s.id === Number(idOrSlug)) ?? null
+      : all.find((s) => s.slug === siteSlug(idOrSlug)) ?? null;
+    if (!base) return null;
+    try {
+      const rows = await prisma.$queryRawUnsafe<any[]>(
+        `SELECT content, content_reviewed FROM unesco_sites WHERE id = $1`, base.id);
+      if (rows.length) {
+        base.content = (rows[0].content ?? null) as SiteContent | null;
+        base.contentReviewed = rows[0].content_reviewed === true;
+      }
+    } catch {
+      // content columns not there yet — serve the site without them, never 500
+    }
+    return base;
   } catch (e) {
     console.error('getSite failed (non-fatal):', e);
     return null;

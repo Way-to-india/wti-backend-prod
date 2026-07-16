@@ -25,6 +25,8 @@ const TIER_LABEL: Record<Tier, string> = {
 export interface TourSacredSite {
   id: number;
   name: string;
+  slug: string | null;
+  url: string | null;
   circuits: string[];
   deity: string | null;
   state: string;
@@ -47,7 +49,7 @@ function noteFor(name: string, tier: Tier, viaCity: string, km: number): string 
 export async function sacredForTour(tourId: string): Promise<TourSacredSite[]> {
   try {
     const rows = await prisma.$queryRawUnsafe<any[]>(
-      `SELECT ss.id, ss.name, ss.circuits, ss.deity, ss.state, tsr.tier, tsr.via_city, tsr.km
+      `SELECT ss.id, ss.name, ss.slug, ss.circuits, ss.deity, ss.state, tsr.tier, tsr.via_city, tsr.km
          FROM tour_sacred tsr
          JOIN sacred_sites ss ON ss.id = tsr.sacred_id
         WHERE tsr.tour_id = $1`, tourId);
@@ -55,9 +57,12 @@ export async function sacredForTour(tourId: string): Promise<TourSacredSite[]> {
       .map((r) => {
         const tier = String(r.tier) as Tier;
         const km = Number(r.km);
+        const slug = r.slug == null ? null : String(r.slug);
         return {
           id: Number(r.id),
           name: String(r.name),
+          slug,
+          url: slug ? `${SITE_BASE_URL}/destinations/sacred-temple-circuits/${slug}` : null,
           circuits: Array.isArray(r.circuits) ? r.circuits.map(String) : [],
           deity: r.deity == null ? null : String(r.deity),
           state: String(r.state),
@@ -189,5 +194,119 @@ export async function toursCoveringSacred(circuit: string | null, page = 1, limi
   } catch (e) {
     console.error('toursCoveringSacred failed (non-fatal):', e);
     return { tours: [], total: 0 };
+  }
+}
+
+const SACRED_COLLECTION_PATH = '/destinations/sacred-temple-circuits';
+
+/** GOLD page content for a temple, written in-session and founder reviewed. */
+export interface SacredSiteContent {
+  metaTitle?: string;
+  metaDescription?: string;
+  heroIntro?: string;
+  sections?: { heading: string; body: string }[];
+  quickFacts?: Record<string, string | null>;
+  faqs?: { question: string; answer: string }[];
+  sources?: string[];
+}
+
+/** All temples for the collection, each with its slug and how many tours reach it. */
+export async function listSacredSites(): Promise<any[]> {
+  try {
+    const rows = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT ss.id, ss.name, ss.slug, ss.circuits, ss.deity, ss.state, ss.nearest_town,
+              ss.lat, ss.lng, ss.blurb,
+              COALESCE(c.n, 0)::int AS tour_count
+         FROM sacred_sites ss
+         LEFT JOIN (
+           SELECT ts.sacred_id, count(*) n
+             FROM tour_sacred ts JOIN tours t ON t.id = ts.tour_id AND t."isActive" = true
+            GROUP BY ts.sacred_id
+         ) c ON c.sacred_id = ss.id
+        ORDER BY tour_count DESC, ss.name`);
+    return rows.map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+      slug: r.slug == null ? null : String(r.slug),
+      circuits: Array.isArray(r.circuits) ? r.circuits.map(String) : [],
+      deity: r.deity == null ? null : String(r.deity),
+      state: String(r.state),
+      nearestTown: String(r.nearest_town),
+      lat: r.lat == null ? null : Number(r.lat),
+      lng: r.lng == null ? null : Number(r.lng),
+      blurb: r.blurb == null ? null : String(r.blurb),
+      tourCount: Number(r.tour_count),
+      url: r.slug == null ? null : `${SITE_BASE_URL}${SACRED_COLLECTION_PATH}/${String(r.slug)}`,
+    }));
+  } catch (e) {
+    console.error('listSacredSites failed (non-fatal):', e);
+    return [];
+  }
+}
+
+/** Resolve one temple by numeric id or slug, with its GOLD content when it exists. */
+export async function getSacredSite(idOrSlug: string): Promise<any | null> {
+  try {
+    const all = await listSacredSites();
+    if (!all.length) return null;
+    const base = /^\d+$/.test(idOrSlug)
+      ? all.find((s) => s.id === Number(idOrSlug)) ?? null
+      : all.find((s) => s.slug === idOrSlug.toLowerCase()) ?? null;
+    if (!base) return null;
+    try {
+      const rows = await prisma.$queryRawUnsafe<any[]>(
+        `SELECT content, content_reviewed FROM sacred_sites WHERE id = $1`, base.id);
+      if (rows.length) {
+        base.content = (rows[0].content ?? null) as SacredSiteContent | null;
+        base.contentReviewed = rows[0].content_reviewed === true;
+      }
+    } catch {
+      // content columns not present, serve the site without them, never 500
+    }
+    return base;
+  } catch (e) {
+    console.error('getSacredSite failed (non-fatal):', e);
+    return null;
+  }
+}
+
+/** Per-temple tour list: the active tours that reach one temple, closest first. */
+export async function toursForSacredSite(sacredId: number): Promise<any[]> {
+  try {
+    const agg = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT ts.tour_id, ts.tier, ts.km, ts.via_city
+         FROM tour_sacred ts
+         JOIN tours t ON t.id = ts.tour_id AND t."isActive" = true
+        WHERE ts.sacred_id = $1
+        ORDER BY CASE ts.tier WHEN 'in_city' THEN 0 WHEN 'short_drive' THEN 1 ELSE 2 END, ts.km`,
+      sacredId);
+    if (!agg.length) return [];
+    const ids = agg.map((a) => String(a.tour_id));
+    const rows = await prisma.tour.findMany({ where: { id: { in: ids } }, select: TOUR_CARD_SELECT });
+    const byId = new Map(rows.map((r: any) => [r.id, r]));
+    return agg
+      .map((a) => {
+        const t = byId.get(String(a.tour_id));
+        if (!t) return null;
+        const tier = String(a.tier) as Tier;
+        return { ...t, tier, tierLabel: TIER_LABEL[tier] ?? '', km: Math.round(Number(a.km)), viaCity: String(a.via_city) };
+      })
+      .filter(Boolean);
+  } catch (e) {
+    console.error('toursForSacredSite failed (non-fatal):', e);
+    return [];
+  }
+}
+
+/** Circuit overviews (short GOLD prose per circuit), keyed by circuit name. */
+export async function circuitContentMap(): Promise<Record<string, any>> {
+  try {
+    const rows = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT circuit, content FROM sacred_circuit_content WHERE content IS NOT NULL`);
+    const out: Record<string, any> = {};
+    for (const r of rows) out[String(r.circuit)] = r.content;
+    return out;
+  } catch {
+    return {};
   }
 }
