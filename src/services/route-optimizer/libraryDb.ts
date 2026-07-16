@@ -74,11 +74,22 @@ export async function aliasLookup(text: string | null | undefined): Promise<{ br
   try {
     const q = normAlias(text);
     if (q.length < 4) return null;
-    const rows = await prisma.$queryRawUnsafe<any[]>(
-      `SELECT branch_id, alias, norm_alias FROM branch_aliases
+    // 1) EXACT: the alias is contained verbatim in the normalised sentence (precise, fast).
+    const exact = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT branch_id, alias FROM branch_aliases
         WHERE approved = true AND length(norm_alias) >= 4 AND position(norm_alias IN $1) > 0
         ORDER BY length(norm_alias) DESC LIMIT 1`, q);
-    return rows[0] ? { branchId: String(rows[0].branch_id), alias: String(rows[0].alias) } : null;
+    if (exact[0]) return { branchId: String(exact[0].branch_id), alias: String(exact[0].alias) };
+    // 2) FUZZY: spelling mistakes (navgreh / nvgrah / nau greh / naugrah …) via pg_trgm
+    //    word_similarity — "how well does the alias match SOME window of his sentence". The
+    //    approved-alias set is small and distinctive, so the gap between the right tour
+    //    (0.3–1.0) and any other (≤0.1) is wide; 0.28 catches every reasonable misspelling
+    //    with a large safety margin. Exact still wins first, so precision is never lost.
+    const fuzzy = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT branch_id, alias, word_similarity(norm_alias, $1) AS ws FROM branch_aliases
+        WHERE approved = true AND length(norm_alias) >= 5 AND word_similarity(norm_alias, $1) > 0.28
+        ORDER BY ws DESC, length(norm_alias) DESC LIMIT 1`, q);
+    return fuzzy[0] ? { branchId: String(fuzzy[0].branch_id), alias: String(fuzzy[0].alias) } : null;
   } catch (e) {
     console.error('aliasLookup failed (non-fatal):', e);
     return null;
