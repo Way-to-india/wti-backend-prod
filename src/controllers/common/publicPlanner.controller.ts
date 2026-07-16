@@ -788,11 +788,11 @@ export class PublicPlannerController {
       // we sell (an APPROVED alias) and at most one shaky city was extracted, drop it so the
       // library serves the journey he actually named. Two+ confident cities = a real
       // multi-city ask, never overridden.
-      if (cities.length >= 1 && cities.length <= 1) {
+      if (cities.length >= 1) {
         try {
-          const named = await aliasLookup(request);
-          if (named) {
-            console.warn(`named-tour override: cleared "${cities[0]?.name}" for alias hit "${named.alias}".`);
+          const named = await aliasLookup(request);   // approved aliases are DISTINCTIVE tour
+          if (named) {                                 // names; a real multi-city ask never hits
+            console.warn(`named-tour override: cleared ${cities.length} city/cities for alias hit "${named.alias}".`);
             cities = [];
           }
         } catch { /* non-fatal */ }
