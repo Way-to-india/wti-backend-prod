@@ -2,6 +2,7 @@ import prisma from '@/config/db';
 import cacheService from '@/services/common/cache.service';
 import { buildTourRoute, norm } from '@/utils/tourRoute';
 import { unescoForTour, tourUnescoJsonLd } from '@/services/common/unesco.service';
+import { sacredForTour, tourSacredJsonLd } from '@/services/common/sacred.service';
 import type { Request, Response } from 'express';
 import type { Prisma } from 'prisma/generated/prisma/client';
 
@@ -658,7 +659,17 @@ export class TourController {
       } catch (e) {
         console.error('UNESCO enrichment failed (non-fatal):', e);
       }
-      const tourWithRoute = { ...tour, route, unescoSites, unescoJsonLd };
+      // ---- Sacred temple circuits (S1) — Jyotirlingas, Char Dham, Arupadai Veedu,
+      // Navagraha, Shakti Peethas, Divya Desams. Same fail-closed pattern.
+      let sacredSites: any[] = [];
+      let sacredJsonLd: Record<string, any> | null = null;
+      try {
+        sacredSites = await sacredForTour(tour.id);
+        sacredJsonLd = tourSacredJsonLd({ title: tour.title, slug: tour.slug }, sacredSites);
+      } catch (e) {
+        console.error('Sacred enrichment failed (non-fatal):', e);
+      }
+      const tourWithRoute = { ...tour, route, unescoSites, unescoJsonLd, sacredSites, sacredJsonLd };
 
       return res.deliver(200, true, {
         tour: tourWithRoute,

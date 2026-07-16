@@ -10,11 +10,13 @@ import ThemeRouter from './theme.routes';
 import TourRouter from './tour.routes';
 import TravelGuideRouter from './travel-guide.routes';
 import UnescoRouter from './unesco.routes';
+import SacredRouter from './sacred.routes';
 
 const router = Router();
 
 router.use(AppRoutes.TOUR, TourRouter);
 router.use(AppRoutes.UNESCO, UnescoRouter);
+router.use(AppRoutes.SACRED, SacredRouter);
 router.use(AppRoutes.CITY, CityRouter);
 router.use(AppRoutes.THEME, ThemeRouter);
 router.use(AppRoutes.QUERY, QueryRouter);
