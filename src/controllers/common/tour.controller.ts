@@ -1,6 +1,7 @@
 import prisma from '@/config/db';
 import cacheService from '@/services/common/cache.service';
 import { buildTourRoute, norm } from '@/utils/tourRoute';
+import { unescoForTour, tourUnescoJsonLd } from '@/services/common/unesco.service';
 import type { Request, Response } from 'express';
 import type { Prisma } from 'prisma/generated/prisma/client';
 
@@ -643,7 +644,21 @@ export class TourController {
       } catch (e) {
         console.error('verified route load failed:', e);
       }
-      const tourWithRoute = { ...tour, route };
+      // ---- UNESCO World Heritage layer (U3) — the sites this route passes, honest by
+      // distance. Fails CLOSED: any error leaves the tour untouched (no map/heritage block,
+      // never a 500). JSON-LD is built server-side for the tour detail page to inject.
+      let unescoSites: any[] = [];
+      let unescoJsonLd: Record<string, any> | null = null;
+      try {
+        unescoSites = await unescoForTour(tour.id);
+        unescoJsonLd = tourUnescoJsonLd(
+          { title: tour.title, slug: tour.slug, overview: tour.overview },
+          unescoSites,
+        );
+      } catch (e) {
+        console.error('UNESCO enrichment failed (non-fatal):', e);
+      }
+      const tourWithRoute = { ...tour, route, unescoSites, unescoJsonLd };
 
       return res.deliver(200, true, {
         tour: tourWithRoute,

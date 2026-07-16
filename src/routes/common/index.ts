@@ -9,10 +9,12 @@ import QueryRouter from './query.routes';
 import ThemeRouter from './theme.routes';
 import TourRouter from './tour.routes';
 import TravelGuideRouter from './travel-guide.routes';
+import UnescoRouter from './unesco.routes';
 
 const router = Router();
 
 router.use(AppRoutes.TOUR, TourRouter);
+router.use(AppRoutes.UNESCO, UnescoRouter);
 router.use(AppRoutes.CITY, CityRouter);
 router.use(AppRoutes.THEME, ThemeRouter);
 router.use(AppRoutes.QUERY, QueryRouter);

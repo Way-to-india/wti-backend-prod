@@ -21,6 +21,7 @@ enum Routes {
   NOTIFICATIONS = '/notifications',
   CRM = '/crm',
   ROUTE_OPTIMIZER = '/route-optimizer',
+  UNESCO = '/unesco',
 }
 
 const AppRoutes = { ...Routes } as const;
