@@ -10,6 +10,7 @@
  * NO MODEL. NO EMBEDDING. Pure SQL.
  */
 import prisma from '@/config/db';
+import { normAlias } from './library';
 import type { BranchLite, BodyClass, StopRole, ThemeTag, ProofObject } from './library';
 
 /** Load every ours-branch with its ordered stops for the in-memory funnel. There are only
@@ -70,9 +71,9 @@ export async function loadBranches(): Promise<BranchLite[]> {
  * temples" → the Navagraha branch; "9 devi darshan" → Nau Devi; etc.
  */
 export async function aliasLookup(text: string | null | undefined): Promise<{ branchId: string; alias: string } | null> {
-  const q = normAlias(text);
-  if (q.length < 4) return null;
   try {
+    const q = normAlias(text);
+    if (q.length < 4) return null;
     const rows = await prisma.$queryRawUnsafe<any[]>(
       `SELECT branch_id, alias, norm_alias FROM branch_aliases
         WHERE approved = true AND length(norm_alias) >= 4 AND position(norm_alias IN $1) > 0
