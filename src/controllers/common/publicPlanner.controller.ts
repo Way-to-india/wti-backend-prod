@@ -48,7 +48,7 @@ import { resolveNamedCircuit, overlayTourDays } from '@/services/route-optimizer
 import { circuitStays, circuitTourFacts, circuitItinerary } from '@/services/route-optimizer/namedCircuitsDb';
 // SPRINT C1 — RUNG 2, the library (itinerary memory + faceted retrieval + proof objects).
 import { retrieve, type QueryFacets } from '@/services/route-optimizer/library';
-import { loadBranches, branchIdByTour, saveRetrievalProof } from '@/services/route-optimizer/libraryDb';
+import { loadBranches, branchIdByTour, saveRetrievalProof, aliasLookup } from '@/services/route-optimizer/libraryDb';
 import { buildLibraryCards, proofSummary } from '@/services/route-optimizer/libraryCards';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
 import { haversineKm } from '@/services/route-optimizer/geo';
@@ -860,7 +860,16 @@ export class PublicPlannerController {
         // is silent the request falls through to the pre-C1 circuit/theme code UNCHANGED.
         // The rung fires ONLY where the brief is a named circuit or a USABLE region — the
         // exact acceptance surface — so no shipped theme/region behaviour moves beneath it.
-        if (circuitHit || regionIsUsable(regionMatch, cities.length)) {
+        // STAGE 0 name match: the four famous circuits (mapped tour→branch) OR ANY named
+        // tour we sell, via branch_aliases ("nav greh temples" → the Navagraha branch). A
+        // named tour makes the rung fire even without a usable region.
+        let libAliasBranchId: string | null = circuitHit ? await branchIdByTour(circuitHit.circuit.tourId) : null;
+        let libAliasQuote: string | null = circuitHit ? circuitHit.quote : null;
+        if (!libAliasBranchId) {
+          const al = await aliasLookup(request);
+          if (al) { libAliasBranchId = al.branchId; libAliasQuote = al.alias; }
+        }
+        if (libAliasBranchId || regionIsUsable(regionMatch, cities.length)) {
           try {
             const saidNightsLib = (intent?.nights.provenance === 'he_said' ? intent.nights.value : null)
               ?? nightsFromWords(request ?? '')?.maxNights ?? null;
@@ -879,11 +888,8 @@ export class PublicPlannerController {
               saidNights: saidNightsLib,
               profile: libProfile,
             };
-            let aliasBranchId: string | null = null;
-            const aliasQuote = circuitHit ? circuitHit.quote : null;
-            if (circuitHit) aliasBranchId = await branchIdByTour(circuitHit.circuit.tourId);
             const branches = await loadBranches();
-            const { offered: scored, proof } = retrieve(branches, facets, { aliasBranchId, aliasQuote });
+            const { offered: scored, proof } = retrieve(branches, facets, { aliasBranchId: libAliasBranchId, aliasQuote: libAliasQuote });
             void saveRetrievalProof(request ?? '', proof, proof.served, proof.aliasHit);   // §10.3, fire-and-forget
 
             if (scored.length) {
@@ -899,11 +905,15 @@ export class PublicPlannerController {
                 const questions = !measuredFrom
                   ? [originQ, ...baseQs.filter((q) => q.key !== 'origin')].slice(0, 2)
                   : baseQs;
+                // when a named tour we sell is the first card (alias hit), name it.
+                const aliasFirst = libAliasBranchId && cards[0] && cards[0].branchId === libAliasBranchId ? cards[0] : null;
                 const lead = circuitHit
                   ? (circuitHit.confidence === 'variant'
                       ? `I read "${circuitHit.quote}" as ${circuitHit.circuit.label}. If you meant something else, tell me plainly and I will start again. `
                       : `You asked for ${circuitHit.circuit.label}. `)
-                  : `From the journeys we run ourselves${m ? ` in ${m.region.label}` : ''}, here ${cards.length === 1 ? 'is one that fits' : `are ${cards.length} that fit`}. `;
+                  : aliasFirst
+                    ? `You asked for the ${aliasFirst.label} — a journey we run ourselves.${cards.length > 1 ? ' A few more that fit are below. ' : ' '}`
+                    : `From the journeys we run ourselves${m ? ` in ${m.region.label}` : ''}, here ${cards.length === 1 ? 'is one that fits' : `are ${cards.length} that fit`}. `;
                 const askOrigin = !measuredFrom
                   ? ' Now tell me the city you are starting from, and I will fit the journey to your door — the right trains, the right flights, and honest days.'
                   : '';

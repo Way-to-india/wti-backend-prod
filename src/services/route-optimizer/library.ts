@@ -336,20 +336,14 @@ export function retrieve(
   const scoreFloor = opts.scoreFloor ?? 45;
   const excluded: ProofExcluded[] = [];
 
-  // STAGE 0 — a named alias is a lookup, not a search. Served first, alone.
+  // STAGE 0 — a named alias is a lookup, not a search: the exact tour he named is the
+  // EXPERT'S PICK, shown FIRST, with facet alternatives beneath it (not alone — he may
+  // still want to compare). "Nav Greh temples" → the Navagraha branch, then other South
+  // India temple journeys.
+  let aliasScored: ScoredBranch | null = null;
   if (opts.aliasBranchId) {
     const hit = branches.find((b) => b.id === opts.aliasBranchId);
-    if (hit) {
-      const scored = scoreBranch(hit, q);
-      const proof: ProofObject = {
-        version: 1, query: q, aliasHit: opts.aliasQuote ?? hit.label,
-        stage1_in: branches.length, stage1_survivors: 1,
-        ranked: [{ branchId: hit.id, label: hit.label, score: scored.score, matched: scored.matchedChips, missing: scored.missingChips, penalties: scored.penalties }],
-        excluded: [], served: [hit.id],
-        reason: `served by name match on "${opts.aliasQuote ?? hit.label}"`,
-      };
-      return { offered: [scored], proof };
-    }
+    if (hit) aliasScored = scoreBranch(hit, q);
   }
 
   // STAGE 1 — hard facets.
@@ -363,20 +357,24 @@ export function retrieve(
   // STAGE 2.5 — constraint-satisfaction scoring; keep the ones above the floor.
   const scored = survivors.map((b) => scoreBranch(b, q)).sort((a, b) => b.score - a.score);
   const offered: ScoredBranch[] = [];
+  if (aliasScored) offered.push(aliasScored);            // the named tour — expert's pick, first
   for (const s of scored) {
+    if (aliasScored && s.branch.id === aliasScored.branch.id) continue;   // never twice
     if (offered.length >= maxOffers) { excluded.push({ branchId: s.branch.id, label: s.branch.label, stage: 'rank', reason: `ranked below the top ${maxOffers}` }); continue; }
     if (s.score < scoreFloor) { excluded.push({ branchId: s.branch.id, label: s.branch.label, stage: 'score', reason: `score ${Math.round(s.score)} below floor ${scoreFloor}: ${s.penalties.map((p) => p.reason).join(', ') || 'no strong match'}` }); continue; }
     offered.push(s);
   }
 
   const proof: ProofObject = {
-    version: 1, query: q, aliasHit: null,
+    version: 1, query: q, aliasHit: aliasScored ? (opts.aliasQuote ?? aliasScored.branch.label) : null,
     stage1_in: branches.length, stage1_survivors: survivors.length,
     ranked: scored.map((s) => ({ branchId: s.branch.id, label: s.branch.label, score: Math.round(s.score * 10) / 10, matched: s.matchedChips, missing: s.missingChips, penalties: s.penalties })),
     excluded, served: offered.map((s) => s.branch.id),
-    reason: offered.length
-      ? `${offered.length} branch(es) served from ${survivors.length} facet survivors of ${branches.length}`
-      : `no branch cleared the facets/score floor (${survivors.length} survivors of ${branches.length})`,
+    reason: aliasScored
+      ? `name match "${opts.aliasQuote ?? aliasScored.branch.label}" served first; ${Math.max(0, offered.length - 1)} facet alternative(s)`
+      : offered.length
+        ? `${offered.length} branch(es) served from ${survivors.length} facet survivors of ${branches.length}`
+        : `no branch cleared the facets/score floor (${survivors.length} survivors of ${branches.length})`,
   };
   return { offered, proof };
 }

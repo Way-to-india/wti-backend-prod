@@ -61,6 +61,29 @@ export async function loadBranches(): Promise<BranchLite[]> {
   }
 }
 
+/**
+ * STAGE 0 — NAME MATCH against branch_aliases (the general case, beyond the four hard-coded
+ * circuits). The traveller's sentence is normalised the same way the aliases were (lower,
+ * non-alnum stripped, h-drift removed), and we return the branch whose LONGEST APPROVED
+ * alias is contained in it. Only approved aliases bind (§5: the founder approves before an
+ * alias goes live), so a raw tour-title alias never fires until it is blessed. "nav greh
+ * temples" → the Navagraha branch; "9 devi darshan" → Nau Devi; etc.
+ */
+export async function aliasLookup(text: string | null | undefined): Promise<{ branchId: string; alias: string } | null> {
+  const q = normAlias(text);
+  if (q.length < 4) return null;
+  try {
+    const rows = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT branch_id, alias, norm_alias FROM branch_aliases
+        WHERE approved = true AND length(norm_alias) >= 4 AND position(norm_alias IN $1) > 0
+        ORDER BY length(norm_alias) DESC LIMIT 1`, q);
+    return rows[0] ? { branchId: String(rows[0].branch_id), alias: String(rows[0].alias) } : null;
+  } catch (e) {
+    console.error('aliasLookup failed (non-fatal):', e);
+    return null;
+  }
+}
+
 /** STAGE 0 bridge: a famous-circuit alias hit carries our tourId; the branch is the row
  *  whose our_tour_id equals it. */
 export async function branchIdByTour(tourId: string): Promise<string | null> {
