@@ -754,6 +754,20 @@ export class PublicPlannerController {
         end = start;
       }
 
+      // A NAMED TOUR BEATS A MISREAD CITY (founder, 15 Jul 2026). An unusual spelling like
+      // "nau greh"/"naugrah"/"nvgrah" is sometimes pulled out as a bogus destination ("Nau
+      // Greh Temple") that would then FAIL the gazetteer and 400 the whole request before
+      // the library is ever asked. So — BEFORE the validation gate — if his sentence names a
+      // tour we sell (an APPROVED alias), we drop the extracted cities so the library serves
+      // the journey he actually named. Approved aliases are distinctive tour names; a real
+      // multi-city ask ("Delhi, Agra, Jaipur") never hits one.
+      if (cities.length >= 1) {
+        try {
+          const named = await aliasLookup(request);
+          if (named) { console.warn(`named-tour override: cleared ${cities.length} for alias "${named.alias}".`); cities = []; }
+        } catch { /* non-fatal */ }
+      }
+
       // validation gate: only real places survive. Unresolved names are NOT
       // silently dropped — each gets the full verify ladder (exact → fuzzy
       // spelling fix → AI existence check + registration). Only a name that
@@ -781,21 +795,6 @@ export class PublicPlannerController {
           status: false,
           message: `We could not find ${failed.length === 1 ? 'this place' : 'these places'}: ${failed.join(', ')}. Please check the spelling, or use the nearest big town.`,
         });
-      }
-      // A NAMED TOUR BEATS A MISREAD CITY (founder, 15 Jul 2026). An unusual spelling like
-      // "naugrah" or "nvgrah" is sometimes pulled out as a single bogus destination, making
-      // cities≥1 and bypassing the named-tour lookup entirely. If his sentence names a tour
-      // we sell (an APPROVED alias) and at most one shaky city was extracted, drop it so the
-      // library serves the journey he actually named. Two+ confident cities = a real
-      // multi-city ask, never overridden.
-      if (cities.length >= 1) {
-        try {
-          const named = await aliasLookup(request);   // approved aliases are DISTINCTIVE tour
-          if (named) {                                 // names; a real multi-city ask never hits
-            console.warn(`named-tour override: cleared ${cities.length} city/cities for alias hit "${named.alias}".`);
-            cities = [];
-          }
-        } catch { /* non-fatal */ }
       }
       const totalNights = cities.reduce((s, c) => s + c.nights, 0);
       // ---- US-800b — A REGION IS NOT A DEAD END --------------------------------------
