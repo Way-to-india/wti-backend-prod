@@ -20,9 +20,18 @@ export async function enqueue(kind: JobKind, key: Record<string, any>): Promise<
       INSERT INTO enrichment_jobs (kind, job_key, dedupe_key, status)
       VALUES (${kind}, ${JSON.stringify(key)}::jsonb, ${dk}, 'pending')
       ON CONFLICT (dedupe_key) DO UPDATE
-        SET status = CASE WHEN enrichment_jobs.status = 'done'
-                          THEN enrichment_jobs.status ELSE 'pending' END,
-            updated_at = now()`;
+        SET status = CASE
+              WHEN enrichment_jobs.status = 'done' THEN enrichment_jobs.status
+              WHEN enrichment_jobs.status = 'error' AND enrichment_jobs.attempts >= 2
+                   AND enrichment_jobs.updated_at > now() - interval '30 days'
+                   THEN enrichment_jobs.status
+              ELSE 'pending' END,
+            updated_at = CASE
+              WHEN enrichment_jobs.status = 'done' THEN enrichment_jobs.updated_at
+              WHEN enrichment_jobs.status = 'error' AND enrichment_jobs.attempts >= 2
+                   AND enrichment_jobs.updated_at > now() - interval '30 days'
+                   THEN enrichment_jobs.updated_at
+              ELSE now() END`;
   } catch (e) { console.error('enqueue failed (non-fatal):', e); }
 }
 
@@ -34,7 +43,7 @@ export async function claim(n: number): Promise<Job[]> {
     UPDATE enrichment_jobs SET status='running', attempts=attempts+1, updated_at=now()
     WHERE id IN (
       SELECT id FROM enrichment_jobs
-      WHERE status='pending' OR (status='error' AND attempts < 3)
+      WHERE status='pending' OR (status='error' AND attempts < 2)
       ORDER BY created_at ASC LIMIT ${Math.max(1, n)}
       FOR UPDATE SKIP LOCKED
     )

@@ -41,10 +41,10 @@ function pick(envKey: string, dflt: string): string {
   return process.env[envKey]?.trim() || dflt;
 }
 export const CONCERN_MODEL = {
-  fare:    () => pick('ENRICH_MODEL_FARE', SONNET),   // drives the cost decision → accuracy
+  fare:    () => pick('ENRICH_MODEL_FARE', HAIKU),   // drives the cost decision → accuracy
   hotel:   () => pick('ENRICH_MODEL_HOTEL', HAIKU),   // low-risk list extraction
-  guide:   () => pick('ENRICH_MODEL_GUIDE', SONNET),  // PII + anti-fabrication → strongest
-  content: () => pick('ENRICH_MODEL_CONTENT', SONNET),// narrative quality
+  guide:   () => pick('ENRICH_MODEL_GUIDE', HAIKU),  // PII + anti-fabrication → strongest
+  content: () => pick('ENRICH_MODEL_CONTENT', HAIKU),// narrative quality
 } as const;
 
 export const enrichmentEnabled = (): boolean => !!process.env.ANTHROPIC_API_KEY;

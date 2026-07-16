@@ -17,7 +17,7 @@ import { webSearchJson, CONCERN_MODEL, isPeakMonth, currentMonthIST, isFresh } f
 import { validateFare } from './guardrails';
 import { enqueue } from './jobs';
 
-const FARE_TTL_HOURS = 48;
+const FARE_TTL_HOURS = 720;   // 30 days (approximate fares acceptable) [cost-audit]
 
 export interface FareResult {
   min: number;

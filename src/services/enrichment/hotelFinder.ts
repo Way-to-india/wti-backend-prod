@@ -8,7 +8,7 @@ import { webSearchJson, CONCERN_MODEL, isFresh } from './core';
 import { validateHotel } from './guardrails';
 import { enqueue } from './jobs';
 
-const HOTEL_TTL_HOURS = 504;
+const HOTEL_TTL_HOURS = 1440;   // 60 days; hotels near-static (name/rating) [cost-audit]
 
 export type HotelCategory = 'budget' | 'standard' | 'premium' | 'luxury';
 
