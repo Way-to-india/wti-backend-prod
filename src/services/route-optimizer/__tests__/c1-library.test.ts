@@ -250,10 +250,11 @@ describe('C1 — retrieve() + PROOF OBJECT (§10.3)', () => {
     expect(proof.served).toContain('kerala-hm');
     expect(proof.stage1_in).toBe(3);
   });
-  test('an alias hit is served alone and the proof records the name match', () => {
+  test('an alias hit is served FIRST (expert pick) and the proof records the name match', () => {
     const { offered, proof } = retrieve(branches, facets({}), { aliasBranchId: 'raj', aliasQuote: 'the forts of Rajasthan' });
-    expect(offered.length).toBe(1);
-    expect(offered[0].branch.id).toBe('raj');
+    expect(offered.length).toBeGreaterThanOrEqual(1);
+    expect(offered[0].branch.id).toBe('raj');            // the named tour leads
+    expect(offered.filter((o) => o.branch.id === 'raj').length).toBe(1);  // never twice
     expect(proof.aliasHit).toBe('the forts of Rajasthan');
   });
 });
