@@ -655,6 +655,31 @@ export function truthCtxFor(input: OptimizeInput, deps: OptimizeDeps): TruthCtx 
  * recursion with optimize(). The objective is forced into the input the plan sees so
  * its DDCV weights, ranking and decision records are all consistent with it.
  */
+/**
+ * THE RETURN-LEG BUILDER (founder principle, 15 Jul 2026: "if there is no further city,
+ * which are the best modes to take the traveller back to his return/onward city?").
+ *
+ * A return to the ORIGIN cannot be an open-path endpoint: the sequencer visits each city
+ * exactly once and can NEVER end at the city it began from. So when the return city IS the
+ * origin (a round trip), we sequence the open path with a FREE end (origin → stops → the
+ * best terminal), then APPEND the origin as the ONE legal closing repeat. The truth law
+ * (truth.ts L4, roundTrip) and repeatedCities({closingOrigin}) already forgive exactly this
+ * one repeat and nothing else. buildPlan then chooses the return leg's mode with the same
+ * radar as every other leg, and expandDays gives the closing origin ZERO nights (he is home).
+ *
+ * A DISTINCT onward city (≠ origin, ≠ any stop) still rides as a normal fixed end.
+ */
+function sequenceOrder(matrix: number[][], startIdx: number | null, endIdx: number | null): number[] {
+  const s = startIdx != null && startIdx >= 0 ? startIdx : null;
+  const e = endIdx != null && endIdx >= 0 ? endIdx : null;
+  if (s != null && e != null && e === s) {
+    const { order } = sequence(matrix, { start: s, end: null });
+    if (order.length && order[order.length - 1] !== s) order.push(s);   // the return home
+    return order;
+  }
+  return sequence(matrix, { start: s, end: e }).order;
+}
+
 export function solveForObjective(input: OptimizeInput, deps: OptimizeDeps, objective: Objective, label: string): Plan {
   const names0 = deps.nodes.map((n) => n.name);
   const pax = input.pax ?? 2;
@@ -664,7 +689,7 @@ export function solveForObjective(input: OptimizeInput, deps: OptimizeDeps, obje
   const solveTol = toleranceForProfile(input.profile);
   const solveW = applyTPP(weightsForObjective(objective), input.tpp);
   const matrix = buildMatrix(names0, deps, objective, pax, preferDaily, solveTol, input.month, solveW, input.contract, input.elevations);
-  const { order } = sequence(matrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null });
+  const order = sequenceOrder(matrix, startIdx, endIdx);
   return buildPlan(order, names0, { ...input, objective }, deps, label);
 }
 
@@ -678,14 +703,14 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
   const solveTol = toleranceForProfile(input.profile);
   const solveW = applyTPP(weightsForObjective(input.objective), input.tpp);
   const matrix = buildMatrix(names0, deps, input.objective, pax, preferDaily, solveTol, input.month, solveW, input.contract, input.elevations);
-  const { order } = sequence(matrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null });
+  const order = sequenceOrder(matrix, startIdx, endIdx);
 
   const best = buildPlan(order, names0, input, deps, `Best (${input.objective})`);
 
   // alternate 1 — edge-penalty diversification (penalise 30% of chosen edges, re-sequence)
   const alt1Matrix = matrix.map((row) => row.slice());
-  for (let i = 1; i < order.length; i++) if (i % 3 === 0) alt1Matrix[order[i - 1]][order[i]] *= 1.6;
-  const alt1Order = sequence(alt1Matrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null }).order;
+  for (let i = 1; i < order.length; i++) if (i % 3 === 0 && order[i - 1] !== order[i]) alt1Matrix[order[i - 1]][order[i]] *= 1.6;
+  const alt1Order = sequenceOrder(alt1Matrix, startIdx, endIdx);
   const alt1 = buildPlan(alt1Order, names0, input, deps, 'Alternate (diversified)');
 
   // alternate 2 — weekday-free fallback: force road/daily modes only (no weekday lock)
@@ -694,7 +719,7 @@ export function optimize(input: OptimizeInput, deps: OptimizeDeps): OptimizeResu
     pool: new Map(Array.from(deps.pool.entries()).map(([k, v]) => [k, v.filter((o) => (o.operatingDays ?? 127) === 127)] as const)),
   };
   const roadMatrix = buildMatrix(names0, roadOnlyDeps, input.objective, pax, true, solveTol, input.month, solveW, input.contract, input.elevations);
-  const alt2Order = sequence(roadMatrix, { start: startIdx != null && startIdx >= 0 ? startIdx : null, end: endIdx != null && endIdx >= 0 ? endIdx : null }).order;
+  const alt2Order = sequenceOrder(roadMatrix, startIdx, endIdx);
   const alt2 = buildPlan(alt2Order, names0, input, { ...deps, pool: roadOnlyDeps.pool, dailyOnly: true }, 'Alternate (date-flexible, no weekday lock)');
   alt2.dateFlexible = true;
 

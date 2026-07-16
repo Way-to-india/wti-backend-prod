@@ -118,7 +118,13 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     const to = inp.sequence[i];
     const opt = inp.chosen.get(legKey(from, to));
     const toNode = inp.nodes.get(to);
-    const nightsAtTo = inp.nights.get(to) ?? 1;
+    // THE RETURN HOME (return-leg builder, 15 Jul 2026): the last leg's destination is the
+    // origin — the one legal closing repeat. He is going home: ZERO nights there, and this
+    // is not a "positioning" drive; it is the journey back.
+    const isReturnHome = i === inp.sequence.length - 1
+      && to.trim().toLowerCase() === inp.sequence[0]?.trim().toLowerCase()
+      && from.trim().toLowerCase() !== to.trim().toLowerCase();
+    const nightsAtTo = isReturnHome ? 0 : (inp.nights.get(to) ?? 1);
 
     if (!opt) {
       // no curated option and no road fallback resolved — surface as VERIFY
@@ -140,7 +146,7 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     const arr = toMin(opt.arrTime ?? null) ?? dep + durationMin;
 
     // positioning drive: road leg into a 0-night gateway (exists only to reach onward transport)
-    const positioning = opt.mode === 'ROAD' && nightsAtTo === 0;
+    const positioning = opt.mode === 'ROAD' && nightsAtTo === 0 && !isReturnHome;
 
     // ---- hard-constraint check: gates / daylight on the inbound corridor to `to`
     const violations: string[] = [];
@@ -293,13 +299,14 @@ export function expandDays(inp: ExpandInput): ExpandOutput {
     const roadTail = reachesElsewhere ? `, then road to ${to} (${opt.accessToKm} km)` : '';
     const flyVia = opt.mode === 'AIR' && reachesElsewhere
       ? `Fly ${from} → ${railhead}${idTxt}${roadTail}` : null;
-    const activity = isHalt
+    const activityBase = isHalt
       ? `En-route overnight halt at ${to} (break the ${from} drive; sightseeing + hotel)`
       : overnight
-        ? `Overnight train ${from} → ${reachesElsewhere ? railhead : to}${idTxt}${roadTail}${inp.praiseHotelNight === false ? '' : ' (saves a hotel night)'}`
+        ? `Overnight train ${from} → ${reachesElsewhere ? railhead : to}${idTxt}${roadTail}${inp.praiseHotelNight === false || isReturnHome ? '' : ' (saves a hotel night)'}`
         : flyVia ?? (opt.mode === 'RAIL' && reachesElsewhere
             ? `Train ${from} → ${railhead}${idTxt}${roadTail}`
             : `${verb} ${from} → ${to}${idTxt}${positioning ? ' (positioning)' : ''}`);
+    const activity = activityBase + (isReturnHome ? ' · your journey home' : '');
     days.push({
       day: dayIdx + 1, weekday: stamp(dayIdx), city: to, halt: isHalt,
       activity,
