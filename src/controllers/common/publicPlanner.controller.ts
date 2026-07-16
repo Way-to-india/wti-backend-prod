@@ -782,6 +782,21 @@ export class PublicPlannerController {
           message: `We could not find ${failed.length === 1 ? 'this place' : 'these places'}: ${failed.join(', ')}. Please check the spelling, or use the nearest big town.`,
         });
       }
+      // A NAMED TOUR BEATS A MISREAD CITY (founder, 15 Jul 2026). An unusual spelling like
+      // "naugrah" or "nvgrah" is sometimes pulled out as a single bogus destination, making
+      // cities≥1 and bypassing the named-tour lookup entirely. If his sentence names a tour
+      // we sell (an APPROVED alias) and at most one shaky city was extracted, drop it so the
+      // library serves the journey he actually named. Two+ confident cities = a real
+      // multi-city ask, never overridden.
+      if (cities.length >= 1 && cities.length <= 1) {
+        try {
+          const named = await aliasLookup(request);
+          if (named) {
+            console.warn(`named-tour override: cleared "${cities[0]?.name}" for alias hit "${named.alias}".`);
+            cities = [];
+          }
+        } catch { /* non-fatal */ }
+      }
       const totalNights = cities.reduce((s, c) => s + c.nights, 0);
       // ---- US-800b — A REGION IS NOT A DEAD END --------------------------------------
       //
