@@ -165,6 +165,53 @@ export async function remapCollection(collectionId: number): Promise<{ sites: nu
 }
 
 // ---------------------------------------------------------------------------
+// The engine, sacred layer: rebuild tour_sacred for ALL temples.
+// Same deterministic traversal and the SAME distance constants as the
+// collections engine above (in_city <= 12, short_drive <= 35, day_trip <= 65,
+// closest stop wins). We wipe tour_sacred and rebuild it, exactly like the
+// original sacred seed. A temple without coordinates attaches nothing.
+// ---------------------------------------------------------------------------
+export async function remapSacred(): Promise<{ sites: number; unmapped: string[]; links: number; tiers: Record<Tier, number> }> {
+  const sites = await prisma.$queryRawUnsafe<any[]>(
+    `SELECT id, name, lat, lng FROM sacred_sites`);
+  const mappable = sites.filter((s) => s.lat != null && s.lng != null);
+  const unmapped = sites.filter((s) => s.lat == null || s.lng == null).map((s) => String(s.name));
+  const stops = await prisma.$queryRawUnsafe<any[]>(
+    `SELECT ts."tourId" AS tour_id, c.name AS city, c.latitude AS lat, c.longitude AS lng
+       FROM tour_stays ts JOIN cities c ON c.id = ts."wtiCityId"
+      WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL`);
+  type Best = { km: number; city: string };
+  const best = new Map<string, Best>();
+  for (const st of stops) {
+    const p: [number, number] = [Number(st.lat), Number(st.lng)];
+    for (const site of mappable) {
+      const km = haversineKm(p, [Number(site.lat), Number(site.lng)]);
+      if (km > DAY_TRIP_KM) continue;
+      const key = `${st.tour_id}|${site.id}`;
+      const cur = best.get(key);
+      if (!cur || km < cur.km) best.set(key, { km, city: String(st.city) });
+    }
+  }
+  // wipe and rebuild the whole table, exactly like the seed
+  await prisma.$executeRawUnsafe(`DELETE FROM tour_sacred`);
+  let links = 0;
+  const tiers: Record<Tier, number> = { in_city: 0, short_drive: 0, day_trip: 0 };
+  for (const [key, b] of best) {
+    const [tourId, sacredId] = key.split('|');
+    const tier = tierFor(b.km);
+    if (!tier) continue;
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO tour_sacred (tour_id, sacred_id, tier, via_city, km, created_at)
+       VALUES ($1,$2,$3,$4,$5, now())
+       ON CONFLICT (tour_id, sacred_id) DO UPDATE SET tier=EXCLUDED.tier, via_city=EXCLUDED.via_city, km=EXCLUDED.km`,
+      tourId, Number(sacredId), tier, b.city, Math.round(b.km * 10) / 10);
+    links++;
+    tiers[tier]++;
+  }
+  return { sites: mappable.length, unmapped, links, tiers };
+}
+
+// ---------------------------------------------------------------------------
 // PUBLIC reads (fail closed)
 // ---------------------------------------------------------------------------
 export async function listCollections(activeOnly = true): Promise<any[]> {

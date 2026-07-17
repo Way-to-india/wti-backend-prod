@@ -8,6 +8,12 @@ const router = Router();
 // heritage data from /api/common/* routers only.
 router.use(authMiddleware);
 
+// sacred temples: additive from admin (declared before the generic :layer
+// routes so the literal "sacred" segment is unambiguous)
+router.post('/legacy/sacred/sites', HeritageAdminController.postSacredSite);
+router.delete('/legacy/sacred/sites/:id', HeritageAdminController.deleteSacredSite);
+router.post('/legacy/sacred/remap', HeritageAdminController.remapSacred);
+
 // legacy layers (unesco_sites / sacred_sites / circuit overviews)
 router.get('/legacy/:layer/sites', HeritageAdminController.getLegacySites);
 router.put('/legacy/:layer/sites/:id', HeritageAdminController.putLegacySite);

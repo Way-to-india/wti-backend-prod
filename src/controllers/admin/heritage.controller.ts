@@ -7,10 +7,11 @@ import {
   listLegacySites, saveLegacyContent, listCircuitContent, saveCircuitContent,
   createCollection, updateCollection, deleteCollection,
   createSite, updateSite, deleteSite, siteTourPreview, bustHeritageCaches,
+  createSacredSite, deleteSacredSite,
   type LegacyLayer,
 } from '@/services/admin/heritage-admin.service';
 import {
-  listCollections, getCollection, remapCollection, geocodeCandidates, contentGate,
+  listCollections, getCollection, remapCollection, remapSacred, geocodeCandidates, contentGate,
 } from '@/services/common/heritage.service';
 
 function layerOf(req: Request): LegacyLayer | null {
@@ -39,12 +40,63 @@ export class HeritageAdminController {
         content: req.body?.content,
         contentReviewed: req.body?.contentReviewed,
         blurb: req.body?.blurb,
+        circuits: req.body?.circuits,
+        deity: req.body?.deity,
+        state: req.body?.state,
+        nearestTown: req.body?.nearestTown,
+        lat: req.body?.lat,
+        lng: req.body?.lng,
+        geocodedFrom: req.body?.geocodedFrom,
       });
       if (!result.ok) return res.deliver(422, false, { issues: result.issues }, 'Content did not pass the GOLD gate');
       return res.deliver(200, true, { saved: true, warnings: result.issues });
     } catch (error) {
       console.error('Heritage admin putLegacySite error:', error);
       return res.deliver(500, false, undefined, 'Failed to save');
+    }
+  }
+
+  // ---- sacred temples: additive from admin ----
+  static async postSacredSite(req: Request, res: Response) {
+    try {
+      const name = String(req.body?.name ?? '').trim();
+      if (!name) return res.deliver(400, false, undefined, 'name is required');
+      const created = await createSacredSite({
+        name,
+        circuits: Array.isArray(req.body?.circuits) ? req.body.circuits : [],
+        deity: req.body?.deity ?? null,
+        state: req.body?.state,
+        nearestTown: req.body?.nearestTown,
+        lat: req.body?.lat ?? null,
+        lng: req.body?.lng ?? null,
+        geocodedFrom: req.body?.geocodedFrom ?? null,
+      });
+      return res.deliver(201, true, created);
+    } catch (error) {
+      console.error('Heritage admin postSacredSite error:', error);
+      return res.deliver(500, false, undefined, 'Failed to create temple');
+    }
+  }
+
+  static async deleteSacredSite(req: Request, res: Response) {
+    try {
+      const result = await deleteSacredSite(Number(req.params.id));
+      if (!result.ok) return res.deliver(409, false, undefined, result.reason);
+      return res.deliver(200, true, { deleted: true });
+    } catch (error) {
+      console.error('Heritage admin deleteSacredSite error:', error);
+      return res.deliver(500, false, undefined, 'Failed to delete temple');
+    }
+  }
+
+  static async remapSacred(_req: Request, res: Response) {
+    try {
+      const result = await remapSacred();
+      await bustHeritageCaches();
+      return res.deliver(200, true, result);
+    } catch (error) {
+      console.error('Heritage admin remapSacred error:', error);
+      return res.deliver(500, false, undefined, 'Remap failed');
     }
   }
 
