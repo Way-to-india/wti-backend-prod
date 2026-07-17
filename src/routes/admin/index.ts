@@ -19,8 +19,10 @@ import TourDraftRouter from './tour-draft.routes'
 import UploadRouter from './upload.routes';
 import CityAdminRouter from './city.routes';
 import RouteOptimizerRouter from './route-optimizer.routes';
+import HeritageAdminRouter from './heritage.routes';
 
 const router = Router();
+
 
 router.use(AppRoutes.TOURS, TourRouter);
 router.use(AppRoutes.AUTH, AuthRouter);
@@ -43,4 +45,5 @@ router.use(AppRoutes.CITY, CityAdminRouter);
 router.use('/upload', UploadRouter);
 router.use(AppRoutes.ROUTE_OPTIMIZER, RouteOptimizerRouter);
 
+router.use('/heritage', HeritageAdminRouter);
 export default router;
