@@ -368,6 +368,11 @@ export interface ProofObject {
 
 export interface RetrieveResult {
   offered: ScoredBranch[];
+  /** EVERY survivor, scored and sorted, alias first when present — so a caller that wants
+   *  to CLASSIFY the field (fit vs "you may also like", region dominance) can reach past
+   *  the served cap. A secondary "UNESCO/heritage" mention can demote the real temple tours
+   *  below the top offers; drawing the shortlist from here keeps them findable. */
+  allScored: ScoredBranch[];
   proof: ProofObject;
 }
 
@@ -417,6 +422,11 @@ export function retrieve(
     offered.push(s);
   }
 
+  // the full ranked field for classification (alias first, then survivors, no dupe)
+  const allScored: ScoredBranch[] = aliasScored
+    ? [aliasScored, ...scored.filter((s) => s.branch.id !== aliasScored!.branch.id)]
+    : scored;
+
   const proof: ProofObject = {
     version: 1, query: q, aliasHit: aliasScored ? (opts.aliasQuote ?? aliasScored.branch.label) : null,
     stage1_in: branches.length, stage1_survivors: survivors.length,
@@ -428,5 +438,5 @@ export function retrieve(
         ? `${offered.length} branch(es) served from ${survivors.length} facet survivors of ${branches.length}`
         : `no branch cleared the facets/score floor (${survivors.length} survivors of ${branches.length})`,
   };
-  return { offered, proof };
+  return { offered, allScored, proof };
 }

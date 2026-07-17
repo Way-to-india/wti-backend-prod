@@ -903,14 +903,39 @@ export class PublicPlannerController {
               profile: libProfile,
             };
             const branches = await loadBranches();
-            // maxOffers 8: give the fit / "you may also like" split a real pool to draw a
-            // clean in-region temple shortlist from (the controller trims after classifying).
-            const { offered: scored, proof } = retrieve(branches, facets, { aliasBranchId: libAliasBranchId, aliasQuote: libAliasQuote, maxOffers: 8 });
+            const { offered: scored, allScored, proof } = retrieve(branches, facets, { aliasBranchId: libAliasBranchId, aliasQuote: libAliasQuote, maxOffers: 6 });
             void saveRetrievalProof(request ?? '', proof, proof.served, proof.aliasHit);   // §10.3, fire-and-forget
 
-            if (scored.length) {
+            // ── SELECT WHAT TO BUILD. With a NAMED tour (alias/circuit) we draw the
+            //    shortlist from the FULL ranking (allScored), not the served cap: a
+            //    secondary "UNESCO / world heritage" mention adds a co-equal Heritage
+            //    motivation that scores heritage-carrying tours at 100 and DEMOTES the real
+            //    in-region temple tours below the top offers. So we take the named tour, up
+            //    to 3 true intent-PEERS (same fine family), and up to 3 in-region TEMPLE
+            //    journeys, and build ONLY those — cheap, and the "you may also like" list is
+            //    drawn from the whole field. Without a named tour, the region path is unchanged.
+            const selRegionStates = m ? stateNamesOf(m) : null;
+            const selFamUser = intentFamily(request ?? '');
+            const SEL_DOM = 0.6;
+            const aliasScored = libAliasBranchId && allScored[0] && allScored[0].branch.id === libAliasBranchId ? allScored[0] : null;
+            let toBuild = scored;
+            if (aliasScored) {
+              const fitsSel: typeof allScored = [];
+              const alsoSel: typeof allScored = [];
+              for (const s of allScored) {
+                if (s === aliasScored) continue;
+                const dom = regionDominance(s.branch.states, selRegionStates);
+                const touches = selRegionStates ? dom > 0 : true;
+                if (selFamUser !== 'generic' && intentFamily(s.branch.label) === selFamUser && touches && fitsSel.length < 3) fitsSel.push(s);
+                else if ((selRegionStates ? dom >= SEL_DOM : true) && isTempleJourney(s.branch.label) && alsoSel.length < 3) alsoSel.push(s);
+                if (fitsSel.length >= 3 && alsoSel.length >= 3) break;
+              }
+              toBuild = [aliasScored, ...fitsSel, ...alsoSel];
+            }
+
+            if (toBuild.length) {
               const { offered: cards, refused } = await buildLibraryCards({
-                offered: scored, request: request ?? '', measuredFrom, end,
+                offered: toBuild, request: request ?? '', measuredFrom, end,
                 month: month != null ? month : null, saidNights: saidNightsLib,
                 profile: libProfile, pax,
               });
