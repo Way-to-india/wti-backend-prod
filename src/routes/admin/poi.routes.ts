@@ -1,7 +1,12 @@
 import { PoiController } from '@/controllers/admin/poi.controller';
+import { authMiddleware } from '@/middlewares/admin/auth.middleware';
 import { Router } from 'express';
 
 const router = Router();
+
+// SECURITY: every POI admin endpoint is authenticated. The public site reads POI
+// data from /api/common/poi/* only. (This router was previously unauthenticated.)
+router.use(authMiddleware);
 
 // ============================================
 // CATEGORIES ROUTES
