@@ -75,8 +75,8 @@ export async function buildLibraryCards(opts: {
         shortfall: null, foodParagraph: null, gateway: null,
         tier: 'designer_catalogue', signal: 'built_before',
         signalVoice: o.branch.evidenceCount > 1
-          ? `This is our own ${tour.title}, a route we run — ${o.branch.evidenceCount} of our journeys follow this shape. `
-          : `This is our own ${tour.title} — a journey we run ourselves. `,
+          ? `This is our own ${tour.title}, a route we have deep expertise with — ${o.branch.evidenceCount} of our journeys follow this shape. `
+          : `This is our own ${tour.title} — a journey we have an expertise with. `,
         cohesion: 0, rejected: [], alsoConsidered: [],
       };
 

@@ -165,6 +165,58 @@ export function deriveBranchChips(stops: RawStop[]): string[] {
   return CHIPS.filter((c) => out.has(c));
 }
 
+// ---------------------------------------------------------------------------------------
+// INTENT FAMILY — a FINE motif beneath the eight coarse chips. The chips cannot tell a
+// planetary-temple tour from a Sai Baba ashram trip: both are 'Pilgrimage'. So when a
+// traveller names a SPECIFIC intent ("temples dedicated to planets") we read its family,
+// and an alternative tour is a true PEER only if it shares that family. A "27 Nakshatra
+// Temple Tour" joins 'celestial_temples' automatically the day it is catalogued — no code
+// change — so it, and only it, would sit under "a few more that fit". 'generic' means "no
+// distinctive motif" and is NEVER treated as an intent-equivalent. Deterministic, label-
+// and keyword-based, NO model. (§ founder rule, 2026-07-17.)
+// ---------------------------------------------------------------------------------------
+export type IntentFamily =
+  | 'celestial_temples' | 'murugan' | 'jyotirlinga' | 'shakti' | 'char_dham' | 'vishnu' | 'generic';
+export function intentFamily(text: string | null | undefined): IntentFamily {
+  const t = (text ?? '').toLowerCase();
+  if (/navagraha|navagrah|navgraha|navgrah|nav\s*graha|nine\s*planet|planetary|planet\s*temple|temples?\s+dedicated\s+to\s+planets|\bgraha\b|nakshatra|nakshatram|27\s*(?:star|nakshatra)/.test(t)) return 'celestial_temples';
+  if (/arupadai|arupadaiveedu|aarupadai|murugan|muruga|kartikeya|karthikeya|subramanya|subrahmanya|palani|skanda|abode[s]?\s+of\s+murugan/.test(t)) return 'murugan';
+  if (/jyotirlinga|jyotirling|jyotirlingam|dwadasa\s*jyotir/.test(t)) return 'jyotirlinga';
+  if (/shakti\s*peeth|shaktipeeth|\bshakti\b|nau\s*devi|nav\s*durga|nine\s*devi|devi\s*darshan/.test(t)) return 'shakti';
+  if (/char\s*dham|chardham|chota\s*char\s*dham/.test(t)) return 'char_dham';
+  if (/divya\s*desam|divyadesam|108\s*divya|perumal\s*temple|vishnu\s*temple/.test(t)) return 'vishnu';
+  return 'generic';
+}
+
+// TEMPLE-JOURNEY MOTIF — is this tour, BY ITS NAME, a temple / pilgrimage journey, and not
+// a wildlife or beach tour that merely passes one shrine? Our own theme index over-tags
+// 'Pilgrimage' onto nearly every South-India tour (a single temple stop is enough), so the
+// chip is useless for a "temple journeys" shortlist — the label is the honest signal. A
+// tour qualifies only if its name reads as a temple journey AND does not read as a
+// dominantly-other-theme trip.
+const TEMPLE_LABEL_RE = /temple|jyotirling|jyotirlinga|murugan|arupadai|navagraha|navgrah|shakti|\bdevi\b|\bdham\b|tirupati|tirumala|kanchipuram|rameshwaram|rameswaram|madurai|kanyakumari|darshan|\byatra\b|pilgrim|\bkovil\b|tirtha|shrine|sabarimala|guruvayur|dwarka|somnath|\bkashi\b/i;
+const OTHER_THEME_LABEL_RE = /wildlife|safari|national\s*park|\bbeach(?:es)?\b|honeymoon|backwater|hill\s*station|nature\s*trail/i;
+export function isTempleJourney(label: string | null | undefined): boolean {
+  const l = label ?? '';
+  return TEMPLE_LABEL_RE.test(l) && !OTHER_THEME_LABEL_RE.test(l);
+}
+
+// REGION DOMINANCE — the SHARE of a branch's states that lie inside the region the
+// traveller named. Touch-overlap (any one state) stays the gate for the broad region
+// survey, but it lets a national circuit that merely CLIPS the region in — "Char Dham
+// Yatra In India" touches Tamil Nadu through Rameswaram, so it slipped into a South-India
+// list. This stricter share is used only to rank alternatives BESIDE a named tour: a
+// wholly-South journey scores 1.0, Char Dham scores ~0.17 and is dropped. Returns 1 when
+// no region was named (nothing to fence).
+export function regionDominance(states: string[] | null | undefined, regionStates: string[] | null | undefined): number {
+  if (!regionStates || !regionStates.length) return 1;
+  const s = states ?? [];
+  if (!s.length) return 0;
+  const rs = new Set(regionStates.map((x) => x.toLowerCase()));
+  const inside = s.filter((x) => rs.has(x.toLowerCase())).length;
+  return inside / s.length;
+}
+
 // =======================================================================================
 // RETRIEVAL FUNNEL — STAGE 1 (hard facets) → STAGE 2.5 (constraint-satisfaction scoring)
 // → proof object. STAGE 0 (alias) and STAGE 4 (the existing serve-time gates) live in the

@@ -47,7 +47,7 @@ import { loadSeasonFacts, loadAccessFacts } from '@/services/route-optimizer/pla
 import { resolveNamedCircuit, overlayTourDays } from '@/services/route-optimizer/namedCircuits';
 import { circuitStays, circuitTourFacts, circuitItinerary } from '@/services/route-optimizer/namedCircuitsDb';
 // SPRINT C1 — RUNG 2, the library (itinerary memory + faceted retrieval + proof objects).
-import { retrieve, type QueryFacets } from '@/services/route-optimizer/library';
+import { retrieve, intentFamily, isTempleJourney, regionDominance, type QueryFacets } from '@/services/route-optimizer/library';
 import { loadBranches, branchIdByTour, saveRetrievalProof, aliasLookup } from '@/services/route-optimizer/libraryDb';
 import { buildLibraryCards, proofSummary } from '@/services/route-optimizer/libraryCards';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
@@ -903,7 +903,9 @@ export class PublicPlannerController {
               profile: libProfile,
             };
             const branches = await loadBranches();
-            const { offered: scored, proof } = retrieve(branches, facets, { aliasBranchId: libAliasBranchId, aliasQuote: libAliasQuote });
+            // maxOffers 8: give the fit / "you may also like" split a real pool to draw a
+            // clean in-region temple shortlist from (the controller trims after classifying).
+            const { offered: scored, proof } = retrieve(branches, facets, { aliasBranchId: libAliasBranchId, aliasQuote: libAliasQuote, maxOffers: 8 });
             void saveRetrievalProof(request ?? '', proof, proof.served, proof.aliasHit);   // §10.3, fire-and-forget
 
             if (scored.length) {
@@ -919,19 +921,57 @@ export class PublicPlannerController {
                 const questions = !measuredFrom
                   ? [originQ, ...baseQs.filter((q) => q.key !== 'origin')].slice(0, 2)
                   : baseQs;
-                // when a named tour we sell is the first card (alias hit), name it.
+                // ── THE NAMED TOUR IS THE ANSWER; the rest are CLASSIFIED (founder rule,
+                //    2026-07-17). A true intent-PEER — same fine family (a future "27
+                //    Nakshatra Temple Tour" for a planetary-temple ask) — sits under "a few
+                //    more that fit". Everything that shares only the broad temple intent is
+                //    a softer "you may also like", and when he named a region ONLY tours
+                //    dominantly IN that region qualify, so a national circuit that merely
+                //    clips it (Char Dham through Rameswaram) is dropped, never shown as a fit.
                 const aliasFirst = libAliasBranchId && cards[0] && cards[0].branchId === libAliasBranchId ? cards[0] : null;
-                const lead = circuitHit
-                  ? (circuitHit.confidence === 'variant'
-                      ? `I read "${circuitHit.quote}" as ${circuitHit.circuit.label}. If you meant something else, tell me plainly and I will start again. `
-                      : `You asked for ${circuitHit.circuit.label}. `)
-                  : aliasFirst
-                    ? `You asked for the ${aliasFirst.label} — a journey we run ourselves.${cards.length > 1 ? ' A few more that fit are below. ' : ' '}`
-                    : `From the journeys we run ourselves${m ? ` in ${m.region.label}` : ''}, here ${cards.length === 1 ? 'is one that fits' : `are ${cards.length} that fit`}. `;
+                const primary = aliasFirst;    // the named tour (alias hit OR famous circuit)
+                const branchById = new Map(branches.map((b) => [b.id, b]));
+                const regionStatesLower = m ? stateNamesOf(m) : null;
+                const famUser = intentFamily(request ?? '');
+                const DOMINANT_REGION = 0.6;
+                const rest = primary ? cards.filter((c) => c !== primary) : [];
+                const fitCards: typeof cards = [];
+                const alsoCards: typeof cards = [];
+                if (primary) {
+                  for (const c of rest) {
+                    const st = branchById.get(c.branchId)?.states ?? [];
+                    const dom = regionDominance(st, regionStatesLower);
+                    const touchesRegion = regionStatesLower ? dom > 0 : true;
+                    if (famUser !== 'generic' && intentFamily(c.label) === famUser && touchesRegion) {
+                      fitCards.push(c);                                   // a true intent-equivalent
+                    } else if ((regionStatesLower ? dom >= DOMINANT_REGION : true) && isTempleJourney(c.label)) {
+                      alsoCards.push(c);                                  // same broad temple intent, in-region
+                    }
+                  }
+                }
+                const alsoTop = alsoCards.slice(0, 3);
+                const orderedCards = primary ? [primary, ...fitCards, ...alsoTop] : cards;
                 const askOrigin = !measuredFrom
                   ? ' Now tell me the city you are starting from, and I will fit the journey to your door — the right trains, the right flights, and honest days.'
                   : '';
-                const proposals = cards.map((c) => ({ ...c.card, dayByDay: c.dayByDay }));
+                const fmtItem = (c: typeof cards[number]) => `${c.label} (${c.card.totalNights} nights)`;
+                const landLine = frame.entry ? ` You land at ${frame.entry}, and the journey is planned from there.` : '';
+                let message: string;
+                if (primary) {
+                  const namedLead = circuitHit
+                    ? (circuitHit.confidence === 'variant'
+                        ? `I read "${circuitHit.quote}" as ${circuitHit.circuit.label} — a journey we have an expertise with. If you meant something else, tell me plainly and I will start again.`
+                        : `You asked for ${circuitHit.circuit.label} — a journey we have an expertise with.`)
+                    : `You asked for the ${primary.label} — a journey we have an expertise with.`;
+                  const fitLine = fitCards.length ? ` A few more that fit are below: ${fitCards.map(fmtItem).join('; ')}.` : '';
+                  const regionWord = m ? `${m.region.label} ` : '';
+                  const alsoLine = alsoTop.length ? ` You may also like these ${regionWord}temple journeys: ${alsoTop.map(fmtItem).join('; ')}.` : '';
+                  message = `${namedLead}${landLine}${fitLine}${alsoLine}${askOrigin}`;
+                } else {
+                  const regionLead = `From the journeys we have expertise with${m ? ` in ${m.region.label}` : ''}, here ${cards.length === 1 ? 'is one that fits' : `are ${cards.length} that fit`}.`;
+                  message = `${regionLead}${landLine} ` + cards.map(fmtItem).join('; ') + '.' + askOrigin;
+                }
+                const proposals = orderedCards.map((c) => ({ ...c.card, dayByDay: c.dayByDay }));
                 return res.status(200).json({
                   status: false,
                   need: 'destinations',
@@ -951,9 +991,7 @@ export class PublicPlannerController {
                   proposal: proposals[0],
                   proposals,
                   refusedProposals: refused,
-                  message: `${lead}${frame.entry ? `You land at ${frame.entry}, and the journey is planned from there. ` : ''}`
-                    + cards.map((c) => `${c.label} (${c.card.totalNights} nights)`).join('; ') + '.'
-                    + askOrigin,
+                  message,
                 });
               }
             }
@@ -983,7 +1021,7 @@ export class PublicPlannerController {
                 totalNights: stays.reduce((s, x) => s + Math.max(1, x.nights), 0),
                 shortfall: null, foodParagraph: null, gateway: null,
                 tier: 'designer_catalogue', signal: 'built_before',
-                signalVoice: `This is our own ${tour.title} — a journey we run ourselves. `
+                signalVoice: `This is our own ${tour.title} — a journey we have an expertise with. `
                   + `${circuitHit.circuit.note}.`,
                 cohesion: 0, rejected: [], alsoConsidered: [],
               };
@@ -1074,7 +1112,7 @@ export class PublicPlannerController {
                   proposal: shapedCircuit,
                   proposals: [shapedCircuit],
                   refusedProposals: [],
-                  message: `${reading}${frame.entry ? `You land at ${frame.entry}, and the journey is planned from there. ` : ''}That is a journey we run ourselves — ${tour.title}, `
+                  message: `${reading}${frame.entry ? `You land at ${frame.entry}, and the journey is planned from there. ` : ''}That is a journey we have an expertise with — ${tour.title}, `
                     + `${g.proposal.totalNights} nights: ${stopWords}. ${circuitHit.circuit.note}.`
                     + (g.gateNotes.length ? ` ${g.gateNotes.join(' ')}` : '')
                     + askOrigin,
@@ -1934,7 +1972,7 @@ export class PublicPlannerController {
           if (matched >= 2) {
             planner.plan.contractNotes = [
               ...(planner.plan.contractNotes ?? []),
-              `The day-by-day details come from our own ${overlayLabel} itinerary — the same journey we run ourselves.`,
+              `The day-by-day details come from our own ${overlayLabel} itinerary — a journey we have deep expertise with.`,
             ];
           }
         }
