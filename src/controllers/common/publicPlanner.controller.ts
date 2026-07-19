@@ -903,6 +903,37 @@ export class PublicPlannerController {
               profile: libProfile,
             };
             const branches = await loadBranches();
+
+            // ── THE CONTRADICTION GATE (2026-07-19). A named tour must not contradict what
+            //    he actually asked for. On 19 July a man who wrote "we love beaches but
+            //    these have to be beaches with less tourists" was shown FOUR temple
+            //    pilgrimages, because the alias "Kandan" fuzzy-matched his sentence and, once
+            //    an alias is seated as `primary`, the whole shortlist below is filtered
+            //    through isTempleJourney() — so ONE false hit makes every card a temple.
+            //
+            //    The alias threshold is now fenced in libraryDb (0.60, length >= 8), which
+            //    is the cure. THIS is the seatbelt: even a PERFECT alias hit is refused when
+            //    nothing in his brief carries a pilgrimage signal. Read from his own words
+            //    and his own chips — deterministic, zero tokens, no model. The signal is
+            //    generous on purpose (any temple word, any deity name, the Pilgrimage chip),
+            //    because the cost of refusing a real pilgrimage ask is far higher than the
+            //    cost of letting one through to the ordinary chip-and-region ranking.
+            if (libAliasBranchId) {
+              const aliasBranch = branches.find((b) => b.id === libAliasBranchId);
+              const pilgrimageAsked =
+                libChips.includes('Pilgrimage')
+                || /temple|pilgrim|yatra|darshan|shrine|spiritual|jyotirlinga|jyotirling|dham|devi|murugan|muruga|kartikeya|karthikeya|subramanya|skanda|kumara|navagraha|navagrah|navgraha|navgrah|graha|nakshatra|arupadai|kedar|badri|tirupati|shirdi|vaishno|puri|somnath|dwarka|rameshwaram|rameswaram|amarnath|kailash|mansarovar/i
+                     .test(request ?? '');
+              if (aliasBranch && isTempleJourney(aliasBranch.label) && !pilgrimageAsked) {
+                console.warn(
+                  `aliasGate: REFUSED "${aliasBranch.label}" (alias "${libAliasQuote ?? '?'}") — `
+                  + `nothing in the brief carries a pilgrimage signal. chips=[${libChips.join(', ') || 'none'}]. `
+                  + `Falling back to chip-and-region ranking.`);
+                libAliasBranchId = null;
+                libAliasQuote = null;
+              }
+            }
+
             const { offered: scored, allScored, proof } = retrieve(branches, facets, { aliasBranchId: libAliasBranchId, aliasQuote: libAliasQuote, maxOffers: 6 });
             void saveRetrievalProof(request ?? '', proof, proof.served, proof.aliasHit);   // §10.3, fire-and-forget
 

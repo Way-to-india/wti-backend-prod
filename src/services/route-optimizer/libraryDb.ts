@@ -81,13 +81,34 @@ export async function aliasLookup(text: string | null | undefined): Promise<{ br
         ORDER BY length(norm_alias) DESC LIMIT 1`, q);
     if (exact[0]) return { branchId: String(exact[0].branch_id), alias: String(exact[0].alias) };
     // 2) FUZZY: spelling mistakes (navgreh / nvgrah / nau greh / naugrah …) via pg_trgm
-    //    word_similarity — "how well does the alias match SOME window of his sentence". The
-    //    approved-alias set is small and distinctive, so the gap between the right tour
-    //    (0.3–1.0) and any other (≤0.1) is wide; 0.28 catches every reasonable misspelling
-    //    with a large safety margin. Exact still wins first, so precision is never lost.
+    //    word_similarity — "how well does the alias match SOME window of his sentence".
+    //
+    //    THE 0.28 DISASTER, measured on production 2026-07-19. The old comment here claimed
+    //    the gap between the right tour and any other was wide. That holds for short,
+    //    alias-SHAPED input. It is FALSE for a free-text brief: normAlias strips every
+    //    space, so a 190-character sentence arrives as ONE 149-character token with no word
+    //    boundaries left for word_similarity to respect. It degrades into a sliding window
+    //    over a blob, and the more he writes the more chances noise gets. Three of twelve
+    //    realistic non-pilgrimage briefs false-fired:
+    //
+    //      "we love beaches"          -> alias Kandan    0.286 -> Arupadai Veedu Tour
+    //      "Planning our honeymoon"   -> alias Planetary 0.400 -> Navagraha Temple Tour
+    //      "trekking and adventure"   -> alias Kandan    0.286 -> Arupadai Veedu Tour
+    //
+    //    A man planning his honeymoon was being sold a planetary temple tour.
+    //
+    //    TWO FENCES, both measured, neither guessed:
+    //      - threshold 0.60. The NOISE ceiling across those briefs is 0.400 and the genuine
+    //        floor is 0.774 (the Nau Devi Yatra, nine Devi temples), so 0.60 sits in open
+    //        water with margin on both sides. A sweep from 0.28 to 0.70 showed every value
+    //        from 0.40 up gives zero false positives AND zero missed real asks.
+    //      - length >= 8. All the damage came from short aliases: Kandan 6, Skanda 6,
+    //        Muruga 6, Kumara 6, Nvgrah 5. Nothing genuine needs them HERE, because nine of
+    //        ten real named-tour asks resolve on the EXACT path above, which is untouched
+    //        and still matches from 4 characters. Fuzzy is for misspellings of LONG names.
     const fuzzy = await prisma.$queryRawUnsafe<any[]>(
       `SELECT branch_id, alias, word_similarity(norm_alias, $1) AS ws FROM branch_aliases
-        WHERE approved = true AND length(norm_alias) >= 5 AND word_similarity(norm_alias, $1) > 0.28
+        WHERE approved = true AND length(norm_alias) >= 8 AND word_similarity(norm_alias, $1) > 0.60
         ORDER BY ws DESC, length(norm_alias) DESC LIMIT 1`, q);
     return fuzzy[0] ? { branchId: String(fuzzy[0].branch_id), alias: String(fuzzy[0].alias) } : null;
   } catch (e) {
