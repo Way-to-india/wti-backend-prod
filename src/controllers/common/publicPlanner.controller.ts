@@ -50,6 +50,8 @@ import { circuitStays, circuitTourFacts, circuitItinerary } from '@/services/rou
 import { retrieve, intentFamily, isTempleJourney, regionDominance, type QueryFacets } from '@/services/route-optimizer/library';
 import { loadBranches, branchIdByTour, saveRetrievalProof, aliasLookup } from '@/services/route-optimizer/libraryDb';
 import { buildLibraryCards, proofSummary } from '@/services/route-optimizer/libraryCards';
+import { audienceFromText, warningsFor } from '@/services/route-optimizer/eligibility';
+import { eligibilityForPlaces, placesOfBranches } from '@/services/route-optimizer/eligibilityDb';
 import { loadElevations } from '@/services/route-optimizer/spineDb';
 import { haversineKm } from '@/services/route-optimizer/geo';
 import type { DesignerMemory } from '@/services/route-optimizer/designerMemory';
@@ -1027,10 +1029,42 @@ export class PublicPlannerController {
                   const regionLead = `From the journeys we have expertise with${m ? ` in ${m.region.label}` : ''}, here ${cards.length === 1 ? 'is one that fits' : `are ${cards.length} that fit`}.`;
                   message = `${regionLead}${landLine} ` + cards.map(fmtItem).join('; ') + '.' + askOrigin;
                 }
+                // ── ELIGIBILITY GATE (2026-07-20). WHO IS ALLOWED IN.
+                //    Every temple used to carry one word, `Pilgrimage`. But Jagannath Puri
+                //    refuses non-Hindus at the Lion Gate by name and appearance, while Hampi
+                //    is an ASI monument open to anyone. Sold from the same label, those are
+                //    two different products, and one of them ends with a family turned away
+                //    from a gate they flew across the world to reach. An OCI card does NOT
+                //    help there — and separately, an OCI holder is legally FOREIGN for permits
+                //    while being Indian only for ticket prices, which is the commonest booking
+                //    error we make.
+                //
+                //    We read WHO is travelling from his own sentence (zero tokens, no model),
+                //    then attach the stored facts for the places these tours actually visit.
+                //    `place_eligibility` holds 94 researched rows, each with its own sources,
+                //    confidence and re-verify date; rows that could not be proven were stored
+                //    with UNKNOWN rather than a plausible guess. So SILENCE HERE MEANS
+                //    "not verified", never "no restriction" — the copy layer must say so.
+                const audience = audienceFromText(request);
+                let eligibility: ReturnType<typeof warningsFor> = [];
+                try {
+                  const placeMap = await placesOfBranches(orderedCards.map((c) => c.branchId));
+                  const placeNames = [...new Set([...placeMap.values()].flat())];
+                  eligibility = warningsFor(await eligibilityForPlaces(placeNames), audience);
+                  if (eligibility.some((w) => w.severity === 'blocker')) {
+                    console.warn(`eligibility: BLOCKER for audience="${audience}" — `
+                      + eligibility.filter((w) => w.severity === 'blocker').map((w) => w.place).join(', '));
+                  }
+                } catch (e) {
+                  console.error('eligibility pass failed (non-fatal):', e);
+                }
+
                 const proposals = orderedCards.map((c) => ({ ...c.card, dayByDay: c.dayByDay }));
                 return res.status(200).json({
                   status: false,
                   need: 'destinations',
+                  audience,
+                  eligibility,
                   library: { alias: proof.aliasHit, served: proof.served, reason: proof.reason },
                   proof: proofSummary(proof),
                   circuit: circuitHit
